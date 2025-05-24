@@ -41,19 +41,44 @@ class CardManager {
         `;
     }    openCardModal(columnId, cardId = null) {
         const currentBoard = BoardManager.getInstance().getCurrentBoard();
-        if (!currentBoard) return;
+        if (!currentBoard) {
+            console.error("CardManager.openCardModal: currentBoard is not available. Cannot open card modal.");
+            ModalManager.getInstance().showNotification('Error: Current board not loaded. Cannot open card details.', 'error');
+            return;
+        }
 
         const currentColumn = currentBoard.columns.find(c => c.id === columnId);
-        if (!currentColumn) return;
+        if (!currentColumn) {
+            console.error(`CardManager.openCardModal: Column with ID '${columnId}' not found on board '${currentBoard.name}'.`);
+            ModalManager.getInstance().showNotification(`Error: Column (ID: ${columnId}) not found. Cannot open card details.`, 'error');
+            return;
+        }
+
+        if (!Array.isArray(currentColumn.cards)) {
+            console.error(`CardManager.openCardModal: Data integrity issue - currentColumn.cards is not an array for column ID '${columnId}'. Initializing to empty array to prevent further errors.`);
+            currentColumn.cards = []; 
+        }
 
         if (cardId) {
             this.currentCard = currentColumn.cards.find(c => c.id === cardId);
+            
+            if (!this.currentCard) {
+                console.error(`CardManager.openCardModal: Card with ID '${cardId}' not found in column '${currentColumn.name}' (Column ID: ${columnId}). Available card IDs in this column: [${currentColumn.cards.map(c => c.id).join(', ')}].`);
+                ModalManager.getInstance().showNotification(`Error: Card (ID: ${cardId}) could not be loaded. It may have been moved or deleted.`, 'error');
+                
+                const modalTitleEl = document.getElementById('modal-title');
+                const cardFormEl = document.getElementById('card-form');
+                if (modalTitleEl) modalTitleEl.textContent = 'Error Loading Card';
+                if (cardFormEl) cardFormEl.reset();
+                return; 
+            }
+
             document.getElementById('modal-title').textContent = 'Edit Card';
             document.getElementById('card-heading').value = this.currentCard.heading;
             document.getElementById('card-content').value = this.currentCard.content;
             document.getElementById('card-color').value = this.currentCard.background || 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)';
-            
-            // Set selected color in palette
+            // document.getElementById('card-custom-style').value = this.currentCard.customStyle || ''; // Element existiert möglicherweise nicht
+
             this.setSelectedColorInPalette('card-color-palette', this.currentCard.background);
         } else {
             this.currentCard = null;
