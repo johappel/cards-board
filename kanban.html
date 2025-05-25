@@ -14,6 +14,7 @@
             <div class="file-actions">
                 <button class="btn btn-secondary" onclick="exportAllBoards()">Export All Boards</button>
                 <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">Import Boards</button>
+                <label for="import-file" class="btn btn-secondary">📥 Import Boards</label>
                 <input type="file" id="import-file" class="file-input" accept=".json" onchange="importBoards(event)">
             </div>
         </div>
@@ -68,10 +69,6 @@
                     <label for="card-color">Card Color</label>
                     <input type="color" id="card-color" value="#ffffff">
                 </div>
-                <div class="form-group">
-                    <label for="card-custom-style">Custom CSS Style</label>
-                    <textarea id="card-custom-style" class="custom-style-editor" placeholder="Enter custom CSS..."></textarea>
-                </div>
                 <div class="ai-section">
                     <h3>AI Features</h3>
                     <button type="button" class="btn btn-secondary" onclick="useAsPrompt()">Use as Prompt</button>
@@ -100,10 +97,6 @@
                 <div class="form-group">
                     <label for="column-color">Column Color</label>
                     <input type="color" id="column-color" value="#e9ecef">
-                </div>
-                <div class="form-group">
-                    <label for="column-custom-style">Custom CSS Style</label>
-                    <textarea id="column-custom-style" class="custom-style-editor" placeholder="Enter custom CSS..."></textarea>
                 </div>
                 <div class="modal-actions">
                     <button type="submit" class="btn btn-primary">Save Column</button>
@@ -137,10 +130,6 @@
                 <div class="form-group">
                     <label for="board-bg-color">Background Color</label>
                     <input type="color" id="board-bg-color" value="#f5f7fa">
-                </div>
-                <div class="form-group">
-                    <label for="board-custom-style">Custom CSS Style</label>
-                    <textarea id="board-custom-style" class="custom-style-editor" placeholder="Enter custom CSS..."></textarea>
                 </div>
                 <div class="ai-section">
                     <h3>AI Configuration</h3>
@@ -221,6 +210,20 @@
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <script src="board.js"></script>
+    <script src="dashboard.js"></script>
+    <script src="column.js"></script>
+    <script src="card.js"></script>
+    <script src="ai.js"></script>
+    <script src="board_settings.js"></script>
+    <script src="import_export.js"></script>
+    <script src="drag_drop.js"></script>
+    <script src="init.js"></script>
+    <script src="api.js"></script>
+
+    
+
+    
+
 </body>
 </html>

@@ -1,0 +1,21 @@
+// Board View Functions
+function openBoard(boardId) {
+    currentBoard = boards.find(b => b.id === boardId);
+    if (!currentBoard) return;
+
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('board-view').style.display = 'flex';
+    
+    updateBoardView();
+    renderColumns();
+}
+
+function updateBoardView() {
+    document.getElementById('board-title').textContent = currentBoard.name;
+    document.getElementById('board-authors').textContent = 'Authors: ' + currentBoard.authors.join(', ');
+    document.getElementById('board-summary').textContent = currentBoard.summary || 'No summary yet...';
+    
+    // Apply background color
+    const boardView = document.getElementById('board-view');
+    boardView.style.backgroundColor = currentBoard.backgroundColor;
+}
