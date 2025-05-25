@@ -1,0 +1,446 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background-color: #f5f7fa;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* Dashboard Styles */
+#dashboard {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.dashboard-header h1 {
+    font-size: 2rem;
+    color: #2c3e50;
+}
+
+.boards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.board-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.board-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.board-card h3 {
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+}
+
+.board-card p {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+}
+
+.add-board-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed #cbd5e0;
+    background: transparent;
+    min-height: 150px;
+}
+
+.add-board-card:hover {
+    border-color: #4a90e2;
+    background: rgba(74, 144, 226, 0.05);
+}
+
+.add-board-btn {
+    font-size: 3rem;
+    color: #cbd5e0;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+/* Board View Styles */
+#board-view {
+    display: none;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.board-header {
+    background: white;
+    padding: 1.5rem 2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.board-header-left {
+    flex: 1;
+}
+
+.board-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.board-authors {
+    font-size: 0.9rem;
+    color: #7f8c8d;
+    margin-bottom: 0.5rem;
+}
+
+.board-summary {
+    font-size: 0.9rem;
+    color: #5a6c7d;
+    max-width: 600px;
+}
+
+.board-header-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: #4a90e2;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #357abd;
+}
+
+.btn-secondary {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.btn-secondary:hover {
+    background: #d0d0d0;
+}
+
+.btn-ai {
+    background: #9b59b6;
+    color: white;
+}
+
+.btn-ai:hover {
+    background: #8e44ad;
+}
+
+/* Kanban Board Columns */
+.kanban-board {
+    flex: 1;
+    display: flex;
+    gap: 1rem;
+    padding: 2rem;
+    overflow-x: auto;
+}
+
+.kanban-column {
+    flex: 0 0 300px;
+    background: #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.column-title {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.column-actions {
+    position: relative;
+}
+
+.menu-dots {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    font-size: 1.2rem;
+}
+
+.dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: white;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    display: none;
+    z-index: 1000;
+    min-width: 150px;
+}
+
+.dropdown-menu.show {
+    display: block;
+}
+
+.dropdown-item {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.dropdown-item:hover {
+    background: #f5f5f5;
+}
+
+.column-content {
+    flex: 1;
+    min-height: 200px;
+}
+
+.add-card-btn {
+    width: 100%;
+    padding: 0.75rem;
+    background: transparent;
+    border: 2px dashed #cbd5e0;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #7f8c8d;
+    transition: all 0.3s ease;
+}
+
+.add-card-btn:hover {
+    border-color: #4a90e2;
+    color: #4a90e2;
+    background: rgba(74, 144, 226, 0.05);
+}
+
+/* Card Styles */
+.kanban-card {
+    background: white;
+    border-radius: 4px;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    cursor: grab;
+    transition: all 0.3s ease;
+}
+
+.kanban-card:hover {
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.kanban-card.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+}
+
+.kanban-card.inactive {
+    opacity: 0.5;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.card-title {
+    font-weight: bold;
+    font-size: 0.95rem;
+}
+
+.card-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.card-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    color: #7f8c8d;
+    transition: color 0.2s;
+}
+
+.card-btn:hover {
+    color: #4a90e2;
+}
+
+.card-content {
+    font-size: 0.9rem;
+    color: #5a6c7d;
+    margin-bottom: 0.5rem;
+}
+
+.card-comments {
+    font-size: 0.85rem;
+    color: #95a5a6;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 8px;
+    padding: 2rem;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.modal-header h2 {
+    font-size: 1.5rem;
+    color: #2c3e50;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #7f8c8d;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #cbd5e0;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.form-group textarea {
+    min-height: 150px;
+    resize: vertical;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2rem;
+}
+
+.ai-section {
+    background: #f8f9fa;
+    border-radius: 4px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.ai-section h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.drag-over {
+    background: #e3f2fd;
+}
+
+.custom-style-editor {
+    font-family: 'Courier New', monospace;
+    background: #f4f4f4;
+    min-height: 100px;
+}
+
+/* Export/Import Buttons */
+.file-actions {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.file-input {
+    display: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .boards-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .kanban-board {
+        flex-direction: column;
+    }
+    
+    .kanban-column {
+        flex: 1;
+        width: 100%;
+    }
+}
