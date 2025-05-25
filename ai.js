@@ -1,4 +1,3 @@
-
 // AI Functions
 function generateBoardSummary() {
     if (!currentBoard.aiConfig?.provider || !currentBoard.aiConfig?.apiKey) {
@@ -71,4 +70,14 @@ function backToDashboard() {
     document.getElementById('dashboard').style.display = 'block';
     currentBoard = null;
     renderDashboard();
+}
+
+function applyCustomStyle(elementId, styles) {
+    const styleElement = document.getElementById(elementId) || document.createElement('style');
+    styleElement.id = elementId;
+    styleElement.textContent = styles;
+    
+    if (!document.getElementById(elementId)) {
+        document.head.appendChild(styleElement);
+    }
 }

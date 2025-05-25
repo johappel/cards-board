@@ -39,6 +39,13 @@ function setupEventListeners() {
             });
         }
     });
+
+    // Tab button click handlers
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('tab-button')) {
+            e.preventDefault();
+        }
+    });
 }
 
 // Initialize default boards
@@ -51,6 +58,7 @@ function initializeBoards() {
         authors: ['User'],
         summary: '',
         backgroundColor: '#f5f7fa',
+        customStyle: '',
         columns: [
             { id: generateId(), name: 'To Do', color: '#e9ecef', cards: [] },
             { id: generateId(), name: 'In Progress', color: '#e9ecef', cards: [] },

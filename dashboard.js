@@ -56,14 +56,14 @@ function openNewBoardModal() {
 }
 
 function createNewBoard(e) {
-    e.preventDefault();
-      const newBoard = {
+    e.preventDefault();    const newBoard = {
         id: generateId(),
         name: document.getElementById('new-board-name').value,
         description: document.getElementById('new-board-description').value,
         authors: ['User'],
         summary: '',
         backgroundColor: '#f5f7fa',
+        customStyle: '',
         columns: [
             { id: generateId(), name: 'To Do', color: '#e9ecef', cards: [] },
             { id: generateId(), name: 'In Progress', color: '#e9ecef', cards: [] },

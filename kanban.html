@@ -115,46 +115,76 @@
                 <button class="close-btn" onclick="closeModal('board-settings-modal')">&times;</button>
             </div>
             <form id="board-settings-form">
-                <div class="form-group">
-                    <label for="board-name">Board Name</label>
-                    <input type="text" id="board-name" required>
+                <!-- Tab Navigation -->
+                <div class="tab-navigation">
+                    <button type="button" class="tab-button active" onclick="switchBoardTab('general')">Allgemein</button>
+                    <button type="button" class="tab-button" onclick="switchBoardTab('advanced')">Erweiterte Einstellungen</button>
                 </div>
-                <div class="form-group">
-                    <label for="board-authors-input">Authors (comma-separated)</label>
-                    <input type="text" id="board-authors-input" placeholder="John Doe, Jane Smith">
-                </div>
-                <div class="form-group">
-                    <label for="board-summary-input">Board Summary</label>
-                    <textarea id="board-summary-input"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="board-bg-color">Background Color</label>
-                    <input type="color" id="board-bg-color" value="#f5f7fa">
-                </div>
-                <div class="ai-section">
-                    <h3>AI Configuration</h3>
+
+                <!-- General Tab -->
+                <div id="board-tab-general" class="tab-content active">
                     <div class="form-group">
-                        <label for="ai-provider">LLM Provider</label>
-                        <select id="ai-provider" onchange="toggleAIFields()">
-                            <option value="">Select Provider</option>
-                            <option value="openai">OpenAI</option>
-                            <option value="anthropic">Anthropic</option>
-                            <option value="custom">Custom</option>
-                        </select>
-                    </div>
-                    <div class="form-group" id="ai-base-url-group" style="display: none;">
-                        <label for="ai-base-url">Base URL</label>
-                        <input type="url" id="ai-base-url" placeholder="https://api.example.com">
+                        <label for="board-name">Board Name</label>
+                        <input type="text" id="board-name" required>
                     </div>
                     <div class="form-group">
-                        <label for="ai-api-key">API Key</label>
-                        <input type="password" id="ai-api-key" placeholder="Enter your API key">
+                        <label for="board-authors-input">Authors (comma-separated)</label>
+                        <input type="text" id="board-authors-input" placeholder="John Doe, Jane Smith">
                     </div>
                     <div class="form-group">
-                        <label for="ai-model">Model</label>
-                        <input type="text" id="ai-model" placeholder="e.g., claude-3-sonnet-20240229">
+                        <label for="board-summary-input">Board Summary</label>
+                        <textarea id="board-summary-input"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="board-bg-color">Background Color</label>
+                        <input type="color" id="board-bg-color" value="#f5f7fa">
+                    </div>
+                    <div class="ai-section">
+                        <h3>AI Configuration</h3>
+                        <div class="form-group">
+                            <label for="ai-provider">LLM Provider</label>
+                            <select id="ai-provider" onchange="toggleAIFields()">
+                                <option value="">Select Provider</option>
+                                <option value="openai">OpenAI</option>
+                                <option value="anthropic">Anthropic</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="ai-base-url-group" style="display: none;">
+                            <label for="ai-base-url">Base URL</label>
+                            <input type="url" id="ai-base-url" placeholder="https://api.example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="ai-api-key">API Key</label>
+                            <input type="password" id="ai-api-key" placeholder="Enter your API key">
+                        </div>
+                        <div class="form-group">
+                            <label for="ai-model">Model</label>
+                            <input type="text" id="ai-model" placeholder="e.g., claude-3-sonnet-20240229">
+                        </div>
                     </div>
                 </div>
+
+                <!-- Advanced Tab -->
+                <div id="board-tab-advanced" class="tab-content">
+                    <div class="form-group">
+                        <label for="board-custom-style">Custom CSS Style</label>
+                        <textarea id="board-custom-style" class="custom-style-editor" placeholder="Enter custom CSS for this board...&#10;&#10;Beispiel:&#10;.kanban-board {&#10;  background: linear-gradient(45deg, #f0f0f0, #ffffff);&#10;}&#10;&#10;.kanban-column {&#10;  border-radius: 15px;&#10;}"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>CSS Preview</label>
+                        <div class="css-preview-info">
+                            <p>Das Custom CSS wird auf das gesamte Board angewendet. Verwenden Sie CSS-Selektoren wie:</p>
+                            <ul>
+                                <li><code>.kanban-board</code> - Das gesamte Board</li>
+                                <li><code>.kanban-column</code> - Alle Spalten</li>
+                                <li><code>.kanban-card</code> - Alle Karten</li>
+                                <li><code>.board-header</code> - Der Board-Header</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="modal-actions">
                     <button type="submit" class="btn btn-primary">Save Settings</button>
                     <button type="button" class="btn btn-danger" onclick="deleteBoard()">Delete Board</button>
