@@ -10,6 +10,7 @@ function dragStart(event, cardId) {
 function dragEnd(event) {
     event.target.classList.remove('dragging');
     draggedCard = null;
+    if (typeof saveAllBoards === 'function') saveAllBoards();
 }
 
 function allowDrop(event) {
@@ -51,7 +52,6 @@ function dragColumnStart(event, columnId) {
 function dragColumnEnd(event) {
     if (draggedColumn) {
         draggedColumn.classList.remove('dragging');
-        
         // Update column order in data
         const newOrder = [];
         document.querySelectorAll('.kanban-column').forEach(col => {
@@ -59,9 +59,9 @@ function dragColumnEnd(event) {
             const column = currentBoard.columns.find(c => c.id === colId);
             if (column) newOrder.push(column);
         });
-        
         currentBoard.columns = newOrder;
         draggedColumn = null;
+        if (typeof saveAllBoards === 'function') saveAllBoards();
     }
 }
 

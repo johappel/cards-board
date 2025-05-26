@@ -138,13 +138,7 @@ function createColumnElement(column, index) {
         <div class="column-header" draggable="true" ondragstart="dragColumnStart(event, '${column.id}')" ondragend="dragColumnEnd(event)">
             <div class="column-title">${column.name}</div>
             <div class="column-actions">
-                <button class="menu-dots" onclick="toggleColumnMenu(event, '${column.id}')">⋮</button>
-                <div class="dropdown-menu" id="column-menu-${column.id}">
-                    <div class="dropdown-item" onclick="openColumnSettings('${column.id}')">Settings</div>
-                    <div class="dropdown-item" onclick="exportColumn('${column.id}')">Export</div>
-                    <div class="dropdown-item" onclick="importColumnData('${column.id}')">Import</div>
-                    <div class="dropdown-item" onclick="deleteColumn('${column.id}')">Delete</div>
-                </div>
+                <button class="menu-dots" onclick="openColumnSettings('${column.id}')">⋮</button>
             </div>
         </div>
         <div class="column-content" ondrop="dropCard(event, '${column.id}')" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">

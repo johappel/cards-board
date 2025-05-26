@@ -121,6 +121,8 @@
                 </div>
                 <div class="modal-actions">
                     <button type="submit" class="btn btn-primary">Save Column</button>
+                    <button type="button" class="btn btn-secondary" onclick="exportColumn(currentColumn.id)">Export Column</button>
+                    <button type="button" class="btn btn-secondary" onclick="importColumnData(currentColumn.id)">Import Cards</button>
                     <button type="button" class="btn btn-danger" onclick="deleteColumn(currentColumn.id)">Delete Column</button>
                     <button type="button" class="btn btn-secondary" onclick="closeModal('column-modal')">Cancel</button>
                 </div>
@@ -272,6 +274,8 @@
     <script src="drag_drop.js"></script>
     <script src="init.js"></script>
     <script src="api.js"></script>
+    <script src="colors.js"></script>
+    <script src="utils.js"></script>
 
     
 
