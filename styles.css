@@ -681,3 +681,94 @@ body {
     flex-direction: column;
     gap: 0.5rem;
 }
+
+/* Card Vorschau und Thumbnail als Coverbild */
+.card-thumb {
+    width: 100%;
+    height: 120px;
+    overflow: hidden;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+.card-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    display: block;
+}
+.card-preview-content {
+    font-size: 0.95rem;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    margin-bottom: 0.5rem;
+    min-height: 1.5em;
+    padding: 0 0.5rem;
+}
+.kanban-card .card-title {
+    padding: 0.5rem 0.5rem 0 0.5rem;
+}
+.kanban-card .card-header {
+    padding: 0.5rem 0.5rem 0 0.5rem;
+}
+
+/* Full Card Modal */
+#full-card-modal {
+    display: flex;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 3000;
+    align-items: center;
+    justify-content: center;
+}
+#full-card-modal .modal-content {
+    border-radius: 10px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 600px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    position: relative;
+    background: inherit;
+}
+#full-card-modal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+#full-card-modal .close-btn {
+    font-size: 1.5rem;
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+}
+.card-thumb-modal {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+.card-thumb-modal img {
+    max-width: 180px;
+    max-height: 180px;
+    border-radius: 10px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+}
+.card-content-full {
+    color: #fff;
+    font-size: 1.05rem;
+    white-space: pre-line;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* Modal Layering */
+#full-card-modal {
+    z-index: 3000;
+}
+#card-modal {
+    z-index: 4000;
+}
