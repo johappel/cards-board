@@ -27,7 +27,6 @@ function toggleAIFields() {
 
 function saveBoardSettings(e) {
     e.preventDefault();
-    
     currentBoard.name = document.getElementById('board-name').value;
     currentBoard.authors = document.getElementById('board-authors-input').value.split(',').map(a => a.trim());
     currentBoard.summary = document.getElementById('board-summary-input').value;
@@ -39,8 +38,8 @@ function saveBoardSettings(e) {
         model: document.getElementById('ai-model').value,
         baseUrl: document.getElementById('ai-base-url').value
     };
-    
     updateBoardView();
+    saveAllBoards();
     closeModal('board-settings-modal');
 }
 

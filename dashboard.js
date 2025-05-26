@@ -41,14 +41,6 @@ function createBoardCard(board) {
     return card;
 }
 
-function deleteBoardFromDashboard(event, boardId) {
-    event.stopPropagation();
-    if (confirm('Are you sure you want to delete this board? This action cannot be undone.')) {
-        boards = boards.filter(b => b.id !== boardId);
-        renderDashboard();
-    }
-}
-
 function openNewBoardModal() {
     document.getElementById('new-board-name').value = '';
     document.getElementById('new-board-description').value = '';
@@ -56,8 +48,10 @@ function openNewBoardModal() {
 }
 
 function createNewBoard(e) {
-    e.preventDefault();    const newBoard = {
-        id: generateId(),        name: document.getElementById('new-board-name').value,
+    e.preventDefault();
+    const newBoard = {
+        id: generateId(),
+        name: document.getElementById('new-board-name').value,
         description: document.getElementById('new-board-description').value,
         authors: ['User'],
         summary: '',
@@ -75,8 +69,17 @@ function createNewBoard(e) {
             baseUrl: ''
         }
     };
-    
     boards.push(newBoard);
+    saveAllBoards();
     renderDashboard();
     closeModal('new-board-modal');
+}
+
+function deleteBoardFromDashboard(event, boardId) {
+    event.stopPropagation();
+    if (confirm('Are you sure you want to delete this board? This action cannot be undone.')) {
+        boards = boards.filter(b => b.id !== boardId);
+        saveAllBoards();
+        renderDashboard();
+    }
 }

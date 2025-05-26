@@ -37,11 +37,10 @@ function openCardModal(columnId, cardId = null) {
 
 function saveCard(e) {
     e.preventDefault();
-      const heading = document.getElementById('card-heading').value;
+    const heading = document.getElementById('card-heading').value;
     const content = document.getElementById('card-content').value;
     const columnId = document.getElementById('card-column').value;
     const color = document.getElementById('card-color').value;
-    
     const cardData = {
         heading,
         content,
@@ -49,13 +48,10 @@ function saveCard(e) {
         comments: currentCard?.comments || '',
         inactive: currentCard?.inactive || false
     };
-    
     const targetColumn = currentBoard.columns.find(c => c.id === columnId);
-    
     if (currentCard) {
         // Update existing card
         Object.assign(currentCard, cardData);
-        
         // If column changed, move card
         if (currentColumn.id !== columnId) {
             currentColumn.cards = currentColumn.cards.filter(c => c.id !== currentCard.id);
@@ -69,9 +65,20 @@ function saveCard(e) {
         };
         targetColumn.cards.push(newCard);
     }
-    
+    saveAllBoards();
     renderColumns();
     closeModal('card-modal');
+}
+
+function toggleCardVisibility(cardId, columnId) {
+    const column = currentBoard.columns.find(c => c.id === columnId);
+    const card = column.cards.find(c => c.id === cardId);
+    if (card) {
+        card.inactive = !card.inactive;
+        if (card.inactive) card.expanded = false;
+        saveAllBoards();
+        renderColumns();
+    }
 }
 
 function toggleCardExpand(event, cardId, columnId) {
@@ -81,17 +88,8 @@ function toggleCardExpand(event, cardId, columnId) {
     if (!card) return;
     if (card.inactive) return; // Minimierte Karten können nicht expandiert werden
     card.expanded = !card.expanded;
+    saveAllBoards();
     renderColumns();
-}
-
-function toggleCardVisibility(cardId, columnId) {
-    const column = currentBoard.columns.find(c => c.id === columnId);
-    const card = column.cards.find(c => c.id === cardId);
-    if (card) {
-        card.inactive = !card.inactive;
-        if (card.inactive) card.expanded = false;
-        renderColumns();
-    }
 }
 
 function createCardElement(card, columnId) {

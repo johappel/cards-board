@@ -5,6 +5,9 @@ function openBoard(boardId) {
 
     document.getElementById('dashboard').style.display = 'none';
     document.getElementById('board-view').style.display = 'flex';
+
+    // update url with board ID
+    window.history.pushState({ boardId: currentBoard.id }, '', `?board=${currentBoard.id}`);
     
     updateBoardView();
     renderColumns();

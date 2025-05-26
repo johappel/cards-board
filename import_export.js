@@ -33,7 +33,7 @@ function importBoards(event) {
                 // Single board
                 boards.push(data);
             }
-            
+            saveAllBoards();
             renderDashboard();
             alert('Import successful!');
         } catch (error) {

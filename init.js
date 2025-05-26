@@ -8,9 +8,30 @@ let draggedColumn = null;
 let columnImportData = null;
 
 // Initialize Application
-document.addEventListener('DOMContentLoaded', function() {
-    initializeBoards();
-    renderDashboard();
+document.addEventListener('DOMContentLoaded', async function() {
+    // Prüfe auf ?board=ID in der URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const boardId = urlParams.get('board');
+    
+    boards = await (window.KanbanStorage?.loadBoards?.() || []);
+    if (!boards || boards.length === 0) {
+        initializeBoards();
+        await window.KanbanStorage?.saveBoards?.(boards);
+    }
+    if (boardId) {
+        const board = boards.find(b => b.id === boardId);
+        if (board) {
+            currentBoard = board;
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('board-view').style.display = 'flex';
+            updateBoardView();
+            renderColumns();
+        } else {
+            renderDashboard();
+        }
+    } else {
+        renderDashboard();
+    }
     setupEventListeners();
     initializeColorPalettes();
 });
@@ -71,4 +92,9 @@ function initializeBoards() {
             baseUrl: ''
         }
     }];
+}
+
+// Nach jeder Änderung speichern
+function saveAllBoards() {
+    window.KanbanStorage?.saveBoards?.(boards);
 }
