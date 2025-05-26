@@ -53,20 +53,6 @@
             </div>
             <form id="card-form">
                 <div class="form-group">
-                    <label for="card-heading">Card Heading</label>
-                    <input type="text" id="card-heading" required>
-                </div>
-                <div class="form-group">
-                    <label for="card-content">Content</label>
-                    <textarea id="card-content" placeholder="Enter content or use as prompt..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="card-column">Column</label>
-                    <select id="card-column">
-                        <!-- Options will be populated dynamically -->
-                    </select>
-                </div>
-                <div class="form-group">
                     <label class="color-palette-label">Card Color</label>
                     <div class="color-palette" id="card-color-palette">
                         <div class="color-option color-gradient-1" data-color="color-gradient-1"></div>
@@ -81,19 +67,53 @@
                     <input type="hidden" id="card-color" value="color-gradient-1">
                 </div>
                 <div class="form-group">
+                    <label for="card-heading">Card Heading</label>
+                    <input type="text" id="card-heading" required>
+                </div>
+                <div class="form-group" style="position:relative;">
+                    <label for="card-content">Content</label>
+                    <div class="ai-icon-container">
+                        <button type="button" class="ai-icon-btn" id="open-ai-modal" title="AI Content Generator" tabindex="0">🤖</button>
+                    </div>
+                    <textarea id="card-content" placeholder="Enter content or use as prompt..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="card-column">Column</label>
+                    <select id="card-column">
+                        <!-- Options will be populated dynamically -->
+                    </select>
+                </div>
+                <div class="form-group">
                     <label for="card-thumbnail">Thumbnail URL</label>
                     <input type="url" id="card-thumbnail" placeholder="https://example.com/thumb.jpg">
                 </div>
-                <div class="ai-section">
-                    <h3>AI Features</h3>
-                    <button type="button" class="btn btn-secondary" onclick="useAsPrompt()">Use as Prompt</button>
-                    <button type="button" class="btn btn-secondary" onclick="generateWithAI()">Generate Content</button>
-                </div>
+                
                 <div class="modal-actions">
                     <button type="submit" class="btn btn-primary">Save Card</button>
                     <button type="button" class="btn btn-secondary" onclick="closeModal('card-modal')">Cancel</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- AI Prompt Modal -->
+    <div class="modal" id="ai-prompt-modal">
+        <div class="modal-content max-420">
+            <div class="modal-header">
+                <h3>AI Prompt</h3>
+                <button class="close-btn" onclick="closeAIPromptModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="ai-prompt-input">Prompt</label>
+                <textarea id="ai-prompt-input" placeholder="Stelle eine Frage oder gib einen Befehl an die KI..."></textarea>
+            </div>
+            <div class="form-group">
+                <label><input type="checkbox" id="ai-include-column-context"> Spalte als Kontext einbeziehen</label>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="submitAIPrompt()">Absenden</button>
+                <button class="btn btn-secondary" onclick="closeAIPromptModal()">Abbrechen</button>
+            </div>
         </div>
     </div>
 
@@ -177,7 +197,7 @@
                                 <option value="custom">Custom</option>
                             </select>
                         </div>
-                        <div class="form-group" id="ai-base-url-group" style="display: none;">
+                        <div class="form-group" id="ai-base-url-group" class="hide">
                             <label for="ai-base-url">Base URL</label>
                             <input type="url" id="ai-base-url" placeholder="https://api.example.com">
                         </div>
@@ -256,13 +276,31 @@
                 <label for="column-import-file">Select JSON file</label>
                 <input type="file" id="column-import-file" accept=".json" onchange="handleColumnImport(event)">
             </div>
-            <div id="column-import-preview" style="display: none;">
+            <div id="column-import-preview" class="hide">
                 <h3>Preview</h3>
                 <div id="import-preview-content"></div>
                 <div class="modal-actions">
                     <button class="btn btn-primary" onclick="confirmColumnImport()">Import</button>
                     <button class="btn btn-secondary" onclick="closeModal('column-import-modal')">Cancel</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Modal für Card Content -->
+    <div id="ai-modal" class="modal hide">
+        <div class="modal-content max-420">
+            <span class="close" id="ai-modal-close">&times;</span>
+            <h3>AI Content Generator</h3>
+            <div class="form-group">
+                <label for="ai-prompt">Prompt</label>
+                <textarea id="ai-prompt" rows="3" placeholder="Beschreibe, was generiert werden soll..."></textarea>
+            </div>
+            <div class="form-group">
+                <label><input type="checkbox" id="ai-use-column-context"> Spalte als Kontext verwenden</label>
+            </div>
+            <div class="form-group">
+                <button id="ai-submit-btn" class="btn-primary">Absenden</button>
             </div>
         </div>
     </div>

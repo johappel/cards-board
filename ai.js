@@ -22,32 +22,57 @@ function generateBoardSummary() {
     alert('Summary generated! (This is a mock implementation)');
 }
 
-function useAsPrompt() {
-    const content = document.getElementById('card-content').value;
-    if (!content) {
-        alert('Please enter some content first.');
-        return;
-    }
-    
+function generateWithAI(prompt, context) {
     if (!currentBoard.aiConfig?.provider || !currentBoard.aiConfig?.apiKey) {
         alert('Please configure AI settings in Board Settings first.');
         return;
     }
-    
-    // Simulate using content as prompt
-    alert(`Using as prompt with ${currentBoard.aiConfig.provider} (${currentBoard.aiConfig.model}):\n\n"${content}"\n\n(In a real implementation, this would send the prompt to the configured AI API)`);
+    // Simulate AI content generation
+    let mockContent = '';
+    if (prompt) {
+        mockContent = `Prompt: ${prompt}\n`;
+    }
+    if (context) {
+        mockContent += `\nKontext:\n${context}\n`;
+    }
+    mockContent += `\nDies ist KI-generierter Beispielinhalt mit ${currentBoard.aiConfig.provider} (${currentBoard.aiConfig.model}).`;
+    document.getElementById('card-content').value = mockContent;
+    alert('Content generated! (This is a mock implementation)');
 }
 
-function generateWithAI() {
-    if (!currentBoard.aiConfig?.provider || !currentBoard.aiConfig?.apiKey) {
-        alert('Please configure AI settings in Board Settings first.');
-        return;
+// AI-Integration für Card-Modal
+// Sorgt dafür, dass das AI-Icon im Card-Modal das Prompt-Modal öffnet und die generierten Inhalte in das Card-Content-Feld schreibt
+
+document.addEventListener('DOMContentLoaded', function() {
+    // AI-Icon im Card-Modal
+    const aiBtn = document.getElementById('open-ai-modal');
+    if (aiBtn) {
+        aiBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            openAIPromptModal();
+        });
     }
-    
-    // Simulate AI content generation
-    const mockContent = `This is AI-generated content using ${currentBoard.aiConfig.provider} (${currentBoard.aiConfig.model}). In a real implementation, this would use the configured AI provider to generate meaningful content.`;
-    
-    document.getElementById('card-content').value = mockContent;
-    
-    alert('Content generated! (This is a mock implementation)');
+});
+
+// openAIPromptModal überschreiben, damit das Modal immer leer startet
+function openAIPromptModal() {
+    document.getElementById('ai-prompt-modal').classList.add('show');
+    document.getElementById('ai-prompt-input').value = '';
+    document.getElementById('ai-include-column-context').checked = false;
+}
+
+// submitAIPrompt: Prompt und Kontext an generateWithAI übergeben, Modal schließen
+async function submitAIPrompt() {
+    const prompt = document.getElementById('ai-prompt-input').value;
+    const includeContext = document.getElementById('ai-include-column-context').checked;
+    let context = '';
+    if (includeContext && currentColumn) {
+        context = currentColumn.cards.map(c => `${c.heading}: ${c.content}`).join('\n');
+    }
+    await generateWithAI(prompt, context);
+    closeAIPromptModal();
+}
+
+function closeAIPromptModal() {
+    document.getElementById('ai-prompt-modal').classList.remove('show');
 }

@@ -322,8 +322,8 @@ body {
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     cursor: grab;
     transition: all 0.3s ease;
-    max-height: 20%;
-    min-height: 200px;
+    max-height: 400px;
+    min-height: 120px;
     overflow: hidden;
     position: relative;
 }
@@ -417,6 +417,10 @@ body {
     width: 90%;
     max-height: 80vh;
     overflow-y: auto;
+}
+
+.modal-content.max-420 {
+    max-width: 420px;
 }
 
 .modal-header {
@@ -771,4 +775,83 @@ body {
 }
 #card-modal {
     z-index: 4000;
+}
+
+/* AI-Button im Card-Modal */
+#ai-generate-btn {
+    position: absolute;
+    top: 0;
+    right: 0.5rem;
+    padding: 0.3rem 0.7rem;
+    font-size: 1.1rem;
+    z-index: 2;
+}
+
+/* AI Prompt Modal */
+#ai-prompt-modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 4100;
+    align-items: center;
+    justify-content: center;
+}
+#ai-prompt-modal.show {
+    display: flex;
+}
+#ai-prompt-modal .modal-content {
+    max-width: 420px;
+    width: 100%;
+    border-radius: 10px;
+    padding: 2rem;
+    background: #fff;
+    color: #222;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    position: relative;
+}
+#ai-prompt-modal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+#ai-prompt-modal .close-btn {
+    font-size: 1.5rem;
+    background: none;
+    border: none;
+    color: #7f8c8d;
+    cursor: pointer;
+}
+input#ai-include-column-context {
+    width: auto;
+}
+/* Modal Content max width */
+.modal-content.max-420 {
+    max-width: 420px;
+}
+
+/* Versteckt ein Element */
+.hide {
+    display: none !important;
+}
+
+/* AI-Icon Button Styling */
+.ai-icon-container {
+    position: absolute;
+    right: 8px;
+    top: 0;
+    z-index: 2;
+}
+.ai-icon-btn {
+    background: none;
+    border: none;
+    font-size: 1.3em;
+    cursor: pointer;
+    padding: 2px 6px;
+    color: #444;
+    transition: color 0.2s;
+}
+.ai-icon-btn:hover {
+    color: #0078d7;
 }

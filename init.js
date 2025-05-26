@@ -68,6 +68,16 @@ function setupEventListeners() {
             e.preventDefault();
         }
     });
+
+    // AI-Icon im Card-Modal
+    const aiBtn = document.getElementById('open-ai-modal');
+    if (aiBtn) {
+        aiBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Prompt-Modal öffnen
+            openAIPromptModal();
+        });
+    }
 }
 
 // Initialize default boards

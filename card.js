@@ -32,8 +32,9 @@ function openCardModal(columnId, cardId = null) {
     openModal('card-modal');
 }
 
-function saveCard(e) {
-    e.preventDefault();
+function saveCard(e, keepOpen) {
+    if (e) e.preventDefault();
+    // Hole Werte wie im Original
     const heading = document.getElementById('card-heading').value;
     const content = document.getElementById('card-content').value;
     const columnId = document.getElementById('card-column').value;
@@ -63,10 +64,14 @@ function saveCard(e) {
             ...cardData
         };
         targetColumn.cards.push(newCard);
+        currentCard = newCard;
+        currentColumn = targetColumn;
     }
     saveAllBoards();
     renderColumns();
-    closeModal('card-modal');
+    if (!keepOpen) {
+        closeModal('card-modal');
+    }
 }
 
 function toggleCardVisibility(cardId, columnId) {
@@ -163,4 +168,106 @@ function showCardFullModal(cardId, columnId) {
 function closeCardFullModal() {
     const modal = document.getElementById('full-card-modal');
     if (modal) modal.remove();
+}
+
+// Automatisches Speichern im Card-Modal bei Änderungen
+// Debounce, damit nicht bei jedem Tastendruck gespeichert wird
+let cardAutoSaveTimeout = null;
+
+function setupCardAutoSave() {
+    const fields = [
+        'card-heading',
+        'card-content',
+        'card-color',
+        'card-thumbnail',
+        'card-column'
+    ];
+    fields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.removeEventListener('input', autoSaveCardHandler);
+            el.removeEventListener('change', autoSaveCardHandler);
+            el.addEventListener('input', autoSaveCardHandler);
+            el.addEventListener('change', autoSaveCardHandler);
+        }
+    });
+    // Color-Palette: Klick auf Farboptionen
+    const palette = document.getElementById('card-color-palette');
+    if (palette) {
+        palette.querySelectorAll('.color-option').forEach(opt => {
+            opt.removeEventListener('click', paletteColorHandler);
+            opt.addEventListener('click', paletteColorHandler);
+        });
+    }
+}
+
+function paletteColorHandler(e) {
+    const color = e.target.getAttribute('data-color');
+    if (color) {
+        document.getElementById('card-color').value = color;
+        setSelectedColor('card-color-palette', color);
+        autoSaveCardHandler();
+    }
+}
+
+function autoSaveCardHandler(e) {
+    if (cardAutoSaveTimeout) clearTimeout(cardAutoSaveTimeout);
+    cardAutoSaveTimeout = setTimeout(() => {
+        saveCard(null, true); // true = Modal bleibt offen
+    }, 400);
+}
+
+// saveCard anpassen: Modal nur schließen, wenn explizit gewünscht
+if (typeof origSaveCard !== 'function') {
+    var origSaveCard = saveCard;
+}
+saveCard = function(e, keepOpen) {
+    if (e) e.preventDefault();
+    // Hole Werte wie im Original
+    const heading = document.getElementById('card-heading').value;
+    const content = document.getElementById('card-content').value;
+    const columnId = document.getElementById('card-column').value;
+    const color = document.getElementById('card-color').value;
+    const thumbnail = document.getElementById('card-thumbnail').value;
+    const cardData = {
+        heading,
+        content,
+        color,
+        thumbnail,
+        comments: currentCard?.comments || '',
+        inactive: currentCard?.inactive || false
+    };
+    const targetColumn = currentBoard.columns.find(c => c.id === columnId);
+    if (currentCard) {
+        // Update existing card
+        Object.assign(currentCard, cardData);
+        // If column changed, move card
+        if (currentColumn.id !== columnId) {
+            currentColumn.cards = currentColumn.cards.filter(c => c.id !== currentCard.id);
+            targetColumn.cards.push(currentCard);
+        }
+    } else {
+        // Create new card
+        const newCard = {
+            id: generateId(),
+            ...cardData
+        };
+        targetColumn.cards.push(newCard);
+        currentCard = newCard;
+        currentColumn = targetColumn;
+    }
+    saveAllBoards();
+    renderColumns();
+    if (!keepOpen) {
+        closeModal('card-modal');
+    }
+}
+
+// openCardModal überschreiben, aber Endlosschleife verhindern
+if (typeof origOpenCardModal !== 'function') {
+    var origOpenCardModal = openCardModal;
+}
+openCardModal = function(columnId, cardId = null) {
+    origOpenCardModal(columnId, cardId);
+    setupCardAutoSave();
 }
