@@ -1,7 +1,7 @@
 /* Color Gradient Palette for Cards and Columns */
 
 .color-gradient-1 {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #aa8bce 0%, #ac71e7 100%);
 }
 
 .color-gradient-2 {
@@ -108,4 +108,26 @@
     background: rgba(255,255,255,1);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
+}
+
+/* Randloser, glassmorpher Header für Modal (Full Card Modal) */
+.full-card-modal .modal-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    border-radius: 0;
+    margin: 0;
+    padding-left: 0;
+    padding-right: 0;
+    background: linear-gradient(90deg, rgba(40,40,60,0.85) 0%, rgba(30,30,40,0.85) 100%);
+    color: #fff;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    z-index: 2;
+}
+
+.full-card-modal .modal-content {
+    padding-top: 64px; /* Höhe des Headers, ggf. anpassen */
 }

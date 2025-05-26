@@ -218,6 +218,8 @@ body {
     min-height: 400px;
     max-height: 80vh;
     overflow-y: auto;
+    position: relative;
+    padding-top: 3.2rem; /* Platz für Header schaffen */
 }
 
 .kanban-column.dragging {
@@ -233,11 +235,16 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
-    cursor: grab;
-    padding: 0.5rem;
-    background: rgba(255,255,255,0.5);
-    border-radius: 4px;
+    margin: 0;
+    padding: 0.5rem 1rem; /* Innenabstand im Header */
+    border-radius: 0;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    width: calc(100% + 2rem); /* Überdeckt den Padding-Bereich der Spalte */
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 1;
 }
 
 .column-header:active {
@@ -326,6 +333,7 @@ body {
     min-height: 120px;
     overflow: hidden;
     position: relative;
+    padding-top: 3.2rem; /* Platz für Header schaffen */
 }
 
 .kanban-card:hover {
@@ -345,12 +353,22 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.5rem;
+    margin: 0;
+    padding: 0.5rem 1rem; /* Innenabstand im Header */
+    border-radius: 0;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    width: calc(100% + 2rem); /* Überdeckt den Padding-Bereich der Karte */
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 1;
 }
 
 .card-title {
     font-weight: bold;
     font-size: 0.95rem;
+    padding: 0;
 }
 
 .card-actions {
@@ -428,11 +446,24 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.5rem;
+    margin-top: 0;
+    padding: 0.5rem 1rem;
+    border-radius: 0;
+    background: linear-gradient(90deg, rgba(30,34,40,0.82) 0%, rgba(30,34,40,0.68) 100%);
+    color: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+    width: calc(100% + 2rem); /* Überdeckt Modal-Padding */
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 1;
 }
 
 .modal-header h2 {
-    font-size: 1.5rem;
-    color: #2c3e50;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
 }
 
 .close-btn {
@@ -621,8 +652,16 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    min-height: 32px;
-    cursor: pointer;
+    margin: 0;
+    padding: 0.5rem 1rem; /* Innenabstand im Header */
+    border-radius: 0;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    width: calc(100% + 0rem); /* Überdeckt den Padding-Bereich der Karte */
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 1;
 }
 
 .kanban-card .card-title {
@@ -632,35 +671,23 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    padding: 0;
 }
 
-.kanban-card.minimized .card-title {
-    font-size: 0.9rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.kanban-card .card-content {
-    transition: max-height 0.3s cubic-bezier(.4,0,.2,1), opacity 0.2s;
-    max-height: 300px;
-    overflow: hidden;
-}
-
-.kanban-card.minimized .card-content {
-    display: none;
-}
-
-.kanban-card .card-actions {
+.kanban-column .column-header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 0.5rem;
-}
-
-.kanban-card .card-btn.eye-min {
-    font-size: 1.1rem;
-    opacity: 0.7;
-    margin-right: 0.2rem;
+    margin: 0;
+    padding: 0.5rem 1rem;
+    border-radius: 0;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    width: calc(100% + 0rem); /* Überdeckt den Padding-Bereich der Spalte */
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 1;
 }
 
 /* Spalten scrollbar */
@@ -706,17 +733,17 @@ body {
 }
 .card-preview-content {
     font-size: 0.95rem;
-    color: #fff;
+    color: #000;
     text-shadow: 0 1px 2px rgba(0,0,0,0.3);
     margin-bottom: 0.5rem;
     min-height: 1.5em;
     padding: 0 0.5rem;
 }
 .kanban-card .card-title {
-    padding: 0.5rem 0.5rem 0 0.5rem;
+    padding: 0.rem 0.5rem 0.1rem 0.5rem;
 }
 .kanban-card .card-header {
-    padding: 0.5rem 0.5rem 0 0.5rem;
+    padding: 0.2rem 0.5rem 0.2rem 0.5rem;
 }
 
 /* Full Card Modal */
@@ -742,14 +769,32 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
-}
-#full-card-modal .close-btn {
-    font-size: 1.5rem;
-    background: none;
-    border: none;
+    margin: 0;
+    padding: 0.5rem 1rem;
+    border-radius: 0;
+    background: linear-gradient(90deg, rgba(30,34,40,0.82) 0%, rgba(30,34,40,0.68) 100%);
     color: #fff;
-    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+    width: calc(100% + 0rem); /* Überdeckt Modal-Padding */
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 1;
+}
+
+#full-card-modal .modal-header h2 {
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+#full-card-modal .close-btn,
+#full-card-modal .card-btn {
+    color: #e0e0e0;
+}
+#full-card-modal .close-btn:hover,
+#full-card-modal .card-btn:hover {
+    color: #fff;
 }
 .card-thumb-modal {
     display: flex;
@@ -767,8 +812,9 @@ body {
     font-size: 1.05rem;
     white-space: pre-line;
     text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    margin-top: 35px;
+    min-height: 300px;
 }
-
 /* Modal Layering */
 #full-card-modal {
     z-index: 3000;
@@ -854,4 +900,29 @@ input#ai-include-column-context {
 }
 .ai-icon-btn:hover {
     color: #0078d7;
+}
+
+/* Glassmorphism Styles */
+.kanban-column .column-header,
+.kanban-card .card-header {
+    background: linear-gradient(90deg, rgba(30,34,40,0.82) 0%, rgba(30,34,40,0.68) 100%);
+    color: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+    /* Optional: leichter Blur für Rauchglas-Effekt */
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+}
+
+.kanban-column .column-header .column-title,
+.kanban-card .card-header .card-title {
+    color: #fff;
+}
+
+.kanban-card .card-header .card-btn,
+.kanban-column .column-header .menu-dots {
+    color: #e0e0e0;
+}
+.kanban-card .card-header .card-btn:hover,
+.kanban-column .column-header .menu-dots:hover {
+    color: #fff;
 }
