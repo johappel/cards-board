@@ -4,13 +4,21 @@ function openCardModal(columnId, cardId = null) {
     
     if (cardId) {
         currentCard = currentColumn.cards.find(c => c.id === cardId);
-        document.getElementById('modal-title').textContent = 'Edit Card';        document.getElementById('card-heading').value = currentCard.heading;
+        document.getElementById('modal-title').textContent = 'Edit Card';        
+        document.getElementById('card-heading').value = currentCard.heading;
         document.getElementById('card-content').value = currentCard.content;
-        document.getElementById('card-color').value = currentCard.color || '#ffffff';
+        document.getElementById('card-color').value = currentCard.color || 'color-gradient-1';
+        
+        // Set selected color in palette
+        setSelectedColor('card-color-palette', currentCard.color || 'color-gradient-1');
     } else {
         currentCard = null;
         document.getElementById('modal-title').textContent = 'Create New Card';
         document.getElementById('card-form').reset();
+        document.getElementById('card-color').value = 'color-gradient-1';
+        
+        // Set default color in palette
+        setSelectedColor('card-color-palette', 'color-gradient-1');
     }
     
     // Populate column select
@@ -78,15 +86,14 @@ function toggleCardVisibility(cardId, columnId) {
 
 function createCardElement(card, columnId) {
     const isInactive = card.inactive ? 'inactive' : '';
-    const cardStyle = card.color ? `background-color: ${card.color};` : '';
+    const colorClass = card.color || 'color-gradient-1';
     
     return `
-        <div class="kanban-card ${isInactive}" 
+        <div class="kanban-card ${isInactive} ${colorClass}" 
              draggable="true" 
              ondragstart="dragStart(event, '${card.id}')"
              ondragend="dragEnd(event)"
-             data-card-id="${card.id}"
-             style="${cardStyle}">
+             data-card-id="${card.id}">
             <div class="card-header">
                 <div class="card-title">${card.heading}</div>
                 <div class="card-actions">

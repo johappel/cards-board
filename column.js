@@ -1,8 +1,9 @@
 // Column Functions
-function addNewColumn() {    const newColumn = {
+function addNewColumn() {    
+    const newColumn = {
         id: generateId(),
         name: 'New Column',
-        color: '#e9ecef',
+        color: 'color-gradient-1',
         cards: []
     };
     
@@ -25,8 +26,12 @@ function toggleColumnMenu(event, columnId) {
 function openColumnSettings(columnId) {
     currentColumn = currentBoard.columns.find(c => c.id === columnId);
     if (!currentColumn) return;
-      document.getElementById('column-name').value = currentColumn.name;
-    document.getElementById('column-color').value = currentColumn.color;
+      
+    document.getElementById('column-name').value = currentColumn.name;
+    document.getElementById('column-color').value = currentColumn.color || 'color-gradient-1';
+    
+    // Set selected color in palette
+    setSelectedColor('column-color-palette', currentColumn.color || 'color-gradient-1');
     
     openModal('column-modal');
 }
@@ -35,7 +40,8 @@ function saveColumn(e) {
     e.preventDefault();
     
     if (!currentColumn) return;
-      currentColumn.name = document.getElementById('column-name').value;
+      
+    currentColumn.name = document.getElementById('column-name').value;
     currentColumn.color = document.getElementById('column-color').value;
     
     renderColumns();
@@ -120,10 +126,10 @@ function confirmColumnImport() {
 
 function createColumnElement(column, index) {
     const columnEl = document.createElement('div');
-    columnEl.className = 'kanban-column';
+    const colorClass = column.color || 'color-gradient-1';
+    columnEl.className = `kanban-column ${colorClass}`;
     columnEl.dataset.columnId = column.id;
     columnEl.dataset.columnIndex = index;
-    columnEl.style.backgroundColor = column.color;
     
     columnEl.innerHTML = `
         <div class="column-header" draggable="true" ondragstart="dragColumnStart(event, '${column.id}')" ondragend="dragColumnEnd(event)">

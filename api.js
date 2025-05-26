@@ -1,13 +1,13 @@
 // API Interface (for external integration)
-window.KanbanAPI = {
-    // Column API
+window.KanbanAPI = {    // Column API
     addColumn: function(boardId, columnName, color) {
         const board = boards.find(b => b.id === boardId);
         if (!board) return { error: 'Board not found' };
-          const newColumn = {
+          
+        const newColumn = {
             id: generateId(),
             name: columnName,
-            color: color || '#e9ecef',
+            color: color || 'color-gradient-1',
             cards: []
         };
         
@@ -56,14 +56,14 @@ window.KanbanAPI = {
     addCard: function(boardId, columnId, heading, content) {
         const board = boards.find(b => b.id === boardId);
         if (!board) return { error: 'Board not found' };
-        
-        const column = board.columns.find(c => c.id === columnId);
+          const column = board.columns.find(c => c.id === columnId);
         if (!column) return { error: 'Column not found' };
-          const newCard = {
+          
+        const newCard = {
             id: generateId(),
             heading: heading,
             content: content,
-            color: '#ffffff',
+            color: 'color-gradient-1',
             comments: '',
             inactive: false
         };

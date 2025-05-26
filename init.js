@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeBoards();
     renderDashboard();
     setupEventListeners();
+    initializeColorPalettes();
 });
 
 // Setup Event Listeners
@@ -56,13 +57,12 @@ function initializeBoards() {
         name: 'My First Board',
         description: 'Welcome to your first Kanban board!',
         authors: ['User'],
-        summary: '',
-        backgroundColor: '#f5f7fa',
+        summary: '',        backgroundColor: '#f5f7fa',
         customStyle: '',
         columns: [
-            { id: generateId(), name: 'To Do', color: '#e9ecef', cards: [] },
-            { id: generateId(), name: 'In Progress', color: '#e9ecef', cards: [] },
-            { id: generateId(), name: 'Done', color: '#e9ecef', cards: [] }
+            { id: generateId(), name: 'To Do', color: 'color-gradient-1', cards: [] },
+            { id: generateId(), name: 'In Progress', color: 'color-gradient-2', cards: [] },
+            { id: generateId(), name: 'Done', color: 'color-gradient-3', cards: [] }
         ],
         aiConfig: {
             provider: '',

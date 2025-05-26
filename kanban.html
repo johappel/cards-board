@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kanban Board System</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="colors.css">
 </head>
 <body>
     <!-- Dashboard View -->
@@ -66,8 +67,18 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="card-color">Card Color</label>
-                    <input type="color" id="card-color" value="#ffffff">
+                    <label class="color-palette-label">Card Color</label>
+                    <div class="color-palette" id="card-color-palette">
+                        <div class="color-option color-gradient-1" data-color="color-gradient-1"></div>
+                        <div class="color-option color-gradient-2" data-color="color-gradient-2"></div>
+                        <div class="color-option color-gradient-3" data-color="color-gradient-3"></div>
+                        <div class="color-option color-gradient-4" data-color="color-gradient-4"></div>
+                        <div class="color-option color-gradient-5" data-color="color-gradient-5"></div>
+                        <div class="color-option color-gradient-6" data-color="color-gradient-6"></div>
+                        <div class="color-option color-gradient-7" data-color="color-gradient-7"></div>
+                        <div class="color-option color-gradient-8" data-color="color-gradient-8"></div>
+                    </div>
+                    <input type="hidden" id="card-color" value="color-gradient-1">
                 </div>
                 <div class="ai-section">
                     <h3>AI Features</h3>
@@ -95,8 +106,18 @@
                     <input type="text" id="column-name" required>
                 </div>
                 <div class="form-group">
-                    <label for="column-color">Column Color</label>
-                    <input type="color" id="column-color" value="#e9ecef">
+                    <label class="color-palette-label">Column Color</label>
+                    <div class="color-palette" id="column-color-palette">
+                        <div class="color-option color-gradient-1" data-color="color-gradient-1"></div>
+                        <div class="color-option color-gradient-2" data-color="color-gradient-2"></div>
+                        <div class="color-option color-gradient-3" data-color="color-gradient-3"></div>
+                        <div class="color-option color-gradient-4" data-color="color-gradient-4"></div>
+                        <div class="color-option color-gradient-5" data-color="color-gradient-5"></div>
+                        <div class="color-option color-gradient-6" data-color="color-gradient-6"></div>
+                        <div class="color-option color-gradient-7" data-color="color-gradient-7"></div>
+                        <div class="color-option color-gradient-8" data-color="color-gradient-8"></div>
+                    </div>
+                    <input type="hidden" id="column-color" value="color-gradient-1">
                 </div>
                 <div class="modal-actions">
                     <button type="submit" class="btn btn-primary">Save Column</button>
