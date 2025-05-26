@@ -74,33 +74,45 @@ function saveCard(e) {
     closeModal('card-modal');
 }
 
+function toggleCardExpand(event, cardId, columnId) {
+    event.stopPropagation();
+    const column = currentBoard.columns.find(c => c.id === columnId);
+    const card = column.cards.find(c => c.id === cardId);
+    if (!card) return;
+    if (card.inactive) return; // Minimierte Karten können nicht expandiert werden
+    card.expanded = !card.expanded;
+    renderColumns();
+}
+
 function toggleCardVisibility(cardId, columnId) {
     const column = currentBoard.columns.find(c => c.id === columnId);
     const card = column.cards.find(c => c.id === cardId);
-    
     if (card) {
         card.inactive = !card.inactive;
+        if (card.inactive) card.expanded = false;
         renderColumns();
     }
 }
 
 function createCardElement(card, columnId) {
-    const isInactive = card.inactive ? 'inactive' : '';
+    const isInactive = card.inactive ? 'minimized' : '';
     const colorClass = card.color || 'color-gradient-1';
-    
+    const expanded = card.expanded && !card.inactive ? 'expanded' : '';
+    const slideIcon = card.expanded && !card.inactive ? '▲' : '▼';
     return `
-        <div class="kanban-card ${isInactive} ${colorClass}" 
+        <div class="kanban-card ${isInactive} ${expanded} ${colorClass}" 
              draggable="true" 
              ondragstart="dragStart(event, '${card.id}')"
              ondragend="dragEnd(event)"
              data-card-id="${card.id}">
-            <div class="card-header">
+            <div class="card-header" onclick="toggleCardExpand(event, '${card.id}', '${columnId}')">
                 <div class="card-title">${card.heading}</div>
                 <div class="card-actions">
-                    <button class="card-btn" onclick="toggleCardVisibility('${card.id}', '${columnId}')">
+                    <button class="card-btn eye-min" onclick="event.stopPropagation();toggleCardVisibility('${card.id}', '${columnId}')">
                         ${card.inactive ? '👁️‍🗨️' : '👁️'}
                     </button>
-                    <button class="card-btn" onclick="openCardModal('${columnId}', '${card.id}')">⋮</button>
+                    <button class="slide-toggle card-btn" onclick="event.stopPropagation();toggleCardExpand(event, '${card.id}', '${columnId}')">${slideIcon}</button>
+                    <button class="card-btn" onclick="event.stopPropagation();openCardModal('${columnId}', '${card.id}')">⋮</button>
                 </div>
             </div>
             <div class="card-content">${card.content}</div>

@@ -204,6 +204,7 @@ body {
     gap: 1rem;
     padding: 2rem;
     overflow-x: auto;
+    align-items: flex-start;
 }
 
 .kanban-column {
@@ -213,6 +214,10 @@ body {
     display: flex;
     flex-direction: column;
     transition: all 0.3s ease;
+    height: 80vh;
+    min-height: 400px;
+    max-height: 80vh;
+    overflow-y: auto;
 }
 
 .kanban-column.dragging {
@@ -287,6 +292,9 @@ body {
 .column-content {
     flex: 1;
     min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
 .add-card-btn {
@@ -314,6 +322,9 @@ body {
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     cursor: grab;
     transition: all 0.3s ease;
+    max-height: 20%;
+    overflow: hidden;
+    position: relative;
 }
 
 .kanban-card:hover {
@@ -359,10 +370,19 @@ body {
     color: #4a90e2;
 }
 
+.card-btn.eye-min {
+    font-size: 1.1rem;
+    opacity: 0.7;
+    margin-right: 0.2rem;
+}
+
 .card-content {
     font-size: 0.9rem;
     color: #5a6c7d;
     margin-bottom: 0.5rem;
+    transition: max-height 0.3s cubic-bezier(.4,0,.2,1), opacity 0.2s;
+    max-height: 300px;
+    overflow: hidden;
 }
 
 .card-comments {
@@ -561,4 +581,102 @@ body {
     border-radius: 3px;
     font-family: 'Courier New', monospace;
     font-size: 0.85rem;
+}
+
+/* --- Karten Slide/Expand/Minimize --- */
+.kanban-card.expanded {
+    max-height: 1000px; /* groß genug für Inhalt */
+    overflow: visible;
+    z-index: 10;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+}
+
+.kanban-card.minimized {
+    max-height: 48px;
+    min-height: 32px;
+    overflow: hidden;
+    padding-bottom: 0;
+}
+
+.kanban-card .slide-toggle {
+    margin-left: 0.5rem;
+    font-size: 1.1rem;
+    cursor: pointer;
+    background: none;
+    border: none;
+    color: inherit;
+    transition: transform 0.2s;
+}
+
+.kanban-card .slide-toggle.rotated {
+    transform: rotate(180deg);
+}
+
+.kanban-card .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 32px;
+    cursor: pointer;
+}
+
+.kanban-card .card-title {
+    flex: 1;
+    font-weight: bold;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.kanban-card.minimized .card-title {
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.kanban-card .card-content {
+    transition: max-height 0.3s cubic-bezier(.4,0,.2,1), opacity 0.2s;
+    max-height: 300px;
+    overflow: hidden;
+}
+
+.kanban-card.minimized .card-content {
+    display: none;
+}
+
+.kanban-card .card-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.kanban-card .card-btn.eye-min {
+    font-size: 1.1rem;
+    opacity: 0.7;
+    margin-right: 0.2rem;
+}
+
+/* Spalten scrollbar */
+.kanban-board {
+    align-items: flex-start;
+}
+
+.kanban-column {
+    height: 80vh;
+    min-height: 400px;
+    max-height: 80vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.kanban-column .column-content {
+    flex: 1 1 auto;
+    min-height: 100px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
