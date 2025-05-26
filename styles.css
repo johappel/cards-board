@@ -732,7 +732,7 @@ body {
     max-width: 600px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.18);
     position: relative;
-    background: inherit;
+    /* background: inherit; */
 }
 #full-card-modal .modal-header {
     display: flex;
