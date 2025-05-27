@@ -518,7 +518,8 @@ body {
 }
 
 .drag-over {
-    background: #e3f2fd;
+    background: rgba(0,0,0,0.15);
+    border: 1px dashed #000000;
 }
 
 /* Export/Import Buttons */
