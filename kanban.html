@@ -34,9 +34,10 @@
             </div>
             <div class="board-header-actions">
                 <button class="btn btn-ai" onclick="generateBoardSummary()">🤖 Generate Summary</button>
+                <button class="btn btn-ai" onclick="openChatbotModal()">💬 Chatbot</button>
                 <button class="btn btn-secondary" onclick="openBoardSettings()">⚙️ Settings</button>
                 <button class="btn btn-secondary" onclick="exportBoard()">📥 Export</button>
-                <button class="btn btn-secondary" onclick="backToDashboard()">← Dashboard</button>
+                <button class="btn btn-secondary" onclick="backToDashboard()">← Back</button>
             </div>
         </div>
         <div class="kanban-board" id="kanban-board">
@@ -301,6 +302,27 @@
             </div>
             <div class="form-group">
                 <button id="ai-submit-btn" class="btn-primary">Absenden</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chatbot Modal -->
+    <div class="modal" id="chatbot-modal">
+        <div class="modal-content max-420 chatbot-modal-content">
+            <div class="modal-header">
+                <h3>Chatbot</h3>
+                <button class="close-btn" onclick="closeModal('chatbot-modal')">&times;</button>
+            </div>
+            <div id="connectionStatus" class="chatbot-connection-status"></div>
+            <div id="chatbox" class="chatbot-chatbox"></div>
+            <div id="suggestion" class="chatbot-suggestion"></div>
+            <div class="chatbot-input-row">
+                <span id="agent-prefix" class="chatbot-agent-prefix">@</span>
+                <select id="agentSelect" class="chatbot-agent-select" title="Agent auswählen"></select>
+                <span id="selectedAgentName"></span>
+                <input id="userInput" type="text" placeholder="Nachricht..." class="chatbot-user-input">
+                <button id="sendButton" class="btn btn-primary">Senden</button>
+                <span id="progressIndicator" class="chatbot-progress-indicator">⏳</span>
             </div>
         </div>
     </div>
