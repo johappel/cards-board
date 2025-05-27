@@ -36,9 +36,16 @@ function dropCard(event, targetColumnId) {
         // Remove from source
         sourceColumn.cards = sourceColumn.cards.filter(c => c.id !== card.id);
         
-        // Add to target
-        targetColumn.cards.push(card);
-        
+        // Prüfe, ob an den Anfang oder ans Ende eingefügt werden soll
+        // Wenn auf die obere Hälfte der Column gedroppt wird, an den Anfang, sonst ans Ende
+        const columnRect = event.currentTarget.getBoundingClientRect();
+        const dropY = event.clientY;
+        const isTop = (dropY - columnRect.top) < columnRect.height / 2;
+        if (isTop) {
+            targetColumn.cards.unshift(card); // an den Anfang
+        } else {
+            targetColumn.cards.push(card); // ans Ende
+        }
         renderColumns();
     }
 }
