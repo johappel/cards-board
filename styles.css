@@ -210,7 +210,7 @@ body {
 .kanban-column {
     flex: 0 0 300px;
     border-radius: 8px;
-    padding: 1rem;
+    padding: 4rem 0.5rem 0.5rem 0.5rem;
     display: flex;
     flex-direction: column;
     transition: all 0.3s ease;
@@ -219,7 +219,6 @@ body {
     max-height: 80vh;
     overflow-y: auto;
     position: relative;
-    padding-top: 3.2rem; /* Platz für Header schaffen */
 }
 
 .kanban-column.dragging {
@@ -926,10 +925,17 @@ input#ai-include-column-context {
     -webkit-backdrop-filter: blur(2px);
     backdrop-filter: blur(2px);
 }
+.kanban-card .card-header {
+    background: linear-gradient(90deg, rgba(186, 203, 229, 0.82) 0%, rgba(195, 230, 207, 0.68) 100%);
+    color: #000000;
+}
 
-.kanban-column .column-header .column-title,
-.kanban-card .card-header .card-title {
+.kanban-column .column-header .column-title{
     color: #fff;
+}
+.kanban-card .card-header .card-title {
+    color: #000;
+    font-weight: normal;
 }
 
 .kanban-card .card-header .card-btn,
