@@ -57,6 +57,8 @@ function saveCard(e, keepOpen) {
             currentColumn.cards = currentColumn.cards.filter(c => c.id !== currentCard.id);
             targetColumn.cards.push(currentCard);
         }
+        // Full Card Modal live aktualisieren, falls offen
+        updateFullCardModal(currentCard.id);
     } else {
         // Create new card
         const newCard = {
@@ -170,6 +172,37 @@ function closeCardFullModal() {
     if (modal) modal.remove();
 }
 
+// Aktualisiert das Full Card Modal, falls es für die aktuelle Karte offen ist
+function updateFullCardModal(cardId) {
+    const modal = document.getElementById('full-card-modal');
+    if (!modal) return;
+    // Prüfe, ob das Modal für die richtige Karte offen ist
+    const headingEl = modal.querySelector('.modal-header h2');
+    if (!headingEl) return;
+    // Hole aktuelle Karte und Spalte
+    let card, column;
+    for (const col of currentBoard.columns) {
+        const c = col.cards.find(card => card.id === cardId);
+        if (c) { card = c; column = col; break; }
+    }
+    if (!card || !column) return;
+    // Modal-Inhalt neu setzen (wie in showCardFullModal)
+    modal.innerHTML = `
+        <div class="modal-content ${card.color || ''}" style="max-width:600px;">
+            <div class="modal-header">
+                <h2>${card.heading || ''}</h2>
+                <div style="display:flex;gap:0.5rem;align-items:center;">
+                    <button class="card-btn" onclick="openCardModal('${column.id}', '${card.id}')">⋮</button>
+                    <button class="close-btn" onclick="closeCardFullModal()">&times;</button>
+                </div>
+            </div>
+            ${card.thumbnail ? `<div class='card-thumb-modal'><img src='${card.thumbnail}' alt='thumbnail' /></div>` : ''}
+            <div class="card-content-full">${card.content || ''}</div>
+        </div>
+    `;
+    modal.onclick = function(e) { if (e.target === modal) closeCardFullModal(); };
+}
+
 // Automatisches Speichern im Card-Modal bei Änderungen
 // Debounce, damit nicht bei jedem Tastendruck gespeichert wird
 let cardAutoSaveTimeout = null;
@@ -246,6 +279,8 @@ saveCard = function(e, keepOpen) {
             currentColumn.cards = currentColumn.cards.filter(c => c.id !== currentCard.id);
             targetColumn.cards.push(currentCard);
         }
+        // Full Card Modal live aktualisieren, falls offen
+        updateFullCardModal(currentCard.id);
     } else {
         // Create new card
         const newCard = {
