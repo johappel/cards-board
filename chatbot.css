@@ -167,3 +167,39 @@
 #chatbot-modal #newChatBtn:hover {
   background: #f1b600;
 }
+
+.chatbot-suggestions {
+  display: none;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0.5rem 0;
+  justify-content: flex-start;
+}
+.chatbot-suggestions.show {
+  display: flex;
+}
+.suggestion-btn {
+  background: #f0f4fa;
+  border: 1px solid #bcd;
+  border-radius: 16px;
+  padding: 0.3em 1em;
+  font-size: 0.95em;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-bottom: 0.2em;
+}
+.suggestion-btn:hover {
+  background: #e0e8f0;
+}
+.think {
+  background: #fffbe6;
+  border-left: 4px solid #f7c873;
+  margin: 0.5em 0;
+  padding: 0.5em 1em;
+  border-radius: 6px;
+  font-size: 0.97em;
+}
+.think details summary {
+  cursor: pointer;
+  font-weight: bold;
+}

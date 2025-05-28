@@ -193,8 +193,16 @@ function connectWebSocket() {
                 return;
             } else if (data.type === 'final_answer') {
                 displayMessage(data.text || data.message, 'bot');
-            } else if (data.type === 'suggestion' && data.suggestion) {
-                displayMessage('<span class="suggestion-message">' + data.suggestion + '</span>', 'bot');
+            } else if ((data.type === 'suggestion' || data.type === 'suggestions') && (data.suggestion || data.text || data.suggestions)) {
+                // Nur als Button anzeigen, nicht mehr als Chatnachricht
+                const suggestionText = data.suggestion || data.text;
+                if (suggestionText) {
+                    renderSuggestions([suggestionText]);
+                } else if (Array.isArray(data.suggestions)) {
+                    renderSuggestions(data.suggestions);
+                }
+            } else if (data.type === 'thinking' && (data.message || data.text)) {
+                displayMessage('<div class="think"><details open><summary>Denken...</summary>' + (data.message || data.text) + '</details></div>', 'system');
             } else if (data.type === 'cards' && Array.isArray(data.cards)) {
                 let targetColumn = data.column || 'Material';
                 const wasCreated = addColumnWithCards(targetColumn, data.cards);
@@ -294,6 +302,31 @@ function sendQueryToN8NAgent(queryText) {
         displayMessage('Netzwerkfehler beim Senden der Anfrage an den Agenten.', 'system');
         console.error('Network error sending query to n8n agent:', error);
     });
+}
+
+// Suggestions-UI unter dem Chat-Input
+function renderSuggestions(suggestions) {
+    const suggestionBar = document.getElementById('chatbot-suggestions');
+    if (!suggestionBar) return;
+    suggestionBar.innerHTML = '';
+    if (!Array.isArray(suggestions) || suggestions.length === 0) {
+        suggestionBar.classList.remove('show');
+        return;
+    }
+    suggestions.forEach(suggestion => {
+        const btn = document.createElement('button');
+        btn.className = 'suggestion-btn';
+        btn.textContent = suggestion;
+        btn.onclick = function() {
+            const userInput = document.getElementById('userInput');
+            userInput.value = suggestion;
+            window.sendQueryToN8NAgent(suggestion);
+            suggestionBar.classList.remove('show');
+            suggestionBar.innerHTML = '';
+        };
+        suggestionBar.appendChild(btn);
+    });
+    suggestionBar.classList.add('show');
 }
 
 // Event-Handler für UI
