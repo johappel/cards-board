@@ -306,3 +306,21 @@ openCardModal = function(columnId, cardId = null) {
     origOpenCardModal(columnId, cardId);
     setupCardAutoSave();
 }
+
+// Hilfsfunktion: Card in Spalte einfügen (für Chatbot)
+function addCardToColumn(columnId, cardData) {
+    const column = currentBoard.columns.find(c => c.id === columnId);
+    if (!column) return;
+    const newCard = {
+        id: generateId(),
+        heading: cardData.heading || cardData.title || 'Neue Karte',
+        content: cardData.content || cardData.fragment || '',
+        color: cardData.color || 'color-gradient-1',
+        thumbnail: cardData.thumbnail || '',
+        comments: '',
+        inactive: false
+    };
+    column.cards.push(newCard);
+    saveAllBoards();
+    renderColumns();
+}

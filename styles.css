@@ -949,70 +949,58 @@ input#ai-include-column-context {
 }
 
 /* Chatbot Modal Styles */
-.chatbot-modal-content {
-    display: flex;
-    flex-direction: column;
-    height: 80vh;
-    max-height: 80vh;
+#chatbot-modal .modal-content {
+  max-width: 420px;
+  width: 100%;
+  border-radius: 10px;
+  padding: 1.5rem 1rem 1rem 1rem;
+  background: #23243a;
+  color: #fff;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  display: flex;
+  flex-direction: column;
+  height: 80vh;
+  min-height: 500px;
 }
-.chatbot-connection-status {
-    font-size: 0.9em;
-    color: #888;
-    margin-bottom: 0.5em;
-}
-.chatbot-chatbox {
-    flex: 1;
-    overflow-y: auto;
-    background: #f8f9fa;
-    border-radius: 6px;
-    padding: 1em;
-    margin-bottom: 1em;
-}
-.chatbot-suggestion {
-    margin-bottom: 0.5em;
+.chatbox {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  background: rgba(30,34,40,0.12);
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  min-height: 200px;
+  max-height: 40vh;
 }
 .chatbot-input-row {
-    display: flex;
-    align-items: center;
-    gap: 0.5em;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
 }
-.chatbot-agent-prefix {
-    cursor: pointer;
+#userInput {
+  flex: 1 1 auto;
 }
-.chatbot-agent-select {
-    min-width: 80px;
+#fragments-container {
+  margin: 0.5rem 0;
 }
-.chatbot-user-input {
-    flex: 1;
+.fragment-card {
+  background: #3a3b5a;
+  color: #fff;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  margin-bottom: 0.5rem;
+  position: relative;
 }
-.chatbot-progress-indicator {
-    display: none;
+.close-card-btn {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
 }
-
-/* Chatbot Message Styles */
-.message {
-    margin-bottom: 0.5em;
-    padding: 0.5em 0.8em;
-    border-radius: 6px;
-    max-width: 90%;
-    word-break: break-word;
-}
-.user-message {
-    background: #e0f7fa;
-    align-self: flex-end;
-    color: #222;
-}
-.bot-message {
-    background: #ede7f6;
-    color: #222;
-}
-.system-message {
-    background: #fbe9e7;
-    color: #b71c1c;
-    font-style: italic;
-}
-.thinking-message {
-    background: #fffde7;
-    color: #888;
-    font-style: italic;
+#progressIndicator {
+  display: none;
 }

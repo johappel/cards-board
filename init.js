@@ -80,11 +80,6 @@ function setupEventListeners() {
     }
 }
 
-// Öffnet das Chatbot-Modal
-function openChatbotModal() {
-    document.getElementById('chatbot-modal').classList.add('show');
-}
-
 // Initialize default boards
 function initializeBoards() {
     // Create default board
