@@ -5,11 +5,11 @@ function openBoardSettings() {
     document.getElementById('board-summary-input').value = currentBoard.summary;
     document.getElementById('board-bg-color').value = currentBoard.backgroundColor;
     document.getElementById('board-custom-style').value = currentBoard.customStyle || '';
-    document.getElementById('ai-provider').value = currentBoard.aiConfig?.provider || '';
-    document.getElementById('ai-api-key').value = currentBoard.aiConfig?.apiKey || '';
-    document.getElementById('ai-model').value = currentBoard.aiConfig?.model || '';
-    document.getElementById('ai-base-url').value = currentBoard.aiConfig?.baseUrl || '';
-    
+    // AI-Konfiguration wird nicht mehr pro Board angezeigt!
+    document.getElementById('ai-provider').parentElement.style.display = 'none';
+    document.getElementById('ai-api-key').parentElement.style.display = 'none';
+    document.getElementById('ai-model').parentElement.style.display = 'none';
+    document.getElementById('ai-base-url-group').style.display = 'none';
     toggleAIFields();
     openModal('board-settings-modal');
 }

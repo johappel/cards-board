@@ -20,6 +20,7 @@
                 <button class="btn btn-secondary" onclick="exportAllBoards()">Export All Boards</button>
                 <label for="import-file" class="btn btn-secondary">📥 Import Boards</label>
                 <input type="file" id="import-file" class="file-input" accept=".json" onchange="importBoards(event)">
+                <button class="btn btn-secondary" onclick="openAISettingsModal()">🌐 AI/n8n Settings</button>
             </div>
         </div>
         <div class="boards-grid" id="boards-grid">
@@ -331,6 +332,51 @@
         <div class="chatbot-statusbar-container">
           <div id="connectionStatus"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- AI Settings Modal (global) -->
+    <div class="modal" id="ai-settings-modal">
+      <div class="modal-content max-420">
+        <div class="modal-header">
+          <h3>Globale AI &amp; n8n Einstellungen</h3>
+          <button class="close-btn" onclick="closeModal('ai-settings-modal')">&times;</button>
+        </div>
+        <form id="ai-settings-form">
+          <div class="form-group">
+            <label for="ai-websocket-url">WebSocket Endpoint</label>
+            <input type="url" id="ai-websocket-url" required placeholder="wss://n8n.rpi-virtuell.de/chat-websocket-endpoint">
+          </div>
+          <div class="form-group">
+            <label for="ai-webhook-url">n8n Webhook Endpoint</label>
+            <input type="url" id="ai-webhook-url" required placeholder="https://n8n.rpi-virtuell.de/webhook/relichat-materialpool">
+          </div>
+          <div class="form-group">
+            <label for="ai-provider">LLM Provider</label>
+            <select id="ai-provider">
+              <option value="">(kein)</option>
+              <option value="openai">OpenAI</option>
+              <option value="anthropic">Anthropic</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="ai-api-key">API Key</label>
+            <input type="password" id="ai-api-key" placeholder="API Key">
+          </div>
+          <div class="form-group">
+            <label for="ai-model">Model</label>
+            <input type="text" id="ai-model" placeholder="z.B. gpt-4, claude-3-sonnet-20240229">
+          </div>
+          <div class="form-group">
+            <label for="ai-base-url">Base URL</label>
+            <input type="url" id="ai-base-url" placeholder="https://api.example.com">
+          </div>
+          <div class="modal-actions">
+            <button type="submit" class="btn btn-primary">Speichern</button>
+            <button type="button" class="btn btn-secondary" onclick="closeModal('ai-settings-modal')">Abbrechen</button>
+          </div>
+        </form>
       </div>
     </div>
 

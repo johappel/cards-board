@@ -2,7 +2,30 @@
 // Diese Datei implementiert die Chatbot-Logik und die Integration mit dem Kanban-Board
 
 // --- Konfiguration ---
-const n8nAgentWebhookUrl = 'https://n8n.rpi-virtuell.de/webhook/relichat-materialpool';
+let websocketUrl = localStorage.getItem('ai_websocketUrl') || 'wss://n8n.rpi-virtuell.de/chat-websocket-endpoint';
+let n8nAgentWebhookUrl = localStorage.getItem('ai_n8nAgentWebhookUrl') || 'https://n8n.rpi-virtuell.de/webhook/relichat-materialpool';
+
+// Globale AI-Settings (Model, Provider, API-Key, Base-URL)
+let globalAISettings = {
+    provider: localStorage.getItem('ai_provider') || '',
+    apiKey: localStorage.getItem('ai_apiKey') || '',
+    model: localStorage.getItem('ai_model') || '',
+    baseUrl: localStorage.getItem('ai_baseUrl') || ''
+};
+
+function saveGlobalAISettings(settings) {
+    Object.entries(settings).forEach(([key, value]) => {
+        localStorage.setItem('ai_' + key, value);
+        globalAISettings[key] = value;
+    });
+}
+
+function saveAIEndpoints(wsUrl, webhookUrl) {
+    localStorage.setItem('ai_websocketUrl', wsUrl);
+    localStorage.setItem('ai_n8nAgentWebhookUrl', webhookUrl);
+    websocketUrl = wsUrl;
+    n8nAgentWebhookUrl = webhookUrl;
+}
 
 let socket;
 let serverAssignedConnectionId = null;
@@ -155,7 +178,10 @@ function getWebSocketUrlForBoard(boardId) {
         connectionId = 'boardchat-' + boardId + '-' + Math.random().toString(36).substr(2, 8) + '-' + Date.now();
         setBoardChatConnectionId(boardId, connectionId);
     }
-    return 'wss://n8n.rpi-virtuell.de/chat-websocket-endpoint/?clientId=' + encodeURIComponent(connectionId);
+    // Nutze global konfiguriertes websocketUrl
+    let url = websocketUrl;
+    if (!/^wss?:\/\//.test(url)) url = 'wss://' + url.replace(/^https?:\/\//, '');
+    return url + '/?clientId=' + encodeURIComponent(connectionId);
 }
 
 // connectWebSocket anpassen:
@@ -411,6 +437,36 @@ function openChatbotModal() {
     }
 }
 
+// Öffnet das globale AI-Settings-Modal und füllt die Felder
+function openAISettingsModal() {
+    document.getElementById('ai-websocket-url').value = localStorage.getItem('ai_websocketUrl') || 'wss://n8n.rpi-virtuell.de/chat-websocket-endpoint';
+    document.getElementById('ai-webhook-url').value = localStorage.getItem('ai_n8nAgentWebhookUrl') || 'https://n8n.rpi-virtuell.de/webhook/relichat-materialpool';
+    document.getElementById('ai-provider').value = localStorage.getItem('ai_provider') || '';
+    document.getElementById('ai-api-key').value = localStorage.getItem('ai_apiKey') || '';
+    document.getElementById('ai-model').value = localStorage.getItem('ai_model') || '';
+    document.getElementById('ai-base-url').value = localStorage.getItem('ai_baseUrl') || '';
+    openModal('ai-settings-modal');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const aiSettingsForm = document.getElementById('ai-settings-form');
+    if (aiSettingsForm) {
+        aiSettingsForm.onsubmit = function(e) {
+            e.preventDefault();
+            const wsUrl = document.getElementById('ai-websocket-url').value.trim();
+            const webhookUrl = document.getElementById('ai-webhook-url').value.trim();
+            const provider = document.getElementById('ai-provider').value.trim();
+            const apiKey = document.getElementById('ai-api-key').value.trim();
+            const model = document.getElementById('ai-model').value.trim();
+            const baseUrl = document.getElementById('ai-base-url').value.trim();
+            saveAIEndpoints(wsUrl, webhookUrl);
+            saveGlobalAISettings({ provider, apiKey, model, baseUrl });
+            closeModal('ai-settings-modal');
+            alert('AI- und n8n-Einstellungen gespeichert!');
+        };
+    }
+});
+
 // Export für globale Nutzung
 window.addCardToColumn = addCardToColumn;
 window.addColumnWithCards = addColumnWithCards;
@@ -418,3 +474,4 @@ window.sendQueryToN8NAgent = sendQueryToN8NAgent;
 window.connectWebSocket = connectWebSocket;
 window.openChatbotModal = openChatbotModal;
 window.closeChatbotModal = closeChatbotModal;
+window.openAISettingsModal = openAISettingsModal;
