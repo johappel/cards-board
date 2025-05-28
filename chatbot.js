@@ -2,8 +2,8 @@
 // Diese Datei implementiert die Chatbot-Logik und die Integration mit dem Kanban-Board
 
 // --- Konfiguration ---
-let websocketUrl = localStorage.getItem('ai_websocketUrl') || 'wss://n8n.rpi-virtuell.de/chat-websocket-endpoint';
-let n8nAgentWebhookUrl = localStorage.getItem('ai_n8nAgentWebhookUrl') || 'https://n8n.rpi-virtuell.de/webhook/relichat-materialpool';
+let websocketUrl = localStorage.getItem('ai_websocketUrl') ;
+let n8nAgentWebhookUrl = localStorage.getItem('ai_n8nAgentWebhookUrl');
 
 // Globale AI-Settings (Model, Provider, API-Key, Base-URL)
 let globalAISettings = {
