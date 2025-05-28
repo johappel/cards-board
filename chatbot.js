@@ -1,38 +1,387 @@
-// Chatbot Integration für Kanban-Board
-// Erwartet, dass addCardToColumn(columnId, cardData) global verfügbar ist
+// chatbot.js - WebSocket/N8N Chatbot Integration für Kanban
+// Diese Datei implementiert die Chatbot-Logik und die Integration mit dem Kanban-Board
 
-// Beispiel: Chatbot verarbeitet spezielle Nachrichten vom Server, um Cards zu erzeugen
-// (Hier nur die Integration für das Modal und das Hinzufügen von Cards)
+// --- Konfiguration ---
+const n8nAgentWebhookUrl = 'https://n8n.rpi-virtuell.de/webhook/relichat-materialpool';
 
-// WebSocket- und Chat-Logik wie in deinem Beispiel
-// ... (dein bestehender Chatbot-Code, siehe UserPrompt)
+let socket;
+let serverAssignedConnectionId = null;
+let connectionStatusInterval = null;
+let reconnectTimeout = null;
+let heartbeatInterval = null;
+let lastPongTimestamp = null;
+const HEARTBEAT_INTERVAL = 30000; // 30 Sekunden
+const RECONNECT_DELAY = 3000; // 3 Sekunden
 
-// Erweiterung: Wenn der Server eine Nachricht mit type: 'add_card' sendet
-// oder eine Card in eine Spalte eingefügt werden soll:
-
-function handleChatbotServerMessage(data) {
-    // ...deine bestehende Verarbeitung...
-    if (data.type === 'add_card' && data.columnId && data.card) {
-        addCardToColumn(data.columnId, data.card);
-        displayMessage('Neue Karte wurde in die Spalte eingefügt.', 'system');
+// Hilfsfunktionen für das Board
+function addCardToColumn(columnName, cardData) {
+    if (!currentBoard) return;
+    let column = currentBoard.columns.find(c => c.name === columnName);
+    if (!column) {
+        // Spalte anlegen, falls nicht vorhanden
+        column = {
+            id: generateId(),
+            name: columnName,
+            color: 'color-gradient-1',
+            cards: []
+        };
+        currentBoard.columns.push(column);
     }
-    // ...weitere Verarbeitung wie bisher...
+    // Card anlegen
+    const newCard = {
+        id: generateId(),
+        heading: cardData.title || 'Unbenannt',
+        content: cardData.content || '',
+        color: 'color-gradient-1',
+        thumbnail: cardData.thumbnail || '',
+        comments: cardData.comment || '',
+        inactive: false
+    };
+    column.cards.push(newCard);
+    if (typeof saveAllBoards === 'function') saveAllBoards();
+    if (typeof renderColumns === 'function') renderColumns();
 }
 
-// Beispiel: Integration in bestehende onmessage-Logik
-// socket.onmessage = function (event) {
-//     const data = JSON.parse(event.data);
-//     handleChatbotServerMessage(data);
-//     ...
-// }
+function addColumnWithCards(columnName, cards) {
+    if (!currentBoard) return;
+    let column = currentBoard.columns.find(c => c.name === columnName);
+    let columnWasCreated = false;
+    if (!column) {
+        column = {
+            id: generateId(),
+            name: columnName,
+            color: 'color-gradient-1',
+            cards: []
+        };
+        currentBoard.columns.push(column);
+        columnWasCreated = true;
+    }
+    // Karten nur hinzufügen, wenn sie noch nicht existieren (nach Titel vergleichen)
+    cards.forEach(cardData => {
+        const exists = column.cards.some(card => card.heading === (cardData.title || 'Unbenannt'));
+        if (!exists) {
+            const newCard = {
+                id: generateId(),
+                heading: cardData.title || 'Unbenannt',
+                content: cardData.content || '',
+                color: 'color-gradient-1',
+                thumbnail: cardData.thumbnail || '',
+                comments: cardData.comment || '',
+                inactive: false
+            };
+            column.cards.push(newCard);
+        }
+    });
+    if (typeof saveAllBoards === 'function') saveAllBoards();
+    if (typeof renderColumns === 'function') renderColumns();
+    return columnWasCreated;
+}
 
-// Hinweis: Die eigentliche Chatbot-Logik und WebSocket-Initialisierung
-// bleibt wie in deinem bisherigen Skript.
+// Chatbot-UI- und WebSocket-Logik
+function displayMessage(textOrHtml, sender = 'bot') {
+    const chatbox = document.getElementById('chatbox');
+    const messageElement = document.createElement('div');
+    const senderClass = sender + '-message';
+    messageElement.classList.add('message', senderClass);
+    messageElement.innerHTML = textOrHtml;
+    chatbox.appendChild(messageElement);
+    chatbox.scrollTop = chatbox.scrollHeight;
+}
 
-// Optional: Chatbot-Modal beim Klick auf einen Button öffnen
-window.openChatbotModal = function() {
-    document.getElementById('chatbot-modal').classList.add('show');
-};
-window.closeModal = window.closeModal || function(id) {
-    document.getElementById(id).classList.remove('show');
-};
+function updateConnectionStatus(message, isError = false) {
+    const connectionStatus = document.getElementById('connectionStatus');
+    connectionStatus.textContent = message;
+    connectionStatus.style.color = isError ? 'red' : '#555';
+    if (message && message.toLowerCase().includes('verbinde')) {
+        connectionStatus.classList.add('reconnecting');
+    } else {
+        connectionStatus.classList.remove('reconnecting');
+    }
+}
+
+function showConnectionId() {
+    const connectionStatus = document.getElementById('connectionStatus');
+    if (serverAssignedConnectionId) {
+        connectionStatus.textContent = `Verbunden (ID: ${serverAssignedConnectionId})`;
+        connectionStatus.style.color = '#555';
+    }
+}
+
+function checkWebSocketStatus() {
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+        updateConnectionStatus('Verbindung zum Chat Agenten abgebrochen!', true);
+    } else {
+        showConnectionId();
+    }
+}
+
+// Hilfsfunktion: Connection-ID für Board speichern/lesen
+function getBoardChatConnectionId(boardId) {
+    if (!boardId) return null;
+    const key = 'chatbotConnectionId_' + boardId;
+    // 1. Tab-spezifisch (sessionStorage)
+    let id = sessionStorage.getItem(key);
+    if (id) return id;
+    // 2. Board-weit (localStorage)
+    id = localStorage.getItem(key);
+    if (id) {
+        // In sessionStorage übernehmen, damit der Tab sie weiterverwendet
+        sessionStorage.setItem(key, id);
+        return id;
+    }
+    // 3. Neu generieren
+    id = 'boardchat-' + boardId + '-' + Math.random().toString(36).substr(2, 8) + '-' + Date.now();
+    sessionStorage.setItem(key, id);
+    localStorage.setItem(key, id);
+    return id;
+}
+function setBoardChatConnectionId(boardId, connectionId) {
+    if (!boardId) return;
+    const key = 'chatbotConnectionId_' + boardId;
+    sessionStorage.setItem(key, connectionId);
+    localStorage.setItem(key, connectionId);
+}
+function clearBoardChatConnectionId(boardId) {
+    if (!boardId) return;
+    const key = 'chatbotConnectionId_' + boardId;
+    sessionStorage.removeItem(key);
+    localStorage.removeItem(key);
+}
+
+// WebSocket-URL dynamisch mit Board-gebundener Connection-ID
+function getWebSocketUrlForBoard(boardId) {
+    let connectionId = getBoardChatConnectionId(boardId);
+    if (!connectionId) {
+        connectionId = 'boardchat-' + boardId + '-' + Math.random().toString(36).substr(2, 8) + '-' + Date.now();
+        setBoardChatConnectionId(boardId, connectionId);
+    }
+    return 'wss://n8n.rpi-virtuell.de/chat-websocket-endpoint/?clientId=' + encodeURIComponent(connectionId);
+}
+
+// connectWebSocket anpassen:
+function connectWebSocket() {
+    // Board-ID bestimmen (z.B. window.currentBoard.id)
+    const boardId = window.currentBoard && window.currentBoard.id ? window.currentBoard.id : 'default';
+    const wsUrl = getWebSocketUrlForBoard(boardId);
+    updateConnectionStatus('Verbinde mit WebSocket-Server...');
+    socket = new WebSocket(wsUrl);
+
+    socket.onopen = function () {
+        updateConnectionStatus('Verbunden mit WebSocket-Server.');
+        displayMessage('Verbindung zum Chat Agenten hergestellt.', 'system');
+        // Connection-ID aus URL extrahieren und speichern
+        const urlParams = new URLSearchParams((socket.url || '').split('?')[1] || '');
+        const connectionId = urlParams.get('clientId');
+        setBoardChatConnectionId(boardId, connectionId);
+        startHeartbeat();
+    };
+
+    socket.onmessage = function (event) {
+        // Heartbeat/Keepalive
+        if (event.data === 'pong') {
+            lastPongTimestamp = Date.now();
+            return;
+        }
+        try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'welcome' && data.connectionId) {
+                serverAssignedConnectionId = data.connectionId;
+                showConnectionId();
+                if (!connectionStatusInterval) {
+                    connectionStatusInterval = setInterval(checkWebSocketStatus, 3000);
+                }
+                return;
+            } else if (data.type === 'final_answer') {
+                displayMessage(data.text || data.message, 'bot');
+            } else if (data.type === 'suggestion' && data.suggestion) {
+                displayMessage('<span class="suggestion-message">' + data.suggestion + '</span>', 'bot');
+            } else if (data.type === 'cards' && Array.isArray(data.cards)) {
+                let targetColumn = data.column || 'Material';
+                const wasCreated = addColumnWithCards(targetColumn, data.cards);
+                if (wasCreated) {
+                    displayMessage(`Spalte "${targetColumn}" wurde neu angelegt und ${data.cards.length} Karten hinzugefügt.`, 'system');
+                } else {
+                    displayMessage(`${data.cards.length} Karten wurden zur Spalte "${targetColumn}" hinzugefügt.`, 'system');
+                }
+            } else if (data.type === 'column' && data.column && Array.isArray(data.cards)) {
+                const wasCreated = addColumnWithCards(data.column, data.cards);
+                if (wasCreated) {
+                    displayMessage(`Neue Spalte "${data.column}" mit ${data.cards.length} Karten angelegt.`, 'system');
+                } else {
+                    displayMessage(`${data.cards.length} Karten wurden zur Spalte "${data.column}" hinzugefügt.`, 'system');
+                }
+            } else {
+                displayMessage(`Unbekannte Nachricht vom Server: ${event.data}`, 'system');
+            }
+        } catch (e) {
+            displayMessage(`Fehler beim Verarbeiten der Server-Nachricht: ${event.data}`, 'system');
+            console.error("Error parsing message from server or unknown message type:", e, event.data);
+        }
+    };
+
+    socket.onclose = function (event) {
+        updateConnectionStatus(`Verbindung zum Chat Agenten abgebrochen! (Code: ${event.code})`, true);
+        displayMessage(`Verbindung zum Chat Agenten verloren. Code: ${event.code}`, 'system');
+        serverAssignedConnectionId = null;
+        socket = null;
+        if (connectionStatusInterval) {
+            clearInterval(connectionStatusInterval);
+            connectionStatusInterval = null;
+        }
+        stopHeartbeat();
+        // Automatisch reconnecten
+        if (!reconnectTimeout) {
+            reconnectTimeout = setTimeout(() => {
+                reconnectTimeout = null;
+                connectWebSocket();
+            }, RECONNECT_DELAY);
+        }
+    };
+
+    socket.onerror = function (error) {
+        updateConnectionStatus('WebSocket Fehler!', true);
+        displayMessage('Ein Fehler ist mit der WebSocket-Verbindung aufgetreten.', 'system');
+        console.error('WebSocket error event:', error);
+    };
+}
+
+function startHeartbeat() {
+    stopHeartbeat();
+    lastPongTimestamp = Date.now();
+    heartbeatInterval = setInterval(() => {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            try {
+                socket.send('ping');
+            } catch (e) {}
+        }
+        // Prüfen, ob der Server geantwortet hat
+        if (Date.now() - lastPongTimestamp > HEARTBEAT_INTERVAL * 2) {
+            // Keine Antwort -> Verbindung als tot betrachten
+            updateConnectionStatus('Verbindung zum Chat Agenten: Timeout, versuche Neuverbindung...', true);
+            try { socket.close(); } catch (e) {}
+        }
+    }, HEARTBEAT_INTERVAL);
+}
+
+function stopHeartbeat() {
+    if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+        heartbeatInterval = null;
+    }
+}
+
+// sendQueryToN8NAgent muss vor allen Event-Handlern deklariert werden!
+function sendQueryToN8NAgent(queryText) {
+    if (!queryText) return;
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+        displayMessage('Kann Nachricht nicht senden: WebSocket nicht verbunden.', 'system');
+        return;
+    }
+    if (!serverAssignedConnectionId) {
+        displayMessage('Kann Nachricht nicht senden: Keine Connection ID vom Server erhalten.', 'system');
+        return;
+    }
+    displayMessage(queryText, 'user');
+    const payload = {
+        query: queryText,
+        connectionId: serverAssignedConnectionId
+    };
+    fetch(n8nAgentWebhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    }).catch(error => {
+        displayMessage('Netzwerkfehler beim Senden der Anfrage an den Agenten.', 'system');
+        console.error('Network error sending query to n8n agent:', error);
+    });
+}
+
+// Event-Handler für UI
+function setupChatbotUI() {
+    const sendButton = document.getElementById('sendButton');
+    const userInput = document.getElementById('userInput');
+    sendButton.addEventListener('click', function() {
+        window.sendQueryToN8NAgent(userInput.value.trim());
+        userInput.value = '';
+    });
+    userInput.addEventListener('keypress', function (event) {
+        if (event.key === 'Enter') {
+            window.sendQueryToN8NAgent(userInput.value.trim());
+            userInput.value = '';
+        }
+    });
+}
+
+// Initialisierung
+// Chatbot nur initialisieren, wenn das Modal sichtbar ist
+function isChatbotModalVisible() {
+    const modal = document.getElementById('chatbot-modal');
+    return modal && modal.classList.contains('show');
+}
+
+// Chatbot-Modal beim Start immer verstecken (robust)
+window.addEventListener('DOMContentLoaded', function() {
+    var modal = document.getElementById('chatbot-modal');
+    if (modal) {
+        modal.classList.remove('show');
+        modal.style.display = 'none'; // Sicherstellen, dass es nicht angezeigt wird
+        // Status initial ausblenden
+        var status = document.getElementById('connectionStatus');
+        if (status) status.style.display = 'none';
+    }
+    // Close-Button im Modal verbinden
+    const closeBtn = document.querySelector('#chatbot-modal .close-btn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeChatbotModal);
+    }
+    // Entfernt: Button dynamisch einfügen (wird jetzt im HTML-Markup gepflegt)
+});
+
+// Event-Handler für "Neuer Chat"-Button
+window.addEventListener('DOMContentLoaded', function() {
+    const newChatBtn = document.getElementById('newChatBtn');
+    if (newChatBtn) {
+        newChatBtn.onclick = function() {
+            const boardId = window.currentBoard && window.currentBoard.id ? window.currentBoard.id : 'default';
+            clearBoardChatConnectionId(boardId);
+            if (socket) { try { socket.close(); } catch(e){} }
+            connectWebSocket();
+            displayMessage('Neuer Chat gestartet. Die Verbindung wurde zurückgesetzt.', 'system');
+        };
+    }
+});
+
+function closeChatbotModal() {
+    var modal = document.getElementById('chatbot-modal');
+    if (modal) {
+        modal.classList.remove('show');
+        modal.style.display = 'none';
+    }
+    // Status ausblenden
+    const status = document.getElementById('connectionStatus');
+    if (status) status.style.display = 'none';
+}
+
+function openChatbotModal() {
+    var modal = document.getElementById('chatbot-modal');
+    if (modal) {
+        modal.classList.add('show');
+        modal.style.display = '';
+    }
+    // Status sichtbar machen
+    const status = document.getElementById('connectionStatus');
+    if (status) status.style.display = 'block';
+    if (!window._chatbotInitialized) {
+        connectWebSocket();
+        setupChatbotUI();
+        window._chatbotInitialized = true;
+    }
+}
+
+// Export für globale Nutzung
+window.addCardToColumn = addCardToColumn;
+window.addColumnWithCards = addColumnWithCards;
+window.sendQueryToN8NAgent = sendQueryToN8NAgent;
+window.connectWebSocket = connectWebSocket;
+window.openChatbotModal = openChatbotModal;
+window.closeChatbotModal = closeChatbotModal;

@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kanban Board System</title>
+    <link rel="stylesheet" href="board.css">
+    <link rel="stylesheet" href="modal.css">
+    <link rel="stylesheet" href="chatbot.css">
+    <!-- Bestehende Stylesheets -->
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="colors.css">
 </head>
@@ -32,11 +36,12 @@
                 <div class="board-summary" id="board-summary">Board summary will appear here...</div>
             </div>
             <div class="board-header-actions">
-                <button class="btn btn-ai" onclick="generateBoardSummary()">🤖 Generate Summary</button>
+                <button class=" btn btn-ai" onclick="openChatbotModal()">💬 Chatbot</button>
+                <button class="btn btn-secondary" onclick="generateBoardSummary()">🤖 Generate Summary</button>
                 <button class="btn btn-secondary" onclick="openBoardSettings()">⚙️ Settings</button>
                 <button class="btn btn-secondary" onclick="exportBoard()">📥 Export</button>
                 <button class="btn btn-secondary" onclick="backToDashboard()">← Dashboard</button>
-                <button class="btn btn-secondary" onclick="openChatbotModal()">💬 Chatbot</button>
+                
             </div>
         </div>
         <div class="kanban-board" id="kanban-board">
@@ -70,7 +75,7 @@
                     <label for="card-heading">Card Heading</label>
                     <input type="text" id="card-heading" required>
                 </div>
-                <div class="form-group" style="position:relative;">
+                <div class="form-group relative">
                     <label for="card-content">Content</label>
                     <div class="ai-icon-container">
                         <button type="button" class="ai-icon-btn" id="open-ai-modal" title="AI Content Generator" tabindex="0">🤖</button>
@@ -310,6 +315,7 @@
       <div class="modal-content chatbot-modal-content">
         <div class="modal-header">
           <h2>Chatbot</h2>
+          <button class="btn btn-secondary" id="newChatBtn" title="Neuen Chat starten (neue Connection-ID)">🆕 Neuer Chat</button>
           <button class="close-btn" onclick="closeModal('chatbot-modal')">&times;</button>
         </div>
         <div id="chatbox" class="chatbox"></div>
@@ -320,9 +326,11 @@
         <div class="chatbot-input-row">
           <input id="userInput" type="text" placeholder="Nachricht eingeben...">
           <button id="sendButton" class="btn btn-primary">Senden</button>
-          <span id="progressIndicator" style="display:none;">⏳</span>
+          <span id="progressIndicator" class="hide">⏳</span>
         </div>
-        <div id="connectionStatus"></div>
+        <div class="chatbot-statusbar-container">
+          <div id="connectionStatus"></div>
+        </div>
       </div>
     </div>
 
@@ -339,6 +347,6 @@
     <script src="api.js"></script>
     <script src="colors.js"></script>
     <script src="utils.js"></script>
-    <script src="chabot.js"></script>
+    <script src="chatbot.js"></script>
 </body>
 </html>
