@@ -44,6 +44,7 @@
             <div class="board-header-actions">
                 <button class=" btn btn-ai" onclick="openChatbotModal()">💬 Chatbot</button>
                 <button class="btn btn-secondary" onclick="generateBoardSummary()">🤖 Generate Summary</button>
+                <button class="btn btn-secondary" onclick="showPasteHelp()">📋 Paste Help</button>
                 <button class="btn btn-secondary" onclick="openBoardSettings()">⚙️ Settings</button>
                 <button class="btn btn-secondary" onclick="exportBoard()">📥 Export</button>
                 <button class="btn btn-secondary" onclick="backToDashboard()">← Dashboard</button>
@@ -95,6 +96,9 @@
                             <button type="button" class="ai-icon-btn" id="open-ai-modal" title="AI Content Generator" tabindex="0">🤖</button>
                         </div>
                         <textarea id="card-content" placeholder="Enter content or use as prompt..."></textarea>
+                        <div class="paste-hint">
+                            💡 Tipp: Sie können Inhalte direkt hier einfügen (Strg+V) - unterstützt Text, HTML, Bilder und Links!
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="card-column">Column</label>
@@ -413,6 +417,7 @@
     <script src="board_settings.js"></script>
     <script src="import_export.js"></script>
     <script src="drag_drop.js"></script>
+    <script src="onpaste.js"></script>
     <script src="init.js"></script>
     <script src="api.js"></script>
     <script src="colors.js"></script>
@@ -422,6 +427,12 @@
     <script src="sortable-duplicate.js"></script>
     <script>
         column_width_changer();
+        // Paste-Funktionalität initialisieren
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.PasteFunctionality) {
+                window.PasteFunctionality.initPasteFunctionality();
+            }
+        });
     </script>
    
 </body>
