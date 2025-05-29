@@ -1,0 +1,293 @@
+/* Card Styles */
+.kanban-card {
+    border-radius: 4px;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    cursor: grab;
+    transition: all 0.3s ease;
+    max-height: 400px;
+    min-height: 120px;
+    overflow: hidden;
+    position: relative;
+    padding-top: 3.2rem; /* Platz für Header schaffen */
+}
+
+.kanban-card:hover {
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.kanban-card.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+}
+
+.kanban-card.inactive {
+    opacity: 0.5;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0;
+    padding: 0.5rem 1rem; /* Innenabstand im Header */
+    border-radius: 0;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    width: calc(100% + 2rem); /* Überdeckt den Padding-Bereich der Karte */
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 1;
+}
+
+.card-title {
+    font-weight: bold;
+    font-size: 0.95rem;
+    padding: 0;
+}
+
+.card-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.card-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    color: #7f8c8d;
+    transition: color 0.2s;
+}
+
+.card-btn:hover {
+    color: #4a90e2;
+}
+
+.card-btn.eye-min {
+    font-size: 1.1rem;
+    opacity: 0.7;
+    margin-right: 0.2rem;
+}
+
+.card-content {
+    font-size: 0.9rem;
+    color: #5a6c7d;
+    margin-bottom: 0.5rem;
+    transition: max-height 0.3s cubic-bezier(.4,0,.2,1), opacity 0.2s;
+    max-height: 300px;
+    overflow: hidden;
+}
+
+.card-comments {
+    font-size: 0.85rem;
+    color: #95a5a6;
+}
+
+/* --- Karten Slide/Expand/Minimize --- */
+.kanban-card.expanded {
+    max-height: 1000px; /* groß genug für Inhalt */
+    overflow: visible;
+    z-index: 10;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+}
+
+.kanban-card.minimized {
+    max-height: 48px;
+    min-height: 32px;
+    overflow: hidden;
+    padding-bottom: 0;
+}
+
+.kanban-card .slide-toggle {
+    margin-left: 0.5rem;
+    font-size: 1.1rem;
+    cursor: pointer;
+    background: none;
+    border: none;
+    color: inherit;
+    transition: transform 0.2s;
+}
+
+.kanban-card .slide-toggle.rotated {
+    transform: rotate(180deg);
+}
+
+.kanban-card .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0;
+    padding: 0.5rem 1rem; /* Innenabstand im Header */
+    border-radius: 0;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    width: calc(100% + 0rem); /* Überdeckt den Padding-Bereich der Karte */
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 1;
+}
+
+.kanban-card .card-title {
+    flex: 1;
+    font-weight: bold;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0;
+}
+
+
+/* Card Vorschau und Thumbnail als Coverbild */
+.card-thumb {
+    width: 100%;
+    height: 120px;
+    overflow: hidden;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+.card-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    display: block;
+}
+.card-preview-content {
+    font-size: 0.95rem;
+    color: #000;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    margin-bottom: 0.5rem;
+    min-height: 1.5em;
+    padding: 0 0.5rem;
+}
+.kanban-card .card-title {
+    padding: 0.rem 0.5rem 0.1rem 0.5rem;
+}
+.kanban-card .card-header {
+    padding: 0.2rem 0.5rem 0.2rem 0.5rem;
+}
+
+/* Full Card Modal */
+#full-card-modal {
+    display: flex;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 3000;
+    align-items: center;
+    justify-content: center;
+}
+#full-card-modal .modal-content {
+    border-radius: 10px;
+    padding: 2rem 0rem 1rem 1.5rem;
+    width: 100%;
+    max-width: 600px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    position: relative;
+    overflow-y: auto;
+    padding-top: 64px; /* Platz für sticky Header */
+    display: flex;
+    flex-direction: column;
+    /* height: 90vh;
+    max-height: 80vh; */
+}
+#full-card-modal .modal-header {
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    margin-top: 0;
+    padding: 0.5rem 1rem;
+    border-radius: 0;
+    background: linear-gradient(90deg, rgba(30,34,40,0.82) 0%, rgba(30,34,40,0.68) 100%);
+    color: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+    width: calc(100% + 0rem); /* Überdeckt Modal-Padding */
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 1;
+}
+
+#full-card-modal .modal-header h2 {
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+#full-card-modal .close-btn,
+#full-card-modal .card-btn {
+    color: #e0e0e0;
+}
+#full-card-modal .close-btn:hover,
+#full-card-modal .card-btn:hover {
+    color: #fff;
+}
+.card-thumb-modal {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+.card-thumb-modal img {
+    max-width: 180px;
+    max-height: 180px;
+    border-radius: 10px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+}
+.card-content-full {
+    color: #fff;
+    font-size: 1.05rem;
+    white-space: pre-line;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    margin: 0;
+    padding: 0.5rem 1rem;
+    min-height: 300px;
+    overflow: auto;
+    max-height: 60vh;
+}
+
+.card-content-full ul, .card-content-full ol{
+    white-space: normal;
+}
+
+/* Modal Layering */
+#full-card-modal {
+    z-index: 3000;
+}
+#card-modal {
+    z-index: 4000;
+}
+/* Randloser, glassmorpher Header für Modal (Full Card Modal) */
+.full-card-modal .modal-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    border-radius: 0;
+    margin: 0;
+    padding-left: 0;
+    padding-right: 0;
+    background: linear-gradient(90deg, rgba(40,40,60,0.85) 0%, rgba(30,30,40,0.85) 100%);
+    color: #fff;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    z-index: 2;
+}
+
+.full-card-modal .modal-content {
+    padding-top: 64px; /* Höhe des Headers, ggf. anpassen */
+}
