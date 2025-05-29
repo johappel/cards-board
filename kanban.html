@@ -44,6 +44,13 @@
                 <button class="btn btn-secondary" onclick="openBoardSettings()">⚙️ Settings</button>
                 <button class="btn btn-secondary" onclick="exportBoard()">📥 Export</button>
                 <button class="btn btn-secondary" onclick="backToDashboard()">← Dashboard</button>
+                 <!-- Spaltenbreite Schieberegler -->
+                <label for="column-width-slider" class="column-width-label">
+                    <span class="column-width-label-text">Spaltenbreite:</span>
+                    <input type="range" id="column-width-slider" class="board-bg-slider" min="220" max="600" value="300" step="10" title="Spaltenbreite einstellen">
+                    <span id="column-width-value" class="column-width-value">300px</span>
+                </label>
+                
                 
             </div>
         </div>
@@ -412,5 +419,9 @@
     <script src="colors.js"></script>
     <script src="utils.js"></script>
     <script src="chatbot.js"></script>
+    <script>
+        column_width_changer();
+    </script>
+   
 </body>
 </html>

@@ -37,6 +37,20 @@ function openColumnSettings(columnId) {
     openModal('column-modal');
 }
 
+function column_width_changer() {
+    // Spaltenbreite live anpassen
+    const colWidthSlider = document.getElementById('column-width-slider');
+    const colWidthValue = document.getElementById('column-width-value');
+    function setColumnWidth(val) {
+        document.documentElement.style.setProperty('--kanban-column-width', val + 'px');
+        if(colWidthValue) colWidthValue.textContent = val + 'px';
+    }
+    if(colWidthSlider) {
+        setColumnWidth(colWidthSlider.value);
+        colWidthSlider.addEventListener('input', e => setColumnWidth(e.target.value));
+    }    
+}
+
 function saveColumn(e) {
     e.preventDefault();
     
