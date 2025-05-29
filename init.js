@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     boards = await (window.KanbanStorage?.loadBoards?.() || []);
     console.log('Boards nach Laden:', JSON.stringify(boards, null, 2)); // Debug-Log
+    
     // Logging für das tatsächlich geladene Board
     let boardForLog = null;
     if (boardId) {
@@ -28,10 +29,13 @@ document.addEventListener('DOMContentLoaded', async function() {
             console.log('### DEBUG: Kartenreihenfolge in Spalte', col.name, col.cards.map(card => card.heading));
         });
     }
+    
     if (!boards || boards.length === 0) {
         initializeBoards();
         await window.KanbanStorage?.saveBoards?.(boards);
-    }    if (boardId) {
+    }
+    
+    if (boardId) {
         const board = boards.find(b => b.id === boardId);
         if (board) {
             currentBoard = board;
@@ -52,6 +56,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     } else {
         renderDashboard();
     }
+    
     setupEventListeners();
     initializeColorPalettes();
     // Nach Initialisierung window.currentBoard setzen
@@ -110,7 +115,8 @@ function initializeBoards() {
         name: 'My First Board',
         description: 'Welcome to your first Kanban board!',
         authors: ['User'],
-        summary: '',        backgroundColor: '#f5f7fa',
+        summary: '',
+        backgroundColor: '#f5f7fa',
         customStyle: '',
         columns: [
             { id: generateId(), name: 'To Do', color: 'color-gradient-1', cards: [] },
@@ -134,6 +140,7 @@ function initSortableKanban() {
         board._sortableInstance.destroy();
         board._sortableInstance = null;
     }
+    
     // Columns im Board (Spalten Drag&Drop) - IMMER neu initialisieren!
     if (board) {
         board._sortableInstance = new Sortable(board, {
@@ -145,28 +152,17 @@ function initSortableKanban() {
             filter: '.btn, .add-card-btn', // Buttons nicht ziehbar
             draggable: '.kanban-column',
             handle: '.column-header', // Nur Header als Drag-Handle
+            onStart: function(evt) {
+                if (window.addDuplicateClass) {
+                    window.addDuplicateClass(evt.item, evt);
+                }
+            },
             onEnd: function (evt) {
-                try {
-                    console.log('### DEBUG: onEnd Spalten-Drag erreicht');
-                    console.log('window.currentBoard:', window.currentBoard);
-                    console.log('window.currentBoard.columns:', window.currentBoard?.columns);
-                    if (!window.currentBoard || !window.currentBoard.columns) return;
-                    const colMap = {};
-                    window.currentBoard.columns.forEach(col => { colMap[col.id] = col; });
-                    // Vorher loggen
-                    console.log('Spalten vorher:', window.currentBoard.columns.map(c => c.name));
-                    const newOrder = [];
-                    board.querySelectorAll('.kanban-column').forEach(colEl => {
-                        const colId = colEl.dataset.columnId;
-                        if (colMap[colId]) newOrder.push(colMap[colId]);
-                    });
-                    // Nachher loggen
-                    console.log('Spalten nach Drag:', newOrder.map(c => c.name));
-                    window.currentBoard.columns = newOrder;
-                    if (typeof saveAllBoards === 'function') saveAllBoards();
-                    console.log('saveAllBoards() nach Spalten-Drag ausgeführt');
-                } catch(e) {
-                    console.error('Fehler im onEnd Spalten-Drag:', e);
+                if (window.removeDuplicateClass) {
+                    window.removeDuplicateClass(evt.item);
+                }
+                if (window.handleColumnDragEnd) {
+                    window.handleColumnDragEnd(evt);
                 }
             }
         });
@@ -188,44 +184,17 @@ function initSortableKanban() {
                 dragClass: 'kanban-card-dragging',
                 draggable: '.kanban-card',
                 handle: '.card-header', // ganzer Header als Drag-Handle
+                onStart: function(evt) {
+                    if (window.addDuplicateClass) {
+                        window.addDuplicateClass(evt.item, evt);
+                    }
+                },
                 onEnd: function (evt) {
-                    try {
-                        console.log('### DEBUG: onEnd Karten-Drag erreicht');
-                        if (!window.currentBoard || !window.currentBoard.columns) return;
-                        const fromColId = evt.from.closest('.kanban-column').dataset.columnId;
-                        const toColId = evt.to.closest('.kanban-column').dataset.columnId;
-                        const fromCol = window.currentBoard.columns.find(c => c.id === fromColId);
-                        const toCol = window.currentBoard.columns.find(c => c.id === toColId);
-                        if (!fromCol || !toCol) return;                        // Vorher loggen
-                        console.log('Karten vorher (from):', fromCol.cards.map(c => c.heading));
-                        console.log('Karten vorher (to):', toCol.cards.map(c => c.heading));
-                        // Karten neu anordnen
-                        const cardMap = {};
-                        window.currentBoard.columns.forEach(col => {
-                            col.cards.forEach(card => { cardMap[card.id] = card; });
-                        });
-                        // Karten in Zielspalte nach DOM sortieren
-                        const newToCards = [];
-                        evt.to.querySelectorAll('.kanban-card').forEach(cardEl => {
-                            const cardId = cardEl.dataset.cardId;
-                            if (cardMap[cardId]) newToCards.push(cardMap[cardId]);
-                        });
-                        toCol.cards = newToCards;
-                        // Karten in Quellspalte nach DOM sortieren (falls moved)
-                        if (fromCol !== toCol) {
-                            const newFromCards = [];
-                            evt.from.querySelectorAll('.kanban-card').forEach(cardEl => {
-                                const cardId = cardEl.dataset.cardId;
-                                if (cardMap[cardId]) newFromCards.push(cardMap[cardId]);
-                            });
-                            fromCol.cards = newFromCards;
-                        }                        // Nachher loggen
-                        console.log('Karten nach (from):', fromCol.cards.map(c => c.heading));
-                        console.log('Karten nach (to):', toCol.cards.map(c => c.heading));
-                        if (typeof saveAllBoards === 'function') saveAllBoards();
-                        console.log('saveAllBoards() nach Karten-Drag ausgeführt');
-                    } catch(e) {
-                        console.error('Fehler im onEnd Karten-Drag:', e);
+                    if (window.removeDuplicateClass) {
+                        window.removeDuplicateClass(evt.item);
+                    }
+                    if (window.handleCardDragEnd) {
+                        window.handleCardDragEnd(evt);
                     }
                 }
             });

@@ -1,0 +1,46 @@
+/* Duplicate Styles for Ctrl+Drag */
+.kanban-card.duplicate-mode {
+    border: 2px solid #4a90e2;
+    box-shadow: 0 0 12px rgba(74, 144, 226, 0.5);
+    opacity: 0.8;
+}
+
+.kanban-column.duplicate-mode {
+    border: 2px solid #4a90e2;
+    box-shadow: 0 0 12px rgba(74, 144, 226, 0.5);
+    opacity: 0.8;
+}
+
+/* Tooltip for duplicate hint */
+.duplicate-hint {
+    position: fixed;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.duplicate-hint.show {
+    opacity: 1;
+}
+
+/* Visual feedback during duplicate drag */
+.sortable-duplicate::after {
+    content: "📋 Duplizieren";
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #4a90e2;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    z-index: 1000;
+}
