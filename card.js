@@ -1,8 +1,27 @@
 // Card Functions
 function openCardModal(columnId, cardId = null) {
-    currentColumn = currentBoard.columns.find(c => c.id === columnId);
     if (cardId) {
-        currentCard = currentColumn.cards.find(c => c.id === cardId);
+        // Zuerst die Karte in allen Spalten suchen (für den Fall, dass sie verschoben wurde)
+        let foundCard = null;
+        let foundColumn = null;
+        for (const col of currentBoard.columns) {
+            const card = col.cards.find(c => c.id === cardId);
+            if (card) {
+                foundCard = card;
+                foundColumn = col;
+                break;
+            }
+        }
+        
+        if (!foundCard || !foundColumn) {
+            console.error('Card not found anywhere:', cardId);
+            return;
+        }
+          // Verwende die gefundene Spalte, nicht die übergebene
+        currentCard = foundCard;
+        currentColumn = foundColumn;
+        columnId = foundColumn.id; // Update columnId für den Rest der Funktion
+        
         document.getElementById('modal-title').textContent = 'Edit Card';
         document.getElementById('card-heading').value = currentCard.heading;
         document.getElementById('card-content').value = currentCard.content;
@@ -10,6 +29,12 @@ function openCardModal(columnId, cardId = null) {
         document.getElementById('card-thumbnail').value = currentCard.thumbnail || '';
         setSelectedColor('card-color-palette', currentCard.color || 'color-gradient-1');
     } else {
+        // Für neue Karten: Verwende die übergebene columnId
+        currentColumn = currentBoard.columns.find(c => c.id === columnId);
+        if (!currentColumn) {
+            console.error('Column not found for new card:', columnId);
+            return;
+        }
         currentCard = null;
         document.getElementById('modal-title').textContent = 'Create New Card';
         document.getElementById('card-form').reset();
@@ -49,13 +74,22 @@ function saveCard(e, keepOpen) {
         inactive: currentCard?.inactive || false
     };
     const targetColumn = currentBoard.columns.find(c => c.id === columnId);
+    if (!targetColumn) {
+        console.error('Target column not found:', columnId);
+        return;
+    }
+    
     if (currentCard) {
         // Update existing card
         Object.assign(currentCard, cardData);
         // If column changed, move card
-        if (currentColumn.id !== columnId) {
+        if (currentColumn && currentColumn.id !== columnId) {
+            // Entferne Karte aus alter Spalte
             currentColumn.cards = currentColumn.cards.filter(c => c.id !== currentCard.id);
+            // Füge Karte zu neuer Spalte hinzu
             targetColumn.cards.push(currentCard);
+            // Aktualisiere currentColumn
+            currentColumn = targetColumn;
         }
         // Full Card Modal live aktualisieren, falls offen
         updateFullCardModal(currentCard.id);
@@ -170,9 +204,22 @@ if (typeof window.setPassiveTouchListeners !== 'function') {
 // Vollständiges Card-Modal anzeigen
 // Nutzt renderMarkdownToHtml für Card-Content-Anzeige
 function showCardFullModal(cardId, columnId) {
-    const column = currentBoard.columns.find(c => c.id === columnId);
-    const card = column.cards.find(c => c.id === cardId);
-    if (!card) return;
+    // Zuerst die Karte in allen Spalten suchen (für den Fall, dass sie verschoben wurde)
+    let foundCard = null;
+    let foundColumn = null;
+    for (const col of currentBoard.columns) {
+        const card = col.cards.find(c => c.id === cardId);
+        if (card) {
+            foundCard = card;
+            foundColumn = col;
+            break;
+        }
+    }
+      if (!foundCard || !foundColumn) {
+        console.error('Card not found anywhere for showCardFullModal:', cardId);
+        return;
+    }
+    
     let modal = document.getElementById('full-card-modal');
     if (!modal) {
         modal = document.createElement('div');
@@ -180,18 +227,18 @@ function showCardFullModal(cardId, columnId) {
         modal.className = 'modal show';
         document.body.appendChild(modal);
     }
-    // Modal-Inhalt
+    // Modal-Inhalt (verwende die gefundene Spalte)
     modal.innerHTML = `
-        <div class="modal-content ${card.color || ''}" style="max-width:600px;">
+        <div class="modal-content ${foundCard.color || ''}" style="max-width:600px;">
             <div class="modal-header">
-                <h2>${card.heading || ''}</h2>
+                <h2>${foundCard.heading || ''}</h2>
                 <div style="display:flex;gap:0.5rem;align-items:center;">
-                    <button class="card-btn" onclick="openCardModal('${columnId}', '${cardId}')">⋮</button>
+                    <button class="card-btn" onclick="openCardModal('${foundColumn.id}', '${cardId}')">⋮</button>
                     <button class="close-btn" onclick="closeCardFullModal()">&times;</button>
                 </div>
             </div>
-            ${card.thumbnail ? `<div class='card-thumb-modal'><img src='${card.thumbnail}' alt='thumbnail' /></div>` : ''}
-            <div class="card-content-full">${window.renderMarkdownToHtml ? window.renderMarkdownToHtml(card.content || '') : (card.content || '')}</div>
+            ${foundCard.thumbnail ? `<div class='card-thumb-modal'><img src='${foundCard.thumbnail}' alt='thumbnail' /></div>` : ''}
+            <div class="card-content-full">${window.renderMarkdownToHtml ? window.renderMarkdownToHtml(foundCard.content || '') : (foundCard.content || '')}</div>
         </div>
     `;
     modal.onclick = function(e) { if (e.target === modal) closeCardFullModal(); };
@@ -300,13 +347,22 @@ saveCard = function(e, keepOpen) {
         inactive: currentCard?.inactive || false
     };
     const targetColumn = currentBoard.columns.find(c => c.id === columnId);
+    if (!targetColumn) {
+        console.error('Target column not found:', columnId);
+        return;
+    }
+    
     if (currentCard) {
         // Update existing card
         Object.assign(currentCard, cardData);
         // If column changed, move card
-        if (currentColumn.id !== columnId) {
+        if (currentColumn && currentColumn.id !== columnId) {
+            // Entferne Karte aus alter Spalte
             currentColumn.cards = currentColumn.cards.filter(c => c.id !== currentCard.id);
+            // Füge Karte zu neuer Spalte hinzu
             targetColumn.cards.push(currentCard);
+            // Aktualisiere currentColumn
+            currentColumn = targetColumn;
         }
         // Full Card Modal live aktualisieren, falls offen
         updateFullCardModal(currentCard.id);

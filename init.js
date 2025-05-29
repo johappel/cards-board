@@ -196,10 +196,9 @@ function initSortableKanban() {
                         const toColId = evt.to.closest('.kanban-column').dataset.columnId;
                         const fromCol = window.currentBoard.columns.find(c => c.id === fromColId);
                         const toCol = window.currentBoard.columns.find(c => c.id === toColId);
-                        if (!fromCol || !toCol) return;
-                        // Vorher loggen
-                        console.log('Karten vorher (from):', fromCol.cards.map(c => c.title));
-                        console.log('Karten vorher (to):', toCol.cards.map(c => c.title));
+                        if (!fromCol || !toCol) return;                        // Vorher loggen
+                        console.log('Karten vorher (from):', fromCol.cards.map(c => c.heading));
+                        console.log('Karten vorher (to):', toCol.cards.map(c => c.heading));
                         // Karten neu anordnen
                         const cardMap = {};
                         window.currentBoard.columns.forEach(col => {
@@ -220,10 +219,9 @@ function initSortableKanban() {
                                 if (cardMap[cardId]) newFromCards.push(cardMap[cardId]);
                             });
                             fromCol.cards = newFromCards;
-                        }
-                        // Nachher loggen
-                        console.log('Karten nach (from):', fromCol.cards.map(c => c.title));
-                        console.log('Karten nach (to):', toCol.cards.map(c => c.title));
+                        }                        // Nachher loggen
+                        console.log('Karten nach (from):', fromCol.cards.map(c => c.heading));
+                        console.log('Karten nach (to):', toCol.cards.map(c => c.heading));
                         if (typeof saveAllBoards === 'function') saveAllBoards();
                         console.log('saveAllBoards() nach Karten-Drag ausgeführt');
                     } catch(e) {
