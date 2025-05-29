@@ -829,6 +829,11 @@ body {
     overflow: auto;
     max-height: 60vh;
 }
+
+.card-content-full ul, .card-content-full ol{
+    white-space: normal;
+}
+
 /* Modal Layering */
 #full-card-modal {
     z-index: 3000;

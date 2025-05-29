@@ -102,9 +102,22 @@ function createCardElement(card, columnId) {
     const colorClass = card.color || 'color-gradient-1';
     let previewText = '';
     if (card.content) {
-        const match = card.content.match(/[^.!?\n]+[.!?\n]/);
-        previewText = match ? match[0] : card.content.substring(0, 240);
-        if (previewText.length > 240) previewText = previewText.substring(0, 240) + '...';
+        // Für die Vorschau: Nur die ersten 240 Zeichen, aber Markdown-Elemente wie Zeilenumbrüche und Listen berücksichtigen
+        let markdownPreview = card.content.split('\n').slice(0, 6).join('\n'); // max. 6 Zeilen
+        if (markdownPreview.length > 240) markdownPreview = markdownPreview.substring(0, 240) + '...';
+        // Nur einfache Markdown-Elemente rendern (keine Überschriften, keine Links, kein Codeblock)
+        if (window.marked) {
+            // marked.parseInline rendert nur Inline-Elemente, aber wir wollen auch Listen und Zeilenumbrüche
+            // Daher: parse, aber nur für erlaubte Elemente
+            let html = window.marked.parse(markdownPreview);
+            // Optional: Überschriften entfernen
+            html = html.replace(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/gi, '$1');
+            // Optional: Links entfernen
+            html = html.replace(/<a [^>]+>(.*?)<\/a>/gi, '$1');
+            previewText = html;
+        } else {
+            previewText = markdownPreview.replace(/\n/g, '<br>');
+        }
     }
     return `
         <div class="kanban-card ${colorClass}" 
@@ -122,7 +135,9 @@ function createCardElement(card, columnId) {
                     <button class="card-btn" onclick="event.stopPropagation();openCardModal('${columnId}', '${card.id}')">⋮</button>
                 </div>
             </div>
-            <div class="card-preview-content">${previewText}</div>
+            <div class="card-preview-content" style="padding-top:0.1rem;padding-bottom:0.1rem;">
+                <ul style="margin-top:0.2em;margin-bottom:0.2em;">${previewText}</ul>
+            </div>
         </div>
     `;
 }
@@ -139,11 +154,11 @@ function cardTouchEnd(event) {
 }
 
 // Vollständiges Card-Modal anzeigen
+// Nutzt renderMarkdownToHtml für Card-Content-Anzeige
 function showCardFullModal(cardId, columnId) {
     const column = currentBoard.columns.find(c => c.id === columnId);
     const card = column.cards.find(c => c.id === cardId);
     if (!card) return;
-    // Modal erzeugen
     let modal = document.getElementById('full-card-modal');
     if (!modal) {
         modal = document.createElement('div');
@@ -162,7 +177,7 @@ function showCardFullModal(cardId, columnId) {
                 </div>
             </div>
             ${card.thumbnail ? `<div class='card-thumb-modal'><img src='${card.thumbnail}' alt='thumbnail' /></div>` : ''}
-            <div class="card-content-full">${card.content || ''}</div>
+            <div class="card-content-full">${window.renderMarkdownToHtml ? window.renderMarkdownToHtml(card.content || '') : (card.content || '')}</div>
         </div>
     `;
     modal.onclick = function(e) { if (e.target === modal) closeCardFullModal(); };
@@ -197,7 +212,7 @@ function updateFullCardModal(cardId) {
                 </div>
             </div>
             ${card.thumbnail ? `<div class='card-thumb-modal'><img src='${card.thumbnail}' alt='thumbnail' /></div>` : ''}
-            <div class="card-content-full">${card.content || ''}</div>
+            <div class="card-content-full">${window.renderMarkdownToHtml ? window.renderMarkdownToHtml(card.content || '') : (card.content || '')}</div>
         </div>
     `;
     modal.onclick = function(e) { if (e.target === modal) closeCardFullModal(); };

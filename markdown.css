@@ -1,0 +1,88 @@
+/* markdown.css - Styling für Markdown-Inhalte im Chatbot und in Cards */
+
+.markdown-content {
+  font-family: inherit;
+  font-size: 1em;
+  color: #222;
+  line-height: 1.6;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3 {
+  margin: 0.5em 0 0.3em 0;
+  font-weight: bold;
+  /* Passe die Farben und Größen an das Card-Design an */
+  color: #2a4d69;
+}
+.markdown-content h1 { font-size: 1.3em; border-bottom: 1px solid #e0e0e0; }
+.markdown-content h2 { font-size: 1.15em; border-bottom: 1px solid #f0f0f0; }
+.markdown-content h3 { font-size: 1.05em; }
+
+.markdown-content p {
+  margin: 0.4em 0;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  margin: 0.4em 0 0.4em 1.2em;
+}
+
+.markdown-content li {
+  margin: 0.2em 0;
+}
+
+.markdown-content code {
+  background: #f5f5f5;
+  border-radius: 3px;
+  padding: 2px 5px;
+  font-size: 0.95em;
+  color: #c7254e;
+}
+
+.markdown-content pre {
+  background: #f5f5f5;
+  border-radius: 4px;
+  padding: 0.7em 1em;
+  overflow-x: auto;
+  font-size: 0.95em;
+  margin: 0.5em 0;
+}
+
+.markdown-content blockquote {
+  border-left: 4px solid #b3c6e7;
+  background: #f7faff;
+  margin: 0.5em 0;
+  padding: 0.5em 1em;
+  color: #3a4a5a;
+}
+
+.markdown-content a {
+  color: #1a73e8;
+  text-decoration: underline;
+}
+
+/* Slide-Down/Up für .think-accordion */
+.think-accordion {
+  background: #f9f9f9;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+  margin: 0.5em 0;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+.think-accordion summary {
+  cursor: pointer;
+  font-weight: bold;
+  padding: 0.5em 1em;
+  background: #e3eafc;
+  color: #2a4d69;
+  border-bottom: 1px solid #e0e0e0;
+  outline: none;
+}
+.think-accordion[open] {
+  box-shadow: 0 2px 8px rgba(42,77,105,0.07);
+}
+.think-accordion > *:not(summary) {
+  padding: 0.7em 1em;
+}

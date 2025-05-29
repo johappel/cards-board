@@ -100,13 +100,47 @@ function addColumnWithCards(columnName, cards) {
     return columnWasCreated;
 }
 
-// Chatbot-UI- und WebSocket-Logik
+// marked.js für Markdown-zu-HTML-Umwandlung einbinden
+if (!window.marked) {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+    script.onload = () => { window.marked = marked; };
+    document.head.appendChild(script);
+}
+// markdown.css einbinden
+(function() {
+    if (!document.getElementById('markdown-css')) {
+        const link = document.createElement('link');
+        link.id = 'markdown-css';
+        link.rel = 'stylesheet';
+        link.href = 'markdown.css';
+        document.head.appendChild(link);
+    }
+})();
+
+// Markdown-zu-HTML-Renderer (nutzt marked)
+function renderMarkdownToHtml(markdownText) {
+    if (window.marked && typeof markdownText === 'string') {
+        let html = window.marked.parse(markdownText);
+        // <think>-Tag als Accordion/Details-Container
+        if (html.includes('<think>')) {
+            html = html.replace(/<think>([\s\S]*?)<\/think>/gi, function(_, content) {
+                return `<details class="think-accordion" open><summary>Denken ...</summary><div class="markdown-content">${content}</div></details>`;
+            });
+        }
+        return `<div class="markdown-content">${html}</div>`;
+    }
+    return markdownText;
+}
+
 function displayMessage(textOrHtml, sender = 'bot') {
     const chatbox = document.getElementById('chatbox');
     const messageElement = document.createElement('div');
     const senderClass = sender + '-message';
     messageElement.classList.add('message', senderClass);
-    messageElement.innerHTML = textOrHtml;
+    // Markdown immer erst beim Anzeigen rendern
+    let html = renderMarkdownToHtml(textOrHtml);
+    messageElement.innerHTML = html;
     chatbox.appendChild(messageElement);
     chatbox.scrollTop = chatbox.scrollHeight;
 }
