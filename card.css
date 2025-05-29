@@ -217,7 +217,7 @@
     box-shadow: 0 1px 4px rgba(0,0,0,0.10);
     -webkit-backdrop-filter: blur(2px);
     backdrop-filter: blur(2px);
-    width: calc(100% + 0rem); /* Überdeckt Modal-Padding */
+    width: 100%;
     position: absolute;
     left: 0;
     top: 0;
@@ -231,6 +231,8 @@
 #full-card-modal .close-btn,
 #full-card-modal .card-btn {
     color: #e0e0e0;
+    top:0.75rem;
+    right: 3rem;
 }
 #full-card-modal .close-btn:hover,
 #full-card-modal .card-btn:hover {
