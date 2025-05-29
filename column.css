@@ -180,3 +180,20 @@
     min-width: 3em;
     display: inline-block;
 }
+
+/* Drag&Drop Ghost/Chosen Styles für Columns (SortableJS) */
+.kanban-column-drag-ghost {
+    opacity: 0.4;
+    background: #e0e7ff;
+    border: 2px dashed #4a90e2;
+    box-shadow: 0 0 12px #4a90e2aa;
+    z-index: 10;
+}
+.kanban-column-drag-chosen {
+    box-shadow: 0 6px 24px #4a90e2aa;
+    opacity: 0.7;
+    z-index: 12;
+}
+.kanban-column-dragging {
+    opacity: 0.5;
+}

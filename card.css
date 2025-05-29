@@ -291,3 +291,26 @@
 .full-card-modal .modal-content {
     padding-top: 64px; /* Höhe des Headers, ggf. anpassen */
 }
+
+/* Vorschau beim Drag&Drop: Card mit .card-preview-placeholder hervorheben */
+.kanban-card.card-preview-placeholder {
+    opacity: 0.5;
+    border: 2px dashed #4a90e2;
+    box-shadow: 0 0 0 2px #4a90e233;
+    transition: opacity 0.15s, border 0.15s;
+}
+
+/* Drag&Drop Ghost/Chosen Styles für SortableJS */
+.kanban-card-drag-ghost {
+    opacity: 0.4;
+    background: #e0e7ff;
+    border: 2px dashed #4a90e2;
+    box-shadow: 0 0 8px #4a90e2aa;
+}
+.kanban-card-drag-chosen {
+    box-shadow: 0 4px 16px #4a90e2aa;
+    opacity: 0.7;
+}
+.kanban-card-dragging {
+    opacity: 0.5;
+}

@@ -149,32 +149,18 @@ function createColumnElement(column, index) {
     columnEl.dataset.columnIndex = index;
     
     columnEl.innerHTML = `
-        <div class="column-header" draggable="true" ondragstart="dragColumnStart(event, '${column.id}')" ondragend="dragColumnEnd(event)">
+        <div class="column-header">
             <div class="column-title">${column.name}</div>
             <div class="column-actions">
                 <button class="menu-dots" onclick="openColumnSettings('${column.id}')">⋮</button>
             </div>
         </div>
-        <div class="column-content" ondrop="dropCard(event, '${column.id}')" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+        <div class="column-content">
             ${column.cards.map(card => createCardElement(card, column.id)).join('')}
         </div>
         <button class="add-card-btn" onclick="openCardModal('${column.id}')">+ Add Card</button>
     `;
-    
-    // Add drag over event for column reordering
-    columnEl.ondragover = (e) => {
-        if (draggedColumn) {
-            e.preventDefault();
-            const boardContainer = document.getElementById('kanban-board');
-            const afterElement = getDragAfterElement(boardContainer, e.clientX);
-            if (afterElement == null) {
-                boardContainer.insertBefore(draggedColumn, boardContainer.lastElementChild);
-            } else {
-                boardContainer.insertBefore(draggedColumn, afterElement);
-            }
-        }
-    };
-    
+    // Drag&Drop-Handler entfernt, SortableJS übernimmt alles
     return columnEl;
 }
 
@@ -197,3 +183,11 @@ function renderColumns() {
     addColumnBtn.onclick = addNewColumn;
     boardContainer.appendChild(addColumnBtn);
 }
+
+// Nach jedem Render Columns SortableJS initialisieren
+const origRenderColumns = typeof renderColumns === 'function' ? renderColumns : null;
+window.renderColumns = function() {
+    if (origRenderColumns) origRenderColumns();
+    if (window.initSortableKanban) window.initSortableKanban();
+    if (window.setPassiveTouchListeners) window.setPassiveTouchListeners();
+};

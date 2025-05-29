@@ -120,10 +120,7 @@ function createCardElement(card, columnId) {
         }
     }
     return `
-        <div class="kanban-card ${colorClass}" 
-             draggable="true" 
-             ondragstart="dragStart(event, '${card.id}')"
-             ondragend="dragEnd(event)"
+        <div class="kanban-card ${colorClass}"
              data-card-id="${card.id}"
              ondblclick="showCardFullModal('${card.id}', '${columnId}')"
              ontouchstart="cardTouchStart(event, '${card.id}', '${columnId}')"
@@ -151,6 +148,23 @@ function cardTouchStart(event, cardId, columnId) {
 }
 function cardTouchEnd(event) {
     if (cardTouchTimer) clearTimeout(cardTouchTimer);
+}
+
+// Nachträglich alle Touch-Listener auf passive setzen
+// (wird nach jedem renderColumns() aufgerufen)
+function setPassiveTouchListeners() {
+    document.querySelectorAll('.kanban-card').forEach(card => {
+        card.removeEventListener('touchstart', card._touchStartHandler, { passive: false });
+        card.removeEventListener('touchend', card._touchEndHandler, { passive: false });
+        card._touchStartHandler = function(e) { cardTouchStart(e, card.dataset.cardId, card.closest('.kanban-column').dataset.columnId); };
+        card._touchEndHandler = function(e) { cardTouchEnd(e); };
+        card.addEventListener('touchstart', card._touchStartHandler, { passive: true });
+        card.addEventListener('touchend', card._touchEndHandler, { passive: true });
+    });
+}
+// Nach jedem renderColumns() aufrufen
+if (typeof window.setPassiveTouchListeners !== 'function') {
+    window.setPassiveTouchListeners = setPassiveTouchListeners;
 }
 
 // Vollständiges Card-Modal anzeigen
