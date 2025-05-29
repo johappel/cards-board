@@ -59,48 +59,50 @@
                 <h2 id="modal-title">Create New Card</h2>
                 <button class="close-btn" onclick="closeModal('card-modal')">&times;</button>
             </div>
-            <form id="card-form">
-                <div class="form-group">
-                    <label class="color-palette-label">Card Color</label>
-                    <div class="color-palette" id="card-color-palette">
-                        <div class="color-option color-gradient-1" data-color="color-gradient-1"></div>
-                        <div class="color-option color-gradient-2" data-color="color-gradient-2"></div>
-                        <div class="color-option color-gradient-3" data-color="color-gradient-3"></div>
-                        <div class="color-option color-gradient-4" data-color="color-gradient-4"></div>
-                        <div class="color-option color-gradient-5" data-color="color-gradient-5"></div>
-                        <div class="color-option color-gradient-6" data-color="color-gradient-6"></div>
-                        <div class="color-option color-gradient-7" data-color="color-gradient-7"></div>
-                        <div class="color-option color-gradient-8" data-color="color-gradient-8"></div>
+            <div class="modal-body">
+                <form id="card-form">
+                    <div class="form-group">
+                        <label class="color-palette-label">Card Color</label>
+                        <div class="color-palette" id="card-color-palette">
+                            <div class="color-option color-gradient-1" data-color="color-gradient-1"></div>
+                            <div class="color-option color-gradient-2" data-color="color-gradient-2"></div>
+                            <div class="color-option color-gradient-3" data-color="color-gradient-3"></div>
+                            <div class="color-option color-gradient-4" data-color="color-gradient-4"></div>
+                            <div class="color-option color-gradient-5" data-color="color-gradient-5"></div>
+                            <div class="color-option color-gradient-6" data-color="color-gradient-6"></div>
+                            <div class="color-option color-gradient-7" data-color="color-gradient-7"></div>
+                            <div class="color-option color-gradient-8" data-color="color-gradient-8"></div>
+                        </div>
+                        <input type="hidden" id="card-color" value="color-gradient-1">
                     </div>
-                    <input type="hidden" id="card-color" value="color-gradient-1">
-                </div>
-                <div class="form-group">
-                    <label for="card-heading">Card Heading</label>
-                    <input type="text" id="card-heading" required>
-                </div>
-                <div class="form-group relative">
-                    <label for="card-content">Content</label>
-                    <div class="ai-icon-container">
-                        <button type="button" class="ai-icon-btn" id="open-ai-modal" title="AI Content Generator" tabindex="0">🤖</button>
+                    <div class="form-group">
+                        <label for="card-heading">Card Heading</label>
+                        <input type="text" id="card-heading" required>
                     </div>
-                    <textarea id="card-content" placeholder="Enter content or use as prompt..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="card-column">Column</label>
-                    <select id="card-column">
-                        <!-- Options will be populated dynamically -->
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="card-thumbnail">Thumbnail URL</label>
-                    <input type="url" id="card-thumbnail" placeholder="https://example.com/thumb.jpg">
-                </div>
-                
-                <div class="modal-actions">
-                    <button type="submit" class="btn btn-primary">Save Card</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('card-modal')">Cancel</button>
-                </div>
-            </form>
+                    <div class="form-group relative">
+                        <label for="card-content">Content</label>
+                        <div class="ai-icon-container">
+                            <button type="button" class="ai-icon-btn" id="open-ai-modal" title="AI Content Generator" tabindex="0">🤖</button>
+                        </div>
+                        <textarea id="card-content" placeholder="Enter content or use as prompt..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="card-column">Column</label>
+                        <select id="card-column">
+                            <!-- Options will be populated dynamically -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="card-thumbnail">Thumbnail URL</label>
+                        <input type="url" id="card-thumbnail" placeholder="https://example.com/thumb.jpg">
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">Save Card</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('card-modal')">Cancel</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -111,16 +113,18 @@
                 <h3>AI Prompt</h3>
                 <button class="close-btn" onclick="closeAIPromptModal()">&times;</button>
             </div>
-            <div class="form-group">
-                <label for="ai-prompt-input">Prompt</label>
-                <textarea id="ai-prompt-input" placeholder="Stelle eine Frage oder gib einen Befehl an die KI..."></textarea>
-            </div>
-            <div class="form-group">
-                <label><input type="checkbox" id="ai-include-column-context"> Spalte als Kontext einbeziehen</label>
-            </div>
-            <div class="modal-actions">
-                <button class="btn btn-primary" onclick="submitAIPrompt()">Absenden</button>
-                <button class="btn btn-secondary" onclick="closeAIPromptModal()">Abbrechen</button>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="ai-prompt-input">Prompt</label>
+                    <textarea id="ai-prompt-input" placeholder="Stelle eine Frage oder gib einen Befehl an die KI..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" id="ai-include-column-context"> Spalte als Kontext einbeziehen</label>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-primary" onclick="submitAIPrompt()">Absenden</button>
+                    <button class="btn btn-secondary" onclick="closeAIPromptModal()">Abbrechen</button>
+                </div>    
             </div>
         </div>
     </div>
@@ -132,33 +136,35 @@
                 <h2>Column Settings</h2>
                 <button class="close-btn" onclick="closeModal('column-modal')">&times;</button>
             </div>
-            <form id="column-form">
-                <div class="form-group">
-                    <label for="column-name">Column Name</label>
-                    <input type="text" id="column-name" required>
-                </div>
-                <div class="form-group">
-                    <label class="color-palette-label">Column Color</label>
-                    <div class="color-palette" id="column-color-palette">
-                        <div class="color-option color-gradient-1" data-color="color-gradient-1"></div>
-                        <div class="color-option color-gradient-2" data-color="color-gradient-2"></div>
-                        <div class="color-option color-gradient-3" data-color="color-gradient-3"></div>
-                        <div class="color-option color-gradient-4" data-color="color-gradient-4"></div>
-                        <div class="color-option color-gradient-5" data-color="color-gradient-5"></div>
-                        <div class="color-option color-gradient-6" data-color="color-gradient-6"></div>
-                        <div class="color-option color-gradient-7" data-color="color-gradient-7"></div>
-                        <div class="color-option color-gradient-8" data-color="color-gradient-8"></div>
+            <div class="modal-body">
+                <form id="column-form">
+                    <div class="form-group">
+                        <label for="column-name">Column Name</label>
+                        <input type="text" id="column-name" required>
                     </div>
-                    <input type="hidden" id="column-color" value="color-gradient-1">
-                </div>
-                <div class="modal-actions">
-                    <button type="submit" class="btn btn-primary">Save Column</button>
-                    <button type="button" class="btn btn-secondary" onclick="exportColumn(currentColumn.id)">Export Column</button>
-                    <button type="button" class="btn btn-secondary" onclick="importColumnData(currentColumn.id)">Import Cards</button>
-                    <button type="button" class="btn btn-danger" onclick="deleteColumn(currentColumn.id)">Delete Column</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('column-modal')">Cancel</button>
-                </div>
-            </form>
+                    <div class="form-group">
+                        <label class="color-palette-label">Column Color</label>
+                        <div class="color-palette" id="column-color-palette">
+                            <div class="color-option color-gradient-1" data-color="color-gradient-1"></div>
+                            <div class="color-option color-gradient-2" data-color="color-gradient-2"></div>
+                            <div class="color-option color-gradient-3" data-color="color-gradient-3"></div>
+                            <div class="color-option color-gradient-4" data-color="color-gradient-4"></div>
+                            <div class="color-option color-gradient-5" data-color="color-gradient-5"></div>
+                            <div class="color-option color-gradient-6" data-color="color-gradient-6"></div>
+                            <div class="color-option color-gradient-7" data-color="color-gradient-7"></div>
+                            <div class="color-option color-gradient-8" data-color="color-gradient-8"></div>
+                        </div>
+                        <input type="hidden" id="column-color" value="color-gradient-1">
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">Save Column</button>
+                        <button type="button" class="btn btn-secondary" onclick="exportColumn(currentColumn.id)">Export Column</button>
+                        <button type="button" class="btn btn-secondary" onclick="importColumnData(currentColumn.id)">Import Cards</button>
+                        <button type="button" class="btn btn-danger" onclick="deleteColumn(currentColumn.id)">Delete Column</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('column-modal')">Cancel</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -169,83 +175,85 @@
                 <h2>Board Settings</h2>
                 <button class="close-btn" onclick="closeModal('board-settings-modal')">&times;</button>
             </div>
-            <form id="board-settings-form">
-                <!-- Tab Navigation -->
-                <div class="tab-navigation">
-                    <button type="button" class="tab-button active" onclick="switchBoardTab('general')">Allgemein</button>
-                    <button type="button" class="tab-button" onclick="switchBoardTab('advanced')">Erweiterte Einstellungen</button>
-                </div>
+            <div class="modal-body">
+                <form id="board-settings-form">
+                    <!-- Tab Navigation -->
+                    <div class="tab-navigation">
+                        <button type="button" class="tab-button active" onclick="switchBoardTab('general')">Allgemein</button>
+                        <button type="button" class="tab-button" onclick="switchBoardTab('advanced')">Erweiterte Einstellungen</button>
+                    </div>
 
-                <!-- General Tab -->
-                <div id="board-tab-general" class="tab-content active">
-                    <div class="form-group">
-                        <label for="board-name">Board Name</label>
-                        <input type="text" id="board-name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="board-authors-input">Authors (comma-separated)</label>
-                        <input type="text" id="board-authors-input" placeholder="John Doe, Jane Smith">
-                    </div>
-                    <div class="form-group">
-                        <label for="board-summary-input">Board Summary</label>
-                        <textarea id="board-summary-input"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="board-bg-color">Background Color</label>
-                        <input type="color" id="board-bg-color" value="#f5f7fa">
-                    </div>
-                    <div class="ai-section">
-                        <h3>AI Configuration</h3>
+                    <!-- General Tab -->
+                    <div id="board-tab-general" class="tab-content active">
                         <div class="form-group">
-                            <label for="ai-provider">LLM Provider</label>
-                            <select id="ai-provider" onchange="toggleAIFields()">
-                                <option value="">Select Provider</option>
-                                <option value="openai">OpenAI</option>
-                                <option value="anthropic">Anthropic</option>
-                                <option value="custom">Custom</option>
-                            </select>
-                        </div>
-                        <div class="form-group" id="ai-base-url-group" class="hide">
-                            <label for="ai-base-url">Base URL</label>
-                            <input type="url" id="ai-base-url" placeholder="https://api.example.com">
+                            <label for="board-name">Board Name</label>
+                            <input type="text" id="board-name" required>
                         </div>
                         <div class="form-group">
-                            <label for="ai-api-key">API Key</label>
-                            <input type="password" id="ai-api-key" placeholder="Enter your API key">
+                            <label for="board-authors-input">Authors (comma-separated)</label>
+                            <input type="text" id="board-authors-input" placeholder="John Doe, Jane Smith">
                         </div>
                         <div class="form-group">
-                            <label for="ai-model">Model</label>
-                            <input type="text" id="ai-model" placeholder="e.g., claude-3-sonnet-20240229">
+                            <label for="board-summary-input">Board Summary</label>
+                            <textarea id="board-summary-input"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="board-bg-color">Background Color</label>
+                            <input type="color" id="board-bg-color" value="#f5f7fa">
+                        </div>
+                        <div class="ai-section">
+                            <h3>AI Configuration</h3>
+                            <div class="form-group">
+                                <label for="ai-provider">LLM Provider</label>
+                                <select id="ai-provider" onchange="toggleAIFields()">
+                                    <option value="">Select Provider</option>
+                                    <option value="openai">OpenAI</option>
+                                    <option value="anthropic">Anthropic</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="ai-base-url-group" class="hide">
+                                <label for="ai-base-url">Base URL</label>
+                                <input type="url" id="ai-base-url" placeholder="https://api.example.com">
+                            </div>
+                            <div class="form-group">
+                                <label for="ai-api-key">API Key</label>
+                                <input type="password" id="ai-api-key" placeholder="Enter your API key">
+                            </div>
+                            <div class="form-group">
+                                <label for="ai-model">Model</label>
+                                <input type="text" id="ai-model" placeholder="e.g., claude-3-sonnet-20240229">
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Advanced Tab -->
-                <div id="board-tab-advanced" class="tab-content">
-                    <div class="form-group">
-                        <label for="board-custom-style">Custom CSS Style</label>
-                        <textarea id="board-custom-style" class="custom-style-editor" placeholder="Enter custom CSS for this board...&#10;&#10;Beispiel:&#10;.kanban-board {&#10;  background: linear-gradient(45deg, #f0f0f0, #ffffff);&#10;}&#10;&#10;.kanban-column {&#10;  border-radius: 15px;&#10;}"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>CSS Preview</label>
-                        <div class="css-preview-info">
-                            <p>Das Custom CSS wird auf das gesamte Board angewendet. Verwenden Sie CSS-Selektoren wie:</p>
-                            <ul>
-                                <li><code>.kanban-board</code> - Das gesamte Board</li>
-                                <li><code>.kanban-column</code> - Alle Spalten</li>
-                                <li><code>.kanban-card</code> - Alle Karten</li>
-                                <li><code>.board-header</code> - Der Board-Header</li>
-                            </ul>
+                    <!-- Advanced Tab -->
+                    <div id="board-tab-advanced" class="tab-content">
+                        <div class="form-group">
+                            <label for="board-custom-style">Custom CSS Style</label>
+                            <textarea id="board-custom-style" class="custom-style-editor" placeholder="Enter custom CSS for this board...&#10;&#10;Beispiel:&#10;.kanban-board {&#10;  background: linear-gradient(45deg, #f0f0f0, #ffffff);&#10;}&#10;&#10;.kanban-column {&#10;  border-radius: 15px;&#10;}"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>CSS Preview</label>
+                            <div class="css-preview-info">
+                                <p>Das Custom CSS wird auf das gesamte Board angewendet. Verwenden Sie CSS-Selektoren wie:</p>
+                                <ul>
+                                    <li><code>.kanban-board</code> - Das gesamte Board</li>
+                                    <li><code>.kanban-column</code> - Alle Spalten</li>
+                                    <li><code>.kanban-card</code> - Alle Karten</li>
+                                    <li><code>.board-header</code> - Der Board-Header</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="modal-actions">
-                    <button type="submit" class="btn btn-primary">Save Settings</button>
-                    <button type="button" class="btn btn-danger" onclick="deleteBoard()">Delete Board</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('board-settings-modal')">Cancel</button>
-                </div>
-            </form>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">Save Settings</button>
+                        <button type="button" class="btn btn-danger" onclick="deleteBoard()">Delete Board</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('board-settings-modal')">Cancel</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -256,20 +264,22 @@
                 <h2>Create New Board</h2>
                 <button class="close-btn" onclick="closeModal('new-board-modal')">&times;</button>
             </div>
-            <form id="new-board-form">
-                <div class="form-group">
-                    <label for="new-board-name">Board Name</label>
-                    <input type="text" id="new-board-name" required>
-                </div>
-                <div class="form-group">
-                    <label for="new-board-description">Description</label>
-                    <textarea id="new-board-description"></textarea>
-                </div>
-                <div class="modal-actions">
-                    <button type="submit" class="btn btn-primary">Create Board</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('new-board-modal')">Cancel</button>
-                </div>
-            </form>
+            <div class="modal-body">
+                <form id="new-board-form">
+                    <div class="form-group">
+                        <label for="new-board-name">Board Name</label>
+                        <input type="text" id="new-board-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-board-description">Description</label>
+                        <textarea id="new-board-description"></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">Create Board</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('new-board-modal')">Cancel</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -280,16 +290,18 @@
                 <h2>Import Column Data</h2>
                 <button class="close-btn" onclick="closeModal('column-import-modal')">&times;</button>
             </div>
-            <div class="form-group">
-                <label for="column-import-file">Select JSON file</label>
-                <input type="file" id="column-import-file" accept=".json" onchange="handleColumnImport(event)">
-            </div>
-            <div id="column-import-preview" class="hide">
-                <h3>Preview</h3>
-                <div id="import-preview-content"></div>
-                <div class="modal-actions">
-                    <button class="btn btn-primary" onclick="confirmColumnImport()">Import</button>
-                    <button class="btn btn-secondary" onclick="closeModal('column-import-modal')">Cancel</button>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="column-import-file">Select JSON file</label>
+                    <input type="file" id="column-import-file" accept=".json" onchange="handleColumnImport(event)">
+                </div>
+                <div id="column-import-preview" class="hide">
+                    <h3>Preview</h3>
+                    <div id="import-preview-content"></div>
+                    <div class="modal-actions">
+                        <button class="btn btn-primary" onclick="confirmColumnImport()">Import</button>
+                        <button class="btn btn-secondary" onclick="closeModal('column-import-modal')">Cancel</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -321,18 +333,20 @@
           <button class="btn btn-secondary" id="newChatBtn" title="Neuen Chat starten (neue Connection-ID)">🆕 Neuer Chat</button>
           <button class="close-btn" onclick="closeModal('chatbot-modal')">&times;</button>
         </div>
-        <div id="chatbox" class="chatbox"></div>
-        <div id="fragments-container" class="fragments-container">
-          <div id="fragbox"></div>
-        </div>
-        <div id="chatbot-suggestions" class="chatbot-suggestions"></div>
-        <div class="chatbot-input-row">
-          <input id="userInput" type="text" placeholder="Nachricht eingeben...">
-          <button id="sendButton" class="btn btn-primary">Senden</button>
-          <span id="progressIndicator" class="hide">⏳</span>
-        </div>
-        <div class="chatbot-statusbar-container">
-          <div id="connectionStatus"></div>
+        <div class="modal-body">
+            <div id="chatbox" class="chatbox"></div>
+            <div id="fragments-container" class="fragments-container">
+            <div id="fragbox"></div>
+            </div>
+            <div id="chatbot-suggestions" class="chatbot-suggestions"></div>
+            <div class="chatbot-input-row">
+            <input id="userInput" type="text" placeholder="Nachricht eingeben...">
+            <button id="sendButton" class="btn btn-primary">Senden</button>
+            <span id="progressIndicator" class="hide">⏳</span>
+            </div>
+            <div class="chatbot-statusbar-container">
+            <div id="connectionStatus"></div>
+            </div>
         </div>
       </div>
     </div>

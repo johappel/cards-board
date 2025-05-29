@@ -107,11 +107,11 @@
 .add-card-btn {
     width: 100%;
     padding: 0.75rem;
-    background: transparent;
-    border: 2px dashed #cbd5e0;
+    background: rgba(200, 200, 200, 05);
+    border: 2px dashed #9a9fa5;
     border-radius: 4px;
     cursor: pointer;
-    color: #7f8c8d;
+    color: #03214e;
     transition: all 0.3s ease;
 }
 

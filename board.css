@@ -19,15 +19,11 @@
 .modal-content {
     background: white;
     border-radius: 8px;
-    padding: 2rem;
+    padding: 0rem 0rem 0.2rem;
     max-width: 600px;
     width: 90%;
     max-height: 80vh;
     overflow-y: auto;
-}
-
-.modal-content.max-420 {
-    max-width: 420px;
 }
 
 .modal-header {
@@ -43,7 +39,7 @@
     box-shadow: 0 1px 4px rgba(0,0,0,0.10);
     -webkit-backdrop-filter: blur(2px);
     backdrop-filter: blur(2px);
-    width: calc(100% + 2rem); /* Überdeckt Modal-Padding */
+    width: calc(100% + 0rem); /* Überdeckt Modal-Padding */
     position: absolute;
     left: 0;
     top: 0;

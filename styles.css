@@ -18,6 +18,7 @@ body {
     display: none !important;
 }
 
+
 /* Use these Substyles Files for Specific Components */
 @import url('column.css');
 @import url('card.css');
@@ -28,5 +29,7 @@ body {
 @import url('colors.css');
 
 
-
+.max-420 {
+    max-width: 420px!important;
+}
 
