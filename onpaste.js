@@ -656,7 +656,9 @@ function extractYouTubeVideoId(url) {
 }
 
 function getYouTubeEmbedUrl(videoId) {
-    return `https://www.youtube.com/embed/${videoId}`;
+    // Verwende youtube-nocookie.com für bessere Privatsphäre und Kompatibilität
+    // Erweiterte Parameter für bessere Kompatibilität
+    return `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=0&rel=0&modestbranding=1&fs=1&cc_load_policy=0&iv_load_policy=3&autohide=0`;
 }
 
 function getYouTubeThumbnail(videoId, quality = 'maxresdefault') {
@@ -784,16 +786,34 @@ ${preview.description}
             <img src="${preview.image}" alt="Preview" onerror="this.style.display='none'; this.parentElement.style.display='none';" 
                  onload="this.style.opacity='1';" style="opacity: 0; transition: opacity 0.3s;">
         </div>
-    `;
-
-    const playerContent = isYouTube ? `
+    `;    const playerContent = isYouTube ? `
         <div class="youtube-video-container" id="video-player-tab" style="display: none;">
             <iframe 
+                id="youtube-iframe-${preview.videoId}"
                 src="${preview.embedUrl}" 
                 frameborder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                allowfullscreen>
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                allowfullscreen
+                loading="lazy"
+                referrerpolicy="strict-origin-when-cross-origin"
+                title="YouTube Video Player"
+                onload="console.log('✅ YouTube Video geladen:', '${preview.videoId}')"
+                onerror="handleYouTubeEmbedError('${preview.videoId}', '${preview.url}')">
             </iframe>
+            <div id="youtube-fallback-${preview.videoId}" style="display: none; padding: 1.5rem; text-align: center; background: #f8f9fa; border-radius: 8px; margin: 1rem 0; border: 2px dashed #dee2e6;">
+                <p style="margin: 0 0 1rem 0; color: #666; font-size: 1.1rem;">⚠️ Video kann nicht eingebettet werden</p>
+                <div style="margin: 1rem 0;">
+                    <button onclick="retryYouTubeEmbed('${preview.videoId}', '${preview.url}')" 
+                            style="background: #28a745; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; margin: 0 0.5rem;">
+                        🔄 Nochmal versuchen
+                    </button>
+                    <a href="${preview.url}" target="_blank" 
+                       style="background: #007bff; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; display: inline-block; margin: 0 0.5rem;">
+                        🔗 Auf YouTube öffnen
+                    </a>
+                </div>
+                <small style="color: #999;">Manche Videos erlauben kein Embedding aufgrund von Urheberrechtseinstellungen.</small>
+            </div>
         </div>
     ` : '';
     
@@ -890,7 +910,10 @@ function showVideoTab(tabName) {
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
     });
-    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    const activeBtn = document.querySelector(`[data-tab="${tabName}"]`);
+    if (activeBtn) {
+        activeBtn.classList.add('active');
+    }
     
     // Tab-Inhalte umschalten
     const thumbnailTab = document.getElementById('thumbnail-tab');
@@ -1060,6 +1083,68 @@ function showPasteNotification(message, duration = 3000) {
     
     return notification;
 }
+
+// Erweiterte YouTube-Embedding-Funktionen
+function handleYouTubeEmbedError(videoId, originalUrl) {
+    console.warn('❌ YouTube Embed fehlgeschlagen für Video:', videoId);
+    const iframe = document.getElementById(`youtube-iframe-${videoId}`);
+    const fallback = document.getElementById(`youtube-fallback-${videoId}`);
+    
+    if (iframe) {
+        iframe.style.display = 'none';
+    }
+    if (fallback) {
+        fallback.style.display = 'block';
+    }
+}
+
+function retryYouTubeEmbed(videoId, originalUrl) {
+    console.log('🔄 Retry YouTube Embed für Video:', videoId);
+    const iframe = document.getElementById(`youtube-iframe-${videoId}`);
+    const fallback = document.getElementById(`youtube-fallback-${videoId}`);
+    
+    if (!iframe) return;
+    
+    // Verstecke Fallback und zeige Iframe
+    if (fallback) fallback.style.display = 'none';
+    iframe.style.display = 'block';
+    
+    // Versuche verschiedene Embedding-URLs
+    const embedUrls = [
+        `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=0&rel=0&modestbranding=1&fs=1`,
+        `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0`,
+        `https://www.youtube-nocookie.com/embed/${videoId}`,
+        `https://www.youtube.com/embed/${videoId}`
+    ];
+    
+    let currentTry = 0;
+    
+    function tryNextUrl() {
+        if (currentTry >= embedUrls.length) {
+            console.warn('❌ Alle YouTube Embed URLs fehlgeschlagen für:', videoId);
+            handleYouTubeEmbedError(videoId, originalUrl);
+            return;
+        }
+        
+        const url = embedUrls[currentTry];
+        console.log(`🔄 Versuche URL ${currentTry + 1}/${embedUrls.length}:`, url);
+        
+        iframe.src = url;
+        iframe.onload = function() {
+            console.log('✅ YouTube Embed erfolgreich mit URL:', url);
+        };
+        iframe.onerror = function() {
+            currentTry++;
+            setTimeout(tryNextUrl, 1000); // Warte 1 Sekunde zwischen Versuchen
+        };
+    }
+    
+    tryNextUrl();
+}
+
+// Globale Funktionen verfügbar machen
+window.handleYouTubeEmbedError = handleYouTubeEmbedError;
+window.retryYouTubeEmbed = retryYouTubeEmbed;
 
 // Export für globale Nutzung
 window.PasteFunctionality = {
