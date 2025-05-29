@@ -199,11 +199,14 @@
 }
 
 .kanban-column.selected-for-paste {
-    box-shadow: 0 0 0 3px #2196F3;
-    border-radius: 8px;
-    transition: box-shadow 0.2s ease;
+    box-shadow: 0 0 0 3px #2196F3 !important;
+    border-radius: 8px !important;
+    transition: box-shadow 0.2s ease !important;
+    background: rgba(33, 150, 243, 0.05) !important;
 }
 
 .kanban-column.selected-for-paste .column-header {
-    background: linear-gradient(120deg, rgba(83, 160, 233, 0.82) 0%, rgba(0, 0, 0, 0.5) 50%);
+    background: linear-gradient(120deg, rgba(33, 150, 243, 0.8) 0%, rgba(33, 150, 243, 0.6) 50%, rgba(33, 150, 243, 0.4) 100%) !important;
+    color: white !important;
+    border-radius: 8px 8px 0 0 !important;
 }

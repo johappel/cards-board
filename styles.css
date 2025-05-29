@@ -250,6 +250,160 @@ body {
     transform: translateY(-1px);
 }
 
+/* YouTube Video Player Styles */
+.video-tabs {
+    display: flex;
+    border-bottom: 2px solid #e1e8ed;
+    margin-bottom: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px 8px 0 0;
+    overflow: hidden;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: none;
+    background: #f8f9fa;
+    color: #657786;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-bottom: 3px solid transparent;
+}
+
+.tab-btn:hover {
+    background: #e1e8ed;
+    color: #333;
+}
+
+.tab-btn.active {
+    background: #ffffff;
+    color: #1da1f2;
+    border-bottom-color: #1da1f2;
+    font-weight: 600;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.youtube-video-container {
+    position: relative;
+    width: 100%;
+    height: 0;
+    padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+    overflow: hidden;
+    background: #000;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.youtube-video-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 8px;
+}
+
+/* YouTube-spezifische URL Preview Anpassungen */
+.url-preview-container.youtube {
+    border-color: #ff0000;
+    box-shadow: 0 2px 8px rgba(255, 0, 0, 0.1);
+}
+
+.youtube-info {
+    background: linear-gradient(135deg, #ff0000, #cc0000);
+    color: white;
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.youtube-info::before {
+    content: "▶️";
+    font-size: 1rem;
+}
+
+/* Loading state für YouTube Videos */
+.youtube-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    background: #f0f0f0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.youtube-loading::before {
+    content: "⏳";
+    margin-right: 0.5rem;
+    animation: spin 2s linear infinite;
+}
+
+/* Responsive YouTube Player */
+@media (max-width: 600px) {
+    .video-tabs {
+        flex-direction: column;
+    }
+    
+    .tab-btn {
+        border-bottom: 1px solid #e1e8ed;
+        border-right: none;
+    }
+    
+    .tab-btn:last-child {
+        border-bottom: none;
+    }
+    
+    .tab-btn.active {
+        border-bottom-color: #e1e8ed;
+        border-left: 3px solid #1da1f2;
+    }
+    
+    .youtube-video-container {
+        padding-bottom: 60%; /* Leicht angepasst für mobile Geräte */
+    }
+}
+
+/* Dark Theme Support für YouTube Player */
+@media (prefers-color-scheme: dark) {
+    .video-tabs {
+        background: #2f3349;
+        border-bottom-color: #404040;
+    }
+    
+    .tab-btn {
+        background: #2f3349;
+        color: #b0b0b0;
+    }
+    
+    .tab-btn:hover {
+        background: #404040;
+        color: #ffffff;
+    }
+    
+    .tab-btn.active {
+        background: #1a1a1a;
+        color: #1da1f2;
+    }
+    
+    .youtube-video-container {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+}
+
 /* Responsive adjustments */
 @media (max-width: 600px) {
     .url-preview-container {

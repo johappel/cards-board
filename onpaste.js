@@ -313,6 +313,9 @@ function closePasteHelp() {
 function selectColumnForPaste(columnId) {
     selectedColumnForPaste = columnId;
     
+    // Debugging-Ausgabe
+    console.log('🎯 Column selected for paste:', columnId);
+    
     // Visuelle Hervorhebung der ausgewählten Spalte
     document.querySelectorAll('.kanban-column').forEach(col => {
         col.classList.remove('selected-for-paste');
@@ -321,6 +324,18 @@ function selectColumnForPaste(columnId) {
     const columnElement = document.querySelector(`[data-column-id="${columnId}"]`);
     if (columnElement) {
         columnElement.classList.add('selected-for-paste');
+        console.log('✅ Column visual selection applied to:', columnElement);
+        
+        // Erzwinge Stil-Update
+        columnElement.style.setProperty('box-shadow', '0 0 0 3px #2196F3', 'important');
+        
+        // Feedback-Nachricht mit Spalten-Namen
+        const columnTitle = columnElement.querySelector('.column-title')?.textContent || 
+                           columnElement.querySelector('.column-header h3')?.textContent || 
+                           'Unbekannt';
+        showPasteNotification(`📋 Spalte '${columnTitle}' für Einfügen ausgewählt`, 2500);
+    } else {
+        console.warn('❌ Column element not found for ID:', columnId);
     }
 }
 
@@ -329,17 +344,34 @@ function initPasteFunctionality() {
     // Globaler Paste Event Listener
     document.addEventListener('paste', handlePaste);
     
-    // Spalten-Klick für Auswahl
+    // Spalten-Klick für Auswahl (mehrere Selektoren)
     document.addEventListener('click', function(event) {
+        // Mehrere Wege, um Spalten-Klicks zu erkennen
         const columnHeader = event.target.closest('.column-header');
+        const columnTitle = event.target.closest('.column-title');
+        const kanbanColumn = event.target.closest('.kanban-column');
+        
+        let columnElement = null;
+        let columnId = null;
+        
         if (columnHeader) {
-            const columnElement = columnHeader.closest('.kanban-column');
-            if (columnElement) {
-                const columnId = columnElement.dataset.columnId;
+            columnElement = columnHeader.closest('.kanban-column');
+        } else if (columnTitle) {
+            columnElement = columnTitle.closest('.kanban-column');
+        } else if (kanbanColumn && !event.target.closest('.kanban-card')) {
+            // Klick direkt auf die Spalte, aber nicht auf eine Karte
+            columnElement = kanbanColumn;
+        }
+        
+        if (columnElement) {
+            columnId = columnElement.dataset.columnId;
+            if (columnId) {
+                event.preventDefault(); // Verhindere andere Event-Handler
+                event.stopPropagation();
                 selectColumnForPaste(columnId);
             }
         }
-    });
+    }, true); // useCapture = true für höhere Priorität
     
     // CSS für Paste-Animationen hinzufügen
     if (!document.getElementById('paste-styles')) {
@@ -353,10 +385,31 @@ function initPasteFunctionality() {
             @keyframes slideOutRight {
                 from { transform: translateX(0); opacity: 1; }
                 to { transform: translateX(100%); opacity: 0; }
+            }            .kanban-column.selected-for-paste {
+                box-shadow: 0 0 0 3px #2196F3 !important;
+                border-radius: 8px !important;
+                transition: box-shadow 0.2s ease !important;
+                background: rgba(33, 150, 243, 0.05) !important;
+                position: relative !important;
             }
-            .kanban-column.selected-for-paste {
-                box-shadow: 0 0 0 3px #2196F3;
-                border-radius: 8px;
+            .kanban-column.selected-for-paste::before {
+                content: '📋 Ausgewählt für Einfügen';
+                position: absolute;
+                top: -25px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #2196F3;
+                color: white;
+                padding: 4px 12px;
+                border-radius: 15px;
+                font-size: 0.8rem;
+                white-space: nowrap;
+                z-index: 1000;
+                opacity: 0.9;
+            }
+            .kanban-column.selected-for-paste .column-header {
+                background: linear-gradient(135deg, rgba(33, 150, 243, 0.8), rgba(33, 150, 243, 0.6)) !important;
+                color: white !important;
             }
             .paste-notification {
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -364,6 +417,8 @@ function initPasteFunctionality() {
         `;
         document.head.appendChild(style);
     }
+    
+    console.log('✅ Paste functionality initialized with enhanced column selection');
 }
 
 // URL Preview Funktionalität
@@ -379,6 +434,11 @@ async function fetchUrlPreview(url) {
 }
 
 async function fetchUrlMetadata(url) {
+    // Spezielle Behandlung für YouTube-URLs
+    if (isYouTubeUrl(url)) {
+        return await fetchYouTubeMetadata(url);
+    }
+    
     const corsProxies = [
         'https://api.allorigins.win/get?url=',
         'https://cors-anywhere.herokuapp.com/',
@@ -445,6 +505,45 @@ async function fetchUrlMetadata(url) {
         description: `Webseite von ${domain}`,
         image: `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
         url: url
+    };
+}
+
+async function fetchYouTubeMetadata(url) {
+    const videoId = extractYouTubeVideoId(url);
+    if (!videoId) {
+        return null;
+    }
+    
+    try {
+        // Versuche YouTube oEmbed API für Metadaten
+        const oembed = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
+        if (oembed.ok) {
+            const data = await oembed.json();
+            return {
+                title: data.title || 'YouTube Video',
+                description: `Video von ${data.author_name || 'YouTube'} • ${data.width}x${data.height}`,
+                image: getYouTubeThumbnail(videoId, 'maxresdefault'),
+                url: url,
+                isYouTube: true,
+                videoId: videoId,
+                embedUrl: getYouTubeEmbedUrl(videoId),
+                authorName: data.author_name,
+                duration: data.duration || null
+            };
+        }
+    } catch (error) {
+        console.warn('YouTube oEmbed failed:', error);
+    }
+    
+    // Fallback: Grundlegende YouTube-Daten
+    return {
+        title: 'YouTube Video',
+        description: 'Video auf YouTube',
+        image: getYouTubeThumbnail(videoId, 'maxresdefault'),
+        url: url,
+        isYouTube: true,
+        videoId: videoId,
+        embedUrl: getYouTubeEmbedUrl(videoId)
     };
 }
 
@@ -542,6 +641,27 @@ function extractDomainFromUrl(url) {
     } catch {
         return url;
     }
+}
+
+// YouTube-spezifische Funktionen
+function isYouTubeUrl(url) {
+    const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+    return youtubeRegex.test(url);
+}
+
+function extractYouTubeVideoId(url) {
+    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+    const match = url.match(regex);
+    return match ? match[1] : null;
+}
+
+function getYouTubeEmbedUrl(videoId) {
+    return `https://www.youtube.com/embed/${videoId}`;
+}
+
+function getYouTubeThumbnail(videoId, quality = 'maxresdefault') {
+    // Verfügbare Qualitäten: maxresdefault, hqdefault, mqdefault, sddefault, default
+    return `https://img.youtube.com/vi/${videoId}/${quality}.jpg`;
 }
 
 // Erweiterte URL-Text Behandlung
@@ -645,30 +765,63 @@ ${preview.description}
 
 [🔗 ${preview.url}](${preview.url})`;
     }
+
+    // YouTube-spezifische Inhalte
+    const isYouTube = preview.isYouTube;
+    const videoTabs = isYouTube ? `
+        <div class="video-tabs">
+            <button class="tab-btn active" onclick="showVideoTab('thumbnail')" data-tab="thumbnail">
+                🖼️ Thumbnail
+            </button>
+            <button class="tab-btn" onclick="showVideoTab('player')" data-tab="player">
+                ▶️ Video Player
+            </button>
+        </div>
+    ` : '';
+
+    const thumbnailContent = `
+        <div class="url-preview-image">
+            <img src="${preview.image}" alt="Preview" onerror="this.style.display='none'; this.parentElement.style.display='none';" 
+                 onload="this.style.opacity='1';" style="opacity: 0; transition: opacity 0.3s;">
+        </div>
+    `;
+
+    const playerContent = isYouTube ? `
+        <div class="youtube-video-container" id="video-player-tab" style="display: none;">
+            <iframe 
+                src="${preview.embedUrl}" 
+                frameborder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowfullscreen>
+            </iframe>
+        </div>
+    ` : '';
     
     modal.innerHTML = `
         <div class="modal-content" style="max-width: 650px;">
             <div class="modal-header">
-                <h2>🔗 URL-Vorschau</h2>
+                <h2>${isYouTube ? '🎥' : '🔗'} ${isYouTube ? 'YouTube Video' : 'URL-Vorschau'}</h2>
                 <button class="close-btn" onclick="closeUrlPreviewModal()">&times;</button>
             </div>
             <div class="modal-body">
+                ${videoTabs}
                 <div class="url-preview-container">
-                    ${preview.image ? `<div class="url-preview-image">
-                        <img src="${preview.image}" alt="Preview" onerror="this.style.display='none'; this.parentElement.style.display='none';" 
-                             onload="this.style.opacity='1';" style="opacity: 0; transition: opacity 0.3s;">
-                    </div>` : ''}
+                    <div id="thumbnail-tab" class="tab-content active">
+                        ${preview.image ? thumbnailContent : ''}
+                    </div>
+                    ${playerContent}
                     <div class="url-preview-content">
                         <h3 class="url-preview-title">${preview.title}</h3>
                         <p class="url-preview-description">${preview.description}</p>
-                        <small class="url-preview-url">🌐 ${preview.url}</small>
+                        <small class="url-preview-url">${isYouTube ? '🎥' : '🌐'} ${preview.url}</small>
+                        ${isYouTube && preview.authorName ? `<br><small style="color: #666;">📺 Kanal: ${preview.authorName}</small>` : ''}
                     </div>
                 </div>
                 
                 <div class="form-group">
                     <label>
                         <input type="checkbox" id="use-as-thumbnail" ${preview.image ? 'checked' : 'disabled'}>
-                        <span>Bild als Karten-Thumbnail verwenden</span>
+                        <span>${isYouTube ? 'Video-Thumbnail als Karten-Thumbnail verwenden' : 'Bild als Karten-Thumbnail verwenden'}</span>
                         ${!preview.image ? '<small style="color: #999;"> (Kein Bild verfügbar)</small>' : ''}
                     </label>
                 </div>
@@ -731,12 +884,87 @@ ${preview.description}
     }, 100);
 }
 
+// YouTube Video Tab-Switching Funktionalität
+function showVideoTab(tabName) {
+    // Tab-Buttons aktualisieren
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    
+    // Tab-Inhalte umschalten
+    const thumbnailTab = document.getElementById('thumbnail-tab');
+    const playerTab = document.getElementById('video-player-tab');
+    
+    if (tabName === 'thumbnail') {
+        if (thumbnailTab) {
+            thumbnailTab.style.display = 'block';
+            thumbnailTab.classList.add('active');
+        }
+        if (playerTab) {
+            playerTab.style.display = 'none';
+            playerTab.classList.remove('active');
+        }
+    } else if (tabName === 'player') {
+        if (thumbnailTab) {
+            thumbnailTab.style.display = 'none';
+            thumbnailTab.classList.remove('active');
+        }
+        if (playerTab) {
+            playerTab.style.display = 'block';
+            playerTab.classList.add('active');
+        }
+    }
+}
+
+// Globale Funktion für Tab-Switching verfügbar machen
+window.showVideoTab = showVideoTab;
+
 function closeUrlPreviewModal() {
     const modal = document.getElementById('url-preview-modal');
     if (modal) {
         modal.remove();
     }
 }
+
+// YouTube Video Tab-Switching Funktionalität
+function showVideoTab(tabName) {
+    // Tab-Buttons aktualisieren
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    const activeBtn = document.querySelector(`[data-tab="${tabName}"]`);
+    if (activeBtn) {
+        activeBtn.classList.add('active');
+    }
+    
+    // Tab-Inhalte umschalten
+    const thumbnailTab = document.getElementById('thumbnail-tab');
+    const playerTab = document.getElementById('video-player-tab');
+    
+    if (tabName === 'thumbnail') {
+        if (thumbnailTab) {
+            thumbnailTab.style.display = 'block';
+            thumbnailTab.classList.add('active');
+        }
+        if (playerTab) {
+            playerTab.style.display = 'none';
+            playerTab.classList.remove('active');
+        }
+    } else if (tabName === 'player') {
+        if (thumbnailTab) {
+            thumbnailTab.style.display = 'none';
+            thumbnailTab.classList.remove('active');
+        }
+        if (playerTab) {
+            playerTab.style.display = 'block';
+            playerTab.classList.add('active');
+        }
+    }
+}
+
+// Globale Funktion für Tab-Switching verfügbar machen
+window.showVideoTab = showVideoTab;
 
 function confirmUrlPreviewPaste() {
     const modal = document.getElementById('url-preview-modal');
@@ -817,8 +1045,7 @@ function showPasteNotification(message, duration = 3000) {
         font-size: 14px;
         animation: slideInRight 0.3s ease;
     `;
-    
-    document.body.appendChild(notification);
+      document.body.appendChild(notification);
     
     if (duration > 0) {
         setTimeout(() => {
@@ -840,5 +1067,11 @@ window.PasteFunctionality = {
     initPasteFunctionality,
     selectColumnForPaste,
     handleTextPaste,
-    handleImagePaste
+    handleImagePaste,
+    showUrlPreviewModal,
+    fetchUrlMetadata,
+    isYouTubeUrl,
+    extractYouTubeVideoId,
+    getYouTubeThumbnail,
+    getYouTubeEmbedUrl
 };
