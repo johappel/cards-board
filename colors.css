@@ -94,9 +94,9 @@
 }
 
 .kanban-card .card-btn {
-    color: rgba(255,255,255,0.8);
-    background: rgba(0,0,0,0.1);
-    border-radius: 3px;
+    color: rgba(0,0,0,0.8);
+    /* background: rgba(0,0,0,0.1); */
+    
 }
 
 .kanban-card .card-btn:hover {
@@ -137,16 +137,27 @@
     color: #000;
     font-weight: normal;
 }
-
-.kanban-card .card-header .card-btn,
-.kanban-column .column-header .menu-dots {
-    color: #e0e0e0;
+.kanban-card .card-header .card-btn{
+    color: #303030;
 }
-.kanban-card .card-header .card-btn:hover,
-.kanban-column .column-header .menu-dots:hover {
+
+.kanban-card .card-header .card-btn:hover{
     color: #fff;
 }
-
+.kanban-column .column-header .menu-dots {
+    color: #fff;
+}
+.kanban-column .column-header .menu-dots:hover {
+    color: #333;
+    background-color: #d4d4d4;
+}
+.menu-dots:hover,.card-btn:hover {
+    min-width: 30px;
+    border-radius: 50%;
+}
+.card-btn:hover {
+    min-width: 24px;
+}
 /* Button Styles */
 .btn {
     padding: 0.5rem 1rem;

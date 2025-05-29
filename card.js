@@ -1,4 +1,85 @@
 // Card Functions
+
+// Variable für die aktuell ausgewählte Karte (für Keyboard-Löschung)
+let selectedCardData = null;
+
+function deleteCard(cardId, columnId) {
+    if (!confirm('Sind Sie sicher, dass Sie diese Karte löschen möchten?')) {
+        return;
+    }
+    
+    const column = currentBoard.columns.find(c => c.id === columnId);
+    if (!column) {
+        console.error('Column not found:', columnId);
+        return;
+    }
+    
+    const cardIndex = column.cards.findIndex(c => c.id === cardId);
+    if (cardIndex === -1) {
+        console.error('Card not found:', cardId);
+        return;
+    }
+    
+    // Karte aus der Spalte entfernen
+    column.cards.splice(cardIndex, 1);
+    
+    // Speichern und Anzeige aktualisieren
+    saveAllBoards();
+    renderColumns();
+    
+    // Eventuell offenes Full Card Modal schließen
+    const fullModal = document.getElementById('full-card-modal');
+    if (fullModal) {
+        closeCardFullModal();
+    }
+    
+    // Card Modal schließen, falls es offen ist
+    closeModal('card-modal');
+    
+    // Ausgewählte Karte zurücksetzen
+    selectedCardData = null;
+}
+
+function selectCard(cardId, columnId) {
+    // Alle Karten deselektieren
+    document.querySelectorAll('.kanban-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // Karte auswählen
+    const cardElement = document.querySelector(`[data-card-id="${cardId}"]`);
+    if (cardElement) {
+        cardElement.classList.add('selected');
+        selectedCardData = { cardId, columnId };
+    }
+}
+
+// Keyboard Event Listener für DEL-Taste
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Delete' && selectedCardData) {
+        event.preventDefault();
+        deleteCard(selectedCardData.cardId, selectedCardData.columnId);
+    }
+    
+    // ESC-Taste zum Deselektieren
+    if (event.key === 'Escape' && selectedCardData) {
+        document.querySelectorAll('.kanban-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        selectedCardData = null;
+    }
+});
+
+// Click außerhalb einer Karte deselektiert alle Karten
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('.kanban-card') && selectedCardData) {
+        document.querySelectorAll('.kanban-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        selectedCardData = null;
+    }
+});
+
 function openCardModal(columnId, cardId = null) {
     if (cardId) {
         // Zuerst die Karte in allen Spalten suchen (für den Fall, dass sie verschoben wurde)
@@ -21,13 +102,16 @@ function openCardModal(columnId, cardId = null) {
         currentCard = foundCard;
         currentColumn = foundColumn;
         columnId = foundColumn.id; // Update columnId für den Rest der Funktion
-        
-        document.getElementById('modal-title').textContent = 'Edit Card';
+          document.getElementById('modal-title').textContent = 'Edit Card';
         document.getElementById('card-heading').value = currentCard.heading;
         document.getElementById('card-content').value = currentCard.content;
         document.getElementById('card-color').value = currentCard.color || 'color-gradient-1';
         document.getElementById('card-thumbnail').value = currentCard.thumbnail || '';
         setSelectedColor('card-color-palette', currentCard.color || 'color-gradient-1');
+        
+        // Delete-Button anzeigen bei bestehenden Karten
+        const deleteBtn = document.getElementById('delete-card-btn');
+        if (deleteBtn) deleteBtn.style.display = 'inline-block';
     } else {
         // Für neue Karten: Verwende die übergebene columnId
         currentColumn = currentBoard.columns.find(c => c.id === columnId);
@@ -35,12 +119,15 @@ function openCardModal(columnId, cardId = null) {
             console.error('Column not found for new card:', columnId);
             return;
         }
-        currentCard = null;
-        document.getElementById('modal-title').textContent = 'Create New Card';
+        currentCard = null;        document.getElementById('modal-title').textContent = 'Create New Card';
         document.getElementById('card-form').reset();
         document.getElementById('card-color').value = 'color-gradient-1';
         document.getElementById('card-thumbnail').value = '';
         setSelectedColor('card-color-palette', 'color-gradient-1');
+        
+        // Delete-Button verstecken bei neuen Karten
+        const deleteBtn = document.getElementById('delete-card-btn');
+        if (deleteBtn) deleteBtn.style.display = 'none';
     }
     
     // Populate column select
@@ -152,10 +239,10 @@ function createCardElement(card, columnId) {
         } else {
             previewText = markdownPreview.replace(/\n/g, '<br>');
         }
-    }
-    return `
+    }    return `
         <div class="kanban-card ${colorClass}"
              data-card-id="${card.id}"
+             onclick="selectCard('${card.id}', '${columnId}')"
              ondblclick="showCardFullModal('${card.id}', '${columnId}')"
              ontouchstart="cardTouchStart(event, '${card.id}', '${columnId}')"
              ontouchend="cardTouchEnd(event)">
@@ -163,7 +250,8 @@ function createCardElement(card, columnId) {
             <div class="card-header">
                 <div class="card-title">${card.heading || ''}</div>
                 <div class="card-actions">
-                    <button class="card-btn" onclick="event.stopPropagation();openCardModal('${columnId}', '${card.id}')">⋮</button>
+                    <button class="card-btn card-delete" onclick="event.stopPropagation();deleteCard('${card.id}', '${columnId}')" title="Karte löschen">🗑️</button>
+                    <button class="card-btn" onclick="event.stopPropagation();openCardModal('${columnId}', '${card.id}')" title="Karte bearbeiten">⋮</button>
                 </div>
             </div>
             <div class="card-preview-content" style="padding-top:0.1rem;padding-bottom:0.1rem;">
@@ -226,14 +314,14 @@ function showCardFullModal(cardId, columnId) {
         modal.id = 'full-card-modal';
         modal.className = 'modal show';
         document.body.appendChild(modal);
-    }
-    // Modal-Inhalt (verwende die gefundene Spalte)
+    }    // Modal-Inhalt (verwende die gefundene Spalte)
     modal.innerHTML = `
         <div class="modal-content ${foundCard.color || ''}" style="max-width:600px;">
             <div class="modal-header">
                 <h2>${foundCard.heading || ''}</h2>
                 <div style="display:flex;gap:0.5rem;align-items:center;">
-                    <button class="card-btn" onclick="openCardModal('${foundColumn.id}', '${cardId}')">⋮</button>
+                    <button class="card-btn" onclick="deleteCard('${cardId}', '${foundColumn.id}')" title="Karte löschen">🗑️</button>
+                    <button class="card-btn" onclick="openCardModal('${foundColumn.id}', '${cardId}')" title="Karte bearbeiten">⋮</button>
                     <button class="close-btn" onclick="closeCardFullModal()">&times;</button>
                 </div>
             </div>
@@ -408,4 +496,13 @@ function addCardToColumn(columnId, cardData) {
     column.cards.push(newCard);
     saveAllBoards();
     renderColumns();
+}
+
+function deleteCurrentCard() {
+    if (!currentCard || !currentColumn) {
+        console.error('No current card selected for deletion');
+        return;
+    }
+    
+    deleteCard(currentCard.id, currentColumn.id);
 }

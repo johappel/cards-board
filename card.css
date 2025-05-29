@@ -316,3 +316,32 @@
 .kanban-card-dragging {
     opacity: 0.5;
 }
+
+/* Selected card styling for keyboard deletion */
+.kanban-card.selected {
+    box-shadow: 0 0 0 3px #4a90e2;
+    transform: translateY(-2px);
+}
+
+.kanban-card.selected .card-header {
+    background: #e3f2fd;
+}
+
+.kanban-card .card-btn.card-delete{
+    display: none;
+}
+.kanban-card.selected .card-btn.card-delete{
+    display: inline-block;
+}
+
+/* Delete button styling */
+.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+}
