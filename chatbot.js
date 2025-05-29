@@ -462,7 +462,7 @@ document.addEventListener('DOMContentLoaded', function() {
             saveAIEndpoints(wsUrl, webhookUrl);
             saveGlobalAISettings({ provider, apiKey, model, baseUrl });
             closeModal('ai-settings-modal');
-            alert('AI- und n8n-Einstellungen gespeichert!');
+            // alert('AI- und n8n-Einstellungen gespeichert!');
         };
     }
 });
