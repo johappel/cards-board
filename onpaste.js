@@ -859,14 +859,15 @@ ${preview.description}
                         💡 Sie können den Inhalt bearbeiten. Markdown wird unterstützt.
                     </small>
                 </div>
-                
-                <div class="modal-actions">
+                  <div class="modal-actions">
                     <button class="btn btn-primary" onclick="confirmUrlPreviewPaste()">
-                        📝 ${target.type === 'column' ? 'Neue Karte erstellen' : 'Einfügen'}
+                        ${isYouTube ? '🎥 Mit Video-Player einfügen' : '📝 ' + (target.type === 'column' ? 'Neue Karte erstellen' : 'Einfügen')}
                     </button>
-                    <button class="btn btn-secondary" onclick="pasteUrlAsSimpleLink()">
+                    ${isYouTube ? `<button class="btn btn-secondary" onclick="pasteYouTubeAsLink()">
+                        🔗 Nur als Link einfügen
+                    </button>` : `<button class="btn btn-secondary" onclick="pasteUrlAsSimpleLink()">
                         🔗 Als einfacher Link
-                    </button>
+                    </button>`}
                     <button class="btn btn-secondary" onclick="closeUrlPreviewModal()">
                         ❌ Abbrechen
                     </button>
@@ -995,9 +996,40 @@ function confirmUrlPreviewPaste() {
     
     const target = JSON.parse(modal.dataset.targetData);
     const title = document.getElementById('preview-card-title').value;
-    const content = document.getElementById('preview-content').value;
+    let content = document.getElementById('preview-content').value;
     const useAsThumbnail = document.getElementById('use-as-thumbnail').checked;
     const thumbnailUrl = useAsThumbnail ? modal.dataset.previewImage : '';
+    const originalUrl = modal.dataset.originalUrl;
+    
+    // Prüfe ob es sich um ein YouTube-Video handelt und erweitere den Inhalt
+    if (isYouTubeUrl(originalUrl)) {
+        const videoId = extractYouTubeVideoId(originalUrl);
+        if (videoId) {
+            const embedUrl = getYouTubeEmbedUrl(videoId);
+            
+            // Erstelle erweiterten YouTube-Inhalt mit eingebettetem Player
+            content = `# ${title}
+
+## 🎥 Video Player
+<div class="youtube-embed" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; background: #000; border-radius: 8px; margin: 1rem 0;">
+<iframe 
+    src="${embedUrl}" 
+    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+    allowfullscreen
+    title="YouTube Video: ${title}">
+</iframe>
+</div>
+
+## 📋 Video-Informationen
+- **Video ID:** \`${videoId}\`
+- **Original URL:** [${originalUrl}](${originalUrl})
+- **Direkt-Link:** [🔗 Auf YouTube öffnen](${originalUrl})
+
+---
+*Eingefügt als YouTube-Video-Player*`;
+        }
+    }
     
     if (target.type === 'modal') {
         // In offenes Card Modal einfügen
@@ -1028,6 +1060,40 @@ function pasteUrlAsSimpleLink() {
     handleTextPaste(`[${url}](${url})`, target);
     closeUrlPreviewModal();
     showPasteNotification('🔗 URL als einfacher Link eingefügt');
+}
+
+function pasteYouTubeAsLink() {
+    const modal = document.getElementById('url-preview-modal');
+    if (!modal) return;
+    
+    const target = JSON.parse(modal.dataset.targetData);
+    const title = document.getElementById('preview-card-title').value;
+    const originalUrl = modal.dataset.originalUrl;
+    const useAsThumbnail = document.getElementById('use-as-thumbnail').checked;
+    const thumbnailUrl = useAsThumbnail ? modal.dataset.previewImage : '';
+    
+    // Erstelle einfachen Link-Inhalt für YouTube
+    const content = `# ${title}
+
+[🎥 Video auf YouTube ansehen](${originalUrl})
+
+---
+*YouTube-Link eingefügt*`;
+    
+    if (target.type === 'modal') {
+        document.getElementById('card-heading').value = title;
+        insertIntoTextarea('card-content', content);
+        if (thumbnailUrl) {
+            document.getElementById('card-thumbnail').value = thumbnailUrl;
+        }
+    } else if (target.type === 'card') {
+        appendToCard(target.cardId, target.columnId, content);
+    } else if (target.type === 'column') {
+        createEnhancedCardFromPaste(target.columnId, title, content, thumbnailUrl);
+    }
+    
+    closeUrlPreviewModal();
+    showPasteNotification('🔗 YouTube-Video als Link eingefügt!');
 }
 
 function createEnhancedCardFromPaste(columnId, title, content, thumbnailUrl = '') {
@@ -1145,6 +1211,7 @@ function retryYouTubeEmbed(videoId, originalUrl) {
 // Globale Funktionen verfügbar machen
 window.handleYouTubeEmbedError = handleYouTubeEmbedError;
 window.retryYouTubeEmbed = retryYouTubeEmbed;
+window.pasteYouTubeAsLink = pasteYouTubeAsLink;
 
 // Export für globale Nutzung
 window.PasteFunctionality = {
@@ -1158,5 +1225,6 @@ window.PasteFunctionality = {
     isYouTubeUrl,
     extractYouTubeVideoId,
     getYouTubeThumbnail,
-    getYouTubeEmbedUrl
+    getYouTubeEmbedUrl,
+    pasteYouTubeAsLink
 };
