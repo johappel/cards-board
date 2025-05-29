@@ -28,7 +28,6 @@ function saveAIEndpoints(wsUrl, webhookUrl) {
 }
 
 let socket;
-let serverAssignedConnectionId = null;
 let connectionStatusInterval = null;
 let reconnectTimeout = null;
 let heartbeatInterval = null;
@@ -143,6 +142,11 @@ function displayMessage(textOrHtml, sender = 'bot') {
     messageElement.innerHTML = html;
     chatbox.appendChild(messageElement);
     chatbox.scrollTop = chatbox.scrollHeight;
+    
+    // Chat-Nachrichten für aktuelles Board speichern
+    const boardId = window.currentBoard && window.currentBoard.id ? window.currentBoard.id : 'default';
+    const currentMessages = getCurrentChatMessages();
+    saveChatMessages(boardId, currentMessages);
 }
 
 function updateConnectionStatus(message, isError = false) {
@@ -158,6 +162,8 @@ function updateConnectionStatus(message, isError = false) {
 
 function showConnectionId() {
     const connectionStatus = document.getElementById('connectionStatus');
+    const boardId = window.currentBoard && window.currentBoard.id ? window.currentBoard.id : 'default';
+    const serverAssignedConnectionId = getServerAssignedConnectionId(boardId);
     if (serverAssignedConnectionId) {
         connectionStatus.textContent = `Verbunden (ID: ${serverAssignedConnectionId})`;
         connectionStatus.style.color = '#555';
@@ -192,15 +198,38 @@ function getBoardChatConnectionId(boardId) {
     localStorage.setItem(key, id);
     return id;
 }
+
 function setBoardChatConnectionId(boardId, connectionId) {
     if (!boardId) return;
     const key = 'chatbotConnectionId_' + boardId;
     sessionStorage.setItem(key, connectionId);
     localStorage.setItem(key, connectionId);
 }
+
 function clearBoardChatConnectionId(boardId) {
     if (!boardId) return;
     const key = 'chatbotConnectionId_' + boardId;
+    sessionStorage.removeItem(key);
+    localStorage.removeItem(key);
+}
+
+// Server-assigned Connection-ID für Board speichern/lesen
+function getServerAssignedConnectionId(boardId) {
+    if (!boardId) return null;
+    const key = 'serverAssignedConnectionId_' + boardId;
+    return sessionStorage.getItem(key) || localStorage.getItem(key);
+}
+
+function setServerAssignedConnectionId(boardId, connectionId) {
+    if (!boardId) return;
+    const key = 'serverAssignedConnectionId_' + boardId;
+    sessionStorage.setItem(key, connectionId);
+    localStorage.setItem(key, connectionId);
+}
+
+function clearServerAssignedConnectionId(boardId) {
+    if (!boardId) return;
+    const key = 'serverAssignedConnectionId_' + boardId;
     sessionStorage.removeItem(key);
     localStorage.removeItem(key);
 }
@@ -224,9 +253,7 @@ function connectWebSocket() {
     const boardId = window.currentBoard && window.currentBoard.id ? window.currentBoard.id : 'default';
     const wsUrl = getWebSocketUrlForBoard(boardId);
     updateConnectionStatus('Verbinde mit WebSocket-Server...');
-    socket = new WebSocket(wsUrl);
-
-    socket.onopen = function () {
+    socket = new WebSocket(wsUrl);    socket.onopen = function () {
         updateConnectionStatus('Verbunden mit WebSocket-Server.');
         displayMessage('Verbindung zum Chat Agenten hergestellt.', 'system');
         // Connection-ID aus URL extrahieren und speichern
@@ -242,10 +269,10 @@ function connectWebSocket() {
             lastPongTimestamp = Date.now();
             return;
         }
-        try {
-            const data = JSON.parse(event.data);
+        try {            const data = JSON.parse(event.data);
             if (data.type === 'welcome' && data.connectionId) {
-                serverAssignedConnectionId = data.connectionId;
+                const boardId = window.currentBoard && window.currentBoard.id ? window.currentBoard.id : 'default';
+                setServerAssignedConnectionId(boardId, data.connectionId);
                 showConnectionId();
                 if (!connectionStatusInterval) {
                     connectionStatusInterval = setInterval(checkWebSocketStatus, 3000);
@@ -285,12 +312,11 @@ function connectWebSocket() {
             displayMessage(`Fehler beim Verarbeiten der Server-Nachricht: ${event.data}`, 'system');
             console.error("Error parsing message from server or unknown message type:", e, event.data);
         }
-    };
-
-    socket.onclose = function (event) {
+    };    socket.onclose = function (event) {
         updateConnectionStatus(`Verbindung zum Chat Agenten abgebrochen! (Code: ${event.code})`, true);
         displayMessage(`Verbindung zum Chat Agenten verloren. Code: ${event.code}`, 'system');
-        serverAssignedConnectionId = null;
+        const boardId = window.currentBoard && window.currentBoard.id ? window.currentBoard.id : 'default';
+        clearServerAssignedConnectionId(boardId);
         socket = null;
         if (connectionStatusInterval) {
             clearInterval(connectionStatusInterval);
@@ -345,6 +371,8 @@ function sendQueryToN8NAgent(queryText) {
         displayMessage('Kann Nachricht nicht senden: WebSocket nicht verbunden.', 'system');
         return;
     }
+    const boardId = window.currentBoard && window.currentBoard.id ? window.currentBoard.id : 'default';
+    const serverAssignedConnectionId = getServerAssignedConnectionId(boardId);
     if (!serverAssignedConnectionId) {
         displayMessage('Kann Nachricht nicht senden: Keine Connection ID vom Server erhalten.', 'system');
         return;
@@ -433,10 +461,21 @@ window.addEventListener('DOMContentLoaded', function() {
 // Event-Handler für "Neuer Chat"-Button
 window.addEventListener('DOMContentLoaded', function() {
     const newChatBtn = document.getElementById('newChatBtn');
-    if (newChatBtn) {
-        newChatBtn.onclick = function() {
+    if (newChatBtn) {        newChatBtn.onclick = function() {
             const boardId = window.currentBoard && window.currentBoard.id ? window.currentBoard.id : 'default';
+            
+            // Chat-Nachrichten für aktuelles Board löschen
+            clearChatMessages(boardId);
+            
+            // Chat-UI leeren
+            const chatbox = document.getElementById('chatbox');
+            if (chatbox) chatbox.innerHTML = '';
+            
+            // Connection-IDs löschen
             clearBoardChatConnectionId(boardId);
+            clearServerAssignedConnectionId(boardId);
+            
+            // WebSocket-Verbindung neu aufbauen
             if (socket) { try { socket.close(); } catch(e){} }
             connectWebSocket();
             displayMessage('Neuer Chat gestartet. Die Verbindung wurde zurückgesetzt.', 'system');
@@ -464,6 +503,12 @@ function openChatbotModal() {
     // Status sichtbar machen
     const status = document.getElementById('connectionStatus');
     if (status) status.style.display = 'block';
+    
+    // Chat-Nachrichten für aktuelles Board laden
+    const boardId = window.currentBoard && window.currentBoard.id ? window.currentBoard.id : 'default';
+    const savedMessages = loadChatMessages(boardId);
+    restoreChatMessages(savedMessages);
+    
     if (!window._chatbotInitialized) {
         connectWebSocket();
         setupChatbotUI();
@@ -501,6 +546,122 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Board-Wechsel-Handler: WebSocket-Verbindung für neues Board aktualisieren
+function handleBoardChange(newBoardId) {
+    // Prüfen ob Chatbot-Modal geöffnet ist
+    const modal = document.getElementById('chatbot-modal');
+    const isModalVisible = modal && modal.classList.contains('show');
+    
+    if (isModalVisible) {
+        if (newBoardId === null) {
+            // Zurück zum Dashboard - Chat leeren und Verbindung schließen
+            const chatbox = document.getElementById('chatbox');
+            if (chatbox) chatbox.innerHTML = '';
+            
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                try {
+                    socket.close();
+                } catch (e) {
+                    console.log('Fehler beim Schließen der WebSocket-Verbindung:', e);
+                }
+            }
+        } else {
+            // Chat-Nachrichten für neues Board laden
+            const savedMessages = loadChatMessages(newBoardId);
+            restoreChatMessages(savedMessages);
+            
+            // Board-Wechsel - Verbindung neu aufbauen
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                try {
+                    socket.close();
+                } catch (e) {
+                    console.log('Fehler beim Schließen der WebSocket-Verbindung:', e);
+                }
+                
+                // Neue Verbindung für das neue Board aufbauen
+                setTimeout(() => {
+                    connectWebSocket();
+                    displayMessage(`Board gewechselt. Neue Chat-Verbindung wird aufgebaut...`, 'system');
+                }, 500);
+            }
+        }
+    }
+}
+
+// Chat-Nachrichten pro Board speichern/laden
+function saveChatMessages(boardId, messages) {
+    if (!boardId) return;
+    const key = 'chatMessages_' + boardId;
+    localStorage.setItem(key, JSON.stringify(messages));
+}
+
+function loadChatMessages(boardId) {
+    if (!boardId) return [];
+    const key = 'chatMessages_' + boardId;
+    const saved = localStorage.getItem(key);
+    if (saved) {
+        try {
+            return JSON.parse(saved);
+        } catch (e) {
+            console.error('Fehler beim Laden der Chat-Nachrichten:', e);
+            return [];
+        }
+    }
+    return [];
+}
+
+function clearChatMessages(boardId) {
+    if (!boardId) return;
+    const key = 'chatMessages_' + boardId;
+    localStorage.removeItem(key);
+}
+
+function getCurrentChatMessages() {
+    const chatbox = document.getElementById('chatbox');
+    if (!chatbox) return [];
+    
+    const messages = [];
+    const messageElements = chatbox.querySelectorAll('.message');
+    
+    messageElements.forEach(el => {
+        const isUserMessage = el.classList.contains('user-message');
+        const isBotMessage = el.classList.contains('bot-message');
+        const isSystemMessage = el.classList.contains('system-message');
+        
+        let sender = 'bot';
+        if (isUserMessage) sender = 'user';
+        else if (isSystemMessage) sender = 'system';
+        
+        messages.push({
+            content: el.innerHTML,
+            sender: sender,
+            timestamp: Date.now()
+        });
+    });
+    
+    return messages;
+}
+
+function restoreChatMessages(messages) {
+    const chatbox = document.getElementById('chatbox');
+    if (!chatbox) return;
+    
+    // Chat leeren
+    chatbox.innerHTML = '';
+    
+    // Nachrichten wiederherstellen
+    messages.forEach(msg => {
+        const messageElement = document.createElement('div');
+        const senderClass = msg.sender + '-message';
+        messageElement.classList.add('message', senderClass);
+        messageElement.innerHTML = msg.content;
+        chatbox.appendChild(messageElement);
+    });
+    
+    // Zum Ende scrollen
+    chatbox.scrollTop = chatbox.scrollHeight;
+}
+
 // Export für globale Nutzung
 window.addCardToColumn = addCardToColumn;
 window.addColumnWithCards = addColumnWithCards;
@@ -509,3 +670,4 @@ window.connectWebSocket = connectWebSocket;
 window.openChatbotModal = openChatbotModal;
 window.closeChatbotModal = closeChatbotModal;
 window.openAISettingsModal = openAISettingsModal;
+window.handleBoardChange = handleBoardChange;

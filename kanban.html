@@ -336,28 +336,23 @@
 
     <!-- Chatbot Modal -->
     <div id="chatbot-modal" class="modal">
-      <div class="modal-content chatbot-modal-content">
-        <div class="modal-header">
-          <h2>Chatbot</h2>
-          <button class="btn btn-secondary" id="newChatBtn" title="Neuen Chat starten (neue Connection-ID)">🆕 Neuer Chat</button>
-          <button class="close-btn" onclick="closeModal('chatbot-modal')">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div id="chatbox" class="chatbox"></div>
-            <div id="fragments-container" class="fragments-container">
-            <div id="fragbox"></div>
+        <div class="modal-content chatbot-modal-content">
+            <div class="modal-header">
+                <h2>Chatbot</h2>
+                <button class="btn btn-secondary" id="newChatBtn" title="Neuen Chat starten (neue Connection-ID)">🆕 Neuer Chat</button>
+                <button class="close-btn" onclick="closeModal('chatbot-modal')">&times;</button>
             </div>
+            <div id="chatbox" class="chatbox"></div>
             <div id="chatbot-suggestions" class="chatbot-suggestions"></div>
             <div class="chatbot-input-row">
-            <input id="userInput" type="text" placeholder="Nachricht eingeben...">
-            <button id="sendButton" class="btn btn-primary">Senden</button>
-            <span id="progressIndicator" class="hide">⏳</span>
+                <input id="userInput" type="text" placeholder="Nachricht eingeben...">
+                <button id="sendButton" class="btn btn-primary">Senden</button>
+                <span id="progressIndicator" class="hide">⏳</span>
             </div>
             <div class="chatbot-statusbar-container">
-            <div id="connectionStatus"></div>
+                <div id="connectionStatus"></div>
             </div>
         </div>
-      </div>
     </div>
 
     <!-- AI Settings Modal (global) -->

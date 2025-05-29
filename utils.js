@@ -1,7 +1,7 @@
 
 // Utility Functions
 function generateId() {
-    return 'id-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    return 'id-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
 }
 
 function openModal(modalId) {
@@ -16,6 +16,13 @@ function backToDashboard() {
     document.getElementById('board-view').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
     currentBoard = null;
+    window.currentBoard = null;
+    
+    // Chatbot über Zurück-zum-Dashboard informieren
+    if (typeof window.handleBoardChange === 'function') {
+        window.handleBoardChange(null);
+    }
+    
     renderDashboard();
 }
 

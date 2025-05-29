@@ -9,6 +9,14 @@ function openBoard(boardId) {
     // update url with board ID
     window.history.pushState({ boardId: currentBoard.id }, '', `?board=${currentBoard.id}`);
     
+    // Global currentBoard aktualisieren
+    window.currentBoard = currentBoard;
+    
+    // Chatbot über Board-Wechsel informieren
+    if (typeof window.handleBoardChange === 'function') {
+        window.handleBoardChange(currentBoard.id);
+    }
+    
     updateBoardView();
     renderColumns();
 }

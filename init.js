@@ -31,14 +31,19 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (!boards || boards.length === 0) {
         initializeBoards();
         await window.KanbanStorage?.saveBoards?.(boards);
-    }
-    if (boardId) {
+    }    if (boardId) {
         const board = boards.find(b => b.id === boardId);
         if (board) {
             currentBoard = board;
             window.currentBoard = currentBoard;
             document.getElementById('dashboard').style.display = 'none';
             document.getElementById('board-view').style.display = 'flex';
+            
+            // Chatbot über Board-Laden informieren (falls bereits initialisiert)
+            if (typeof window.handleBoardChange === 'function') {
+                window.handleBoardChange(currentBoard.id);
+            }
+            
             updateBoardView();
             renderColumns();
         } else {
