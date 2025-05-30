@@ -393,31 +393,9 @@ function initPasteFunctionality() {
                 box-shadow: 0 0 0 3px #2196F3 !important;
                 border-radius: 8px !important;
                 transition: box-shadow 0.2s ease !important;
-                background: rgba(33, 150, 243, 0.05) !important;
                 position: relative !important;
             }
-            .kanban-column.selected-for-paste::before {
-                content: '📋 Ausgewählt für Einfügen';
-                position: absolute;
-                top: -25px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: #2196F3;
-                color: white;
-                padding: 4px 12px;
-                border-radius: 15px;
-                font-size: 0.8rem;
-                white-space: nowrap;
-                z-index: 1000;
-                opacity: 0.9;
-            }
-            .kanban-column.selected-for-paste .column-header {
-                background: linear-gradient(135deg, rgba(33, 150, 243, 0.8), rgba(33, 150, 243, 0.6)) !important;
-                color: white !important;
-            }
-            .paste-notification {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            }
+            
         `;
         document.head.appendChild(style);
     }
@@ -1024,14 +1002,10 @@ function confirmUrlPreviewPaste() {
     title="YouTube Video: ${title}">
 </iframe>
 </div>
-
-## 📋 Video-Informationen
-- **Video ID:** \`${videoId}\`
-- **Original URL:** [${originalUrl}](${originalUrl})
-- **Direkt-Link:** [🔗 Auf YouTube öffnen](${originalUrl})
-
 ---
-*Eingefügt als YouTube-Video-Player*`;
+[🔗 Auf YouTube öffnen](${originalUrl})
+
+`;
         }
     }
     

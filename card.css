@@ -1,6 +1,7 @@
 /* Card Styles */
 .kanban-card {
-    border-radius: 4px;
+    border-radius: 8px;
+    border: 1px solid #777777;
     padding: 1rem;
     margin-bottom: 0.5rem;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
@@ -40,6 +41,7 @@
     left: 0;
     top: 0;
     z-index: 1;
+    background: linear-gradient(120deg, rgba(207, 211, 214, 0.8) 0%, rgba(226, 224, 231, 0.5) 30%, rgb(254, 253, 255) 100%) !important;
 }
 
 .card-title {

@@ -197,16 +197,24 @@
 .kanban-column-dragging {
     opacity: 0.5;
 }
+.kanban-column{
+    background-blend-mode:lighten ;
+    background-color: rgba(238, 237, 237, 0.4) !important;
+}
 
 .kanban-column.selected-for-paste {
     box-shadow: 0 0 0 3px #2196F3 !important;
     border-radius: 8px !important;
     transition: box-shadow 0.2s ease !important;
-    background: rgba(33, 150, 243, 0.05) !important;
+    background-blend-mode: multiply;
+    background-color: rgba(138, 138, 138, 0.15) !important;
+
+
 }
 
 .kanban-column.selected-for-paste .column-header {
-    background: linear-gradient(120deg, rgba(33, 150, 243, 0.8) 0%, rgba(33, 150, 243, 0.6) 50%, rgba(33, 150, 243, 0.4) 100%) !important;
+    background-blend-mode: lighten;
+    background: linear-gradient(135deg, rgba(33, 150, 243, 0.8) 0%, rgba(80, 77, 95, 0.5) 30%, rgba(80, 77, 95, 1) 100%) !important;
     color: white !important;
     border-radius: 8px 8px 0 0 !important;
 }

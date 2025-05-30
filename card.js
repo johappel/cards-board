@@ -4,9 +4,9 @@
 let selectedCardData = null;
 
 function deleteCard(cardId, columnId) {
-    if (!confirm('Sind Sie sicher, dass Sie diese Karte löschen möchten?')) {
-        return;
-    }
+    // if (!confirm('Sind Sie sicher, dass Sie diese Karte löschen möchten?')) {
+    //     return;
+    // }
     
     const column = currentBoard.columns.find(c => c.id === columnId);
     if (!column) {
