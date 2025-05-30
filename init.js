@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const boardId = urlParams.get('board');
     
     boards = await (window.KanbanStorage?.loadBoards?.() || []);
-    console.log('Boards nach Laden:', JSON.stringify(boards, null, 2)); // Debug-Log
+    //console.log('DEBUG: Boards nach Laden:', JSON.stringify(boards, null, 2)); // Debug-Log
     
     // Logging für das tatsächlich geladene Board
     let boardForLog = null;
@@ -24,9 +24,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         boardForLog = boards[0];
     }
     if (boardForLog && boardForLog.columns) {
-        console.log('### DEBUG: Spaltenreihenfolge nach Laden:', boardForLog.columns.map(c => c.name));
         boardForLog.columns.forEach(col => {
-            console.log('### DEBUG: Kartenreihenfolge in Spalte', col.name, col.cards.map(card => card.heading));
         });
     }
     
@@ -206,9 +204,7 @@ function initSortableKanban() {
 function saveAllBoards() {
     console.log('saveAllBoards() aufgerufen', JSON.stringify(boards, null, 2));
     if (window.currentBoard && window.currentBoard.columns) {
-        console.log('### DEBUG: Spaltenreihenfolge beim Speichern:', window.currentBoard.columns.map(c => c.name));
         window.currentBoard.columns.forEach(col => {
-            console.log('### DEBUG: Kartenreihenfolge in Spalte', col.name, col.cards.map(card => card.heading));
         });
     }
     window.KanbanStorage?.saveBoards?.(boards);

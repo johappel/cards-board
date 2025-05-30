@@ -30,7 +30,6 @@ function initSortableKanban() {
                     window.removeDuplicateClass(evt.item);
                 }
                 try {
-                    console.log('### DEBUG: onEnd Spalten-Drag erreicht');
                     if (!window.currentBoard || !window.currentBoard.columns) return;
                     
                     // Ctrl+Drag: Spalte duplizieren
@@ -117,7 +116,6 @@ function initSortableKanban() {
                         window.removeDuplicateClass(evt.item);
                     }
                     try {
-                        console.log('### DEBUG: onEnd Karten-Drag erreicht');
                         if (!window.currentBoard || !window.currentBoard.columns) return;
                         const fromColId = evt.from.closest('.kanban-column').dataset.columnId;
                         const toColId = evt.to.closest('.kanban-column').dataset.columnId;

@@ -329,11 +329,8 @@ function selectColumnForPaste(columnId) {
         // Erzwinge Stil-Update
         columnElement.style.setProperty('box-shadow', '0 0 0 3px #2196F3', 'important');
         
-        // Feedback-Nachricht mit Spalten-Namen
-        const columnTitle = columnElement.querySelector('.column-title')?.textContent || 
-                           columnElement.querySelector('.column-header h3')?.textContent || 
-                           'Unbekannt';
-        showPasteNotification(`📋 Spalte '${columnTitle}' für Einfügen ausgewählt`, 2500);
+        // Feedback-Nachricht mit Spalten-Namen - nur bei Paste-Aktion
+        // showPasteNotification entfernt - wird nur bei echtem Paste aufgerufen
     } else {
         console.warn('❌ Column element not found for ID:', columnId);
     }
@@ -343,9 +340,16 @@ function selectColumnForPaste(columnId) {
 function initPasteFunctionality() {
     // Globaler Paste Event Listener
     document.addEventListener('paste', handlePaste);
-    
-    // Spalten-Klick für Auswahl (mehrere Selektoren)
+      // Spalten-Klick für Auswahl (mehrere Selektoren)
     document.addEventListener('click', function(event) {
+        // Ignoriere Klicks auf Menu-Dots und andere Buttons
+        if (event.target.closest('.menu-dots') || 
+            event.target.closest('button') || 
+            event.target.closest('.dropdown-menu') ||
+            event.target.closest('.column-actions')) {
+            return; // Lass diese Events normal durch
+        }
+        
         // Mehrere Wege, um Spalten-Klicks zu erkennen
         const columnHeader = event.target.closest('.column-header');
         const columnTitle = event.target.closest('.column-title');

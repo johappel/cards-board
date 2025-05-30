@@ -232,11 +232,19 @@ function toggleCardExpand(event, cardId, columnId) {
 
 function createCardElement(card, columnId) {
     const colorClass = card.color || 'color-gradient-1';
-    let previewText = '';
-    if (card.content) {
-        // Für die Vorschau: Nur die ersten 240 Zeichen, aber Markdown-Elemente wie Zeilenumbrüche und Listen berücksichtigen
-        let markdownPreview = card.content.split('\n').slice(0, 6).join('\n'); // max. 6 Zeilen
+    let previewText = '';    if (card.content) {
+        // Für die Vorschau: YouTube-Embed-Blöcke entfernen (mehrzeilig)
+        let markdownPreview = card.content.replace(/<div class="youtube-embed"[\s\S]*?<\/div>/g, '');
+        
+        // Zusätzlich: Gesamte YouTube-Einbettungsblöcke entfernen (inklusive Überschriften)
+        markdownPreview = markdownPreview.replace(/## 🎥 Video Player[\s\S]*?(?=##|$)/g, '');
+        
+        // Erste 6 Zeilen und max. 240 Zeichen für Vorschau
+        markdownPreview = markdownPreview.split('\n').slice(0, 6).join('\n'); // max. 6 Zeilen
+        console.log('### DEBUG - Rendering card content:', card.content);
+        
         if (markdownPreview.length > 240) markdownPreview = markdownPreview.substring(0, 240) + '...';
+        
         // Nur einfache Markdown-Elemente rendern (keine Überschriften, keine Links, kein Codeblock)
         if (window.marked) {
             // marked.parseInline rendert nur Inline-Elemente, aber wir wollen auch Listen und Zeilenumbrüche
