@@ -357,19 +357,29 @@ function showCardFullModal(cardId, columnId) {
         document.body.appendChild(modal);
     }    // Modal-Inhalt (verwende die gefundene Spalte)
     modal.innerHTML = `
-        <div class="modal-content ${foundCard.color || ''}" style="max-width:600px;">
+        <div class="modal-content ${foundCard.color || ''}">
             <div class="modal-header">
                 <h2>${foundCard.heading || ''}</h2>
-                <div style="display:flex;gap:0.5rem;align-items:center;">
-                    <button class="card-btn" onclick="deleteCard('${cardId}', '${foundColumn.id}')" title="Karte löschen">🗑️</button>
-                    <button class="card-btn" onclick="openCardModal('${foundColumn.id}', '${cardId}')" title="Karte bearbeiten">⋮</button>
-                    <button class="close-btn" onclick="closeCardFullModal()">&times;</button>
+                <div class="modal-header-actions">
+                    <div class="primary-actions">
+                        <button class="card-btn" onclick="openCardModal('${foundColumn.id}', '${cardId}')" title="Karte bearbeiten">
+                            ✏️ Bearbeiten
+                        </button>
+                    </div>
+                    <div class="secondary-actions">
+                        <button class="card-btn delete-btn" onclick="deleteCard('${cardId}', '${foundColumn.id}')" title="Karte löschen">
+                            🗑️ Löschen
+                        </button>
+                        <button class="close-btn" onclick="closeCardFullModal()" title="Schließen">&times;</button>
+                    </div>
                 </div>
             </div>
-            ${foundCard.thumbnail ? `<div class='card-thumb-modal'><img src='${foundCard.thumbnail}' alt='thumbnail' /></div>` : ''}
-            <div class="card-content-full">${window.renderMarkdownToHtml ? window.renderMarkdownToHtml(foundCard.content || '') : (foundCard.content || '')}</div>
-            ${foundCard.comments ? `<div class="card-comment" style="margin: 1rem; color: #fff;">💬 ${foundCard.comments}</div>` : ''}
-            ${foundCard.url ? `<div class="card-url" style="margin: 1rem;"><a href="${foundCard.url}" class="card-url-link" target="_blank" rel="noopener noreferrer" style="color: #4a90e2;">🔗 ${foundCard.url}</a></div>` : ''}
+            <div class="modal-body">
+                ${foundCard.thumbnail ? `<div class='card-thumb-modal'><img src='${foundCard.thumbnail}' alt='thumbnail' /></div>` : ''}
+                <div class="card-content-full">${window.renderMarkdownToHtml ? window.renderMarkdownToHtml(foundCard.content || '') : (foundCard.content || '')}</div>
+                ${foundCard.comments ? `<div class="card-comment">${foundCard.comments}</div>` : ''}
+                ${foundCard.url ? `<div class="card-url"><a href="${foundCard.url}" class="card-url-link" target="_blank" rel="noopener noreferrer">${foundCard.url}</a></div>` : ''}
+            </div>
         </div>
     `;
     modal.onclick = function(e) { if (e.target === modal) closeCardFullModal(); };
@@ -394,18 +404,29 @@ function updateFullCardModal(cardId) {
     }
     if (!card || !column) return;    // Modal-Inhalt neu setzen (wie in showCardFullModal)
     modal.innerHTML = `
-        <div class="modal-content ${card.color || ''}" style="max-width:600px;">
+        <div class="modal-content ${card.color || ''}">
             <div class="modal-header">
                 <h2>${card.heading || ''}</h2>
-                <div style="display:flex;gap:0.5rem;align-items:center;">
-                    <button class="card-btn" onclick="openCardModal('${column.id}', '${card.id}')">⋮</button>
-                    <button class="close-btn" onclick="closeCardFullModal()">&times;</button>
+                <div class="modal-header-actions">
+                    <div class="primary-actions">
+                        <button class="card-btn" onclick="openCardModal('${column.id}', '${card.id}')" title="Karte bearbeiten">
+                            ✏️ Bearbeiten
+                        </button>
+                    </div>
+                    <div class="secondary-actions">
+                        <button class="card-btn delete-btn" onclick="deleteCard('${card.id}', '${column.id}')" title="Karte löschen">
+                            🗑️ Löschen
+                        </button>
+                        <button class="close-btn" onclick="closeCardFullModal()" title="Schließen">&times;</button>
+                    </div>
                 </div>
             </div>
-            ${card.thumbnail ? `<div class='card-thumb-modal'><img src='${card.thumbnail}' alt='thumbnail' /></div>` : ''}
-            <div class="card-content-full">${window.renderMarkdownToHtml ? window.renderMarkdownToHtml(card.content || '') : (card.content || '')}</div>
-            ${card.comments ? `<div class="card-comment" style="margin: 1rem; color: #fff;">💬 ${card.comments}</div>` : ''}
-            ${card.url ? `<div class="card-url" style="margin: 1rem;"><a href="${card.url}" class="card-url-link" target="_blank" rel="noopener noreferrer" style="color: #4a90e2;">🔗 ${card.url}</a></div>` : ''}
+            <div class="modal-body">
+                ${card.thumbnail ? `<div class='card-thumb-modal'><img src='${card.thumbnail}' alt='thumbnail' /></div>` : ''}
+                <div class="card-content-full">${window.renderMarkdownToHtml ? window.renderMarkdownToHtml(card.content || '') : (card.content || '')}</div>
+                ${card.comments ? `<div class="card-comment">${card.comments}</div>` : ''}
+                ${card.url ? `<div class="card-url"><a href="${card.url}" class="card-url-link" target="_blank" rel="noopener noreferrer">${card.url}</a></div>` : ''}
+            </div>
         </div>
     `;
     modal.onclick = function(e) { if (e.target === modal) closeCardFullModal(); };
