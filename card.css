@@ -12,6 +12,7 @@
     overflow: hidden;
     position: relative;
     height: fit-content;
+    flex: 0 0 auto; /* Verhindert, dass die Karte in flexbox-Layouts skaliert */
     padding-top: 2.2rem; /* Platz für Header schaffen */
 }
 

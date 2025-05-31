@@ -1,25 +1,18 @@
 /* Kanban Board Columns */
-.kanban-board {
-    flex: 1;
-    display: flex;
-    gap: 1rem;
-    padding: 2rem;
-    overflow-x: auto;
-    align-items: flex-start;
-}
+/* Die .kanban-board Regel wurde nach board.css verschoben und hier entfernt. */
 
 .kanban-column {
     flex: 0 0 var(--kanban-column-width, 300px);
     border-radius: 8px;
-    padding: 3.5rem 0.1rem 0.1rem 0.1rem;
+    /* padding-top wird entfernt, da der Header absolut positioniert ist und seinen eigenen Padding hat */
+    padding: 0 0.1rem 0.1rem 0.1rem;
     display: flex;
     flex-direction: column;
     transition: all 0.3s ease;
-    height: 80vh;
-    min-height: 400px;
-    max-height: 80vh;
-    overflow-y: auto;
+    /* Feste Höhen entfernt, Höhe wird durch align-items: stretch vom Parent (.kanban-board) bestimmt */
+    overflow: hidden; /* Verhindert Scrollbalken an der Spalte selbst */
     position: relative;
+    box-sizing: border-box; /* Hinzugefügt */
 }
 
 .kanban-column.dragging {
@@ -40,11 +33,12 @@
     border-radius: 0;
     background: #fff;
     box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-    width: calc(100% + 2rem); /* Überdeckt den Padding-Bereich der Spalte */
-    position: absolute;
+    width: 100%; /* Nimmt die volle Breite der Spalte ein */
+    position: absolute; /* Absolut positioniert relativ zur Spalte */
     left: 0;
     top: 0;
     z-index: 1;
+    height: 3.5rem; /* Feste Höhe für den Header, passend zum ursprünglichen Padding-Top der Spalte */
 }
 
 .column-header:active {
@@ -97,29 +91,35 @@
 }
 
 .column-content {
-    flex: 1;
-    min-height: 200px;
+    position: absolute;
+    top: 3.5rem; /* Höhe des .column-header */
+    left: 0.1rem; /* Spalten-Padding berücksichtigen */
+    right: 0.1rem; /* Spalten-Padding berücksichtigen */
+    bottom: 3.2rem; /* Platz für den add-card-btn (ca. 2.5rem Höhe + 0.6rem Abstand + 0.1rem Spalten-Padding unten) */
+    overflow-y: auto; /* Nur dieser Bereich soll scrollen */
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.5rem; /* Beibehalten vom Original */
+    padding: 0.5rem; /* Innenabstand für den Inhalt (Karten) */
 }
 
 .add-card-btn {
-    width: 100%;
+    position: absolute; /* Absolut positionieren relativ zu .kanban-column */
+    bottom: 0.6rem; /* Abstand vom unteren Rand der Spalte, über dem Spalten-Padding */
+    left: 0.6rem;   /* Abstand vom linken Rand der Spalte, innerhalb des Spalten-Paddings */
+    right: 0.6rem;  /* Abstand vom rechten Rand der Spalte, innerhalb des Spalten-Paddings */
+    width: auto; /* Breite wird durch left/right und das Padding des Buttons bestimmt */
     padding: 0.75rem;
-    background: rgba(200, 200, 200, 05);
+    background: rgba(200, 200, 200, 0.5);
     border: 2px dashed #9a9fa5;
     border-radius: 4px;
     cursor: pointer;
     color: #03214e;
     transition: all 0.3s ease;
+    z-index: 5; /* Sicherstellen, dass er über anderem Inhalt im Column-Flow liegt, falls nötig */
+    /* flex-shrink: 0; ist hier nicht mehr relevant */
 }
 
-.add-card-btn:hover {
-    border-color: #4a90e2;
-    color: #4a90e2;
-    background: rgba(74, 144, 226, 0.05);
-}
 /* Column placeholder for drag and drop */
 .column-placeholder {
     flex: 0 0 300px;
@@ -127,44 +127,6 @@
     border: 2px dashed #4a90e2;
     border-radius: 8px;
     opacity: 0.5;
-}
-
-.kanban-column .column-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 0;
-    padding: 0.5rem 1rem;
-    border-radius: 0;
-    background: #fff;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-    width: calc(100% + 0rem); /* Überdeckt den Padding-Bereich der Spalte */
-    position: absolute;
-    left: 0;
-    top: 0;
-    z-index: 1;
-}
-/* Spalten scrollbar */
-.kanban-board {
-    align-items: flex-start;
-}
-
-.kanban-column {
-    height: 80vh;
-    min-height: 400px;
-    max-height: 80vh;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-}
-
-.kanban-column .column-content {
-    flex: 1 0 auto;
-    min-height: 100px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0.005rem;
 }
 
 /* Schieberegler-Label und Wert */

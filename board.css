@@ -219,6 +219,31 @@
     cursor: pointer;
 }
 
+/* Board View Anpassungen */
+#board-view {
+    display: flex; /* Ermöglicht Flexbox-Layout für Header und Kanban-Board */
+    flex-direction: column; /* Ordnet Header und Kanban-Board untereinander an */
+    height: 100vh; /* Nimmt die volle Höhe des Ansichtsfensters ein */
+    overflow: hidden; /* Verhindert vertikales Scrollen für die gesamte Board-Ansicht */
+}
+
+.board-header {
+    /* Stellt sicher, dass der Header nicht schrumpft */
+    flex-shrink: 0; 
+}
+
+.kanban-board {
+    flex-grow: 1; /* Nimmt den verbleibenden Platz in #board-view ein */
+    min-height: 0; /* Verhindert, dass der Inhalt das Element über den zugewiesenen Platz hinaus vergrößert */
+    display: flex; /* Richtet Spalten als Flex-Items aus */
+    align-items: stretch; /* Spalten dehnen sich auf die volle Höhe des .kanban-board Inhaltsbereichs aus */
+    gap: 1rem; /* Abstand zwischen den Spalten */
+    padding: 2rem; /* Innenabstand des Boards */
+    overflow-x: auto; /* Ermöglicht horizontales Scrollen der Spalten */
+    overflow-y: hidden; /* Verhindert vertikales Scrollen des Boards selbst */
+    box-sizing: border-box; /* Padding und Border werden in die Gesamtbreite/-höhe einbezogen */
+}
+
 #board-view {
     display: none;
     height: 100vh;
