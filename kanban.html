@@ -68,7 +68,10 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="modal-title">Create New Card</h2>
-                <button class="close-btn" onclick="closeModal('card-modal')">&times;</button>
+                <div class="modal-header-actions">
+                    <button class="btn-icon paste-btn" id="smart-paste-btn" onclick="openSmartPasteModal()" title="Smart Paste - Einfügen mit Vorschau">📋</button>
+                    <button class="close-btn" onclick="closeModal('card-modal')">&times;</button>
+                </div>
             </div>
             <div class="modal-body">
                 <form id="card-form">
@@ -416,6 +419,49 @@
       </div>
     </div>
 
+    <!-- Smart Paste Modal -->
+    <div class="modal" id="smart-paste-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Smart Paste</h2>
+                <button class="close-btn" onclick="closeModal('smart-paste-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="smart-paste-section">
+                    <div class="paste-instructions">
+                        <h3>📋 Inhalt einfügen</h3>
+                        <p>Fügen Sie Ihren Inhalt hier ein (Strg+V). Unterstützt werden:</p>
+                        <ul>
+                            <li>🔗 URLs (werden als Links mit Vorschau eingefügt)</li>
+                            <li>🖼️ Bilder (Screenshots, Dateien)</li>
+                            <li>📄 HTML-Inhalte (werden zu Markdown konvertiert)</li>
+                            <li>📝 Einfacher Text und Markdown</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="paste-input-area">
+                        <textarea id="smart-paste-input" 
+                                  placeholder="Klicken Sie hier und drücken Sie Strg+V zum Einfügen..."
+                                  rows="5"></textarea>
+                        <div class="paste-buttons">
+                            <button class="btn btn-secondary" id="manual-paste-btn" onclick="triggerManualPaste()">📋 Aus Zwischenablage einfügen</button>
+                        </div>
+                    </div>
+                    
+                    <div id="paste-preview-area" class="paste-preview-area" style="display: none;">
+                        <h4>👀 Vorschau</h4>
+                        <div id="paste-preview-content" class="paste-preview-content"></div>
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-primary" id="apply-smart-paste-btn" onclick="applySmartPaste()" disabled>✅ Einfügen</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('smart-paste-modal')">Abbrechen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="storage.js"></script>
     <script src="board.js"></script>
     <script src="dashboard.js"></script>
@@ -437,8 +483,11 @@
         column_width_changer();
         // Paste-Funktionalität initialisieren
         document.addEventListener('DOMContentLoaded', function() {
-            if (window.PasteFunctionality) {
-                window.PasteFunctionality.initPasteFunctionality();
+            if (typeof initPasteFunctionality === 'function') {
+                initPasteFunctionality();
+                console.log('🎯 Paste functionality initialized from kanban.html');
+            } else {
+                console.warn('❌ initPasteFunctionality function not found');
             }
             
             // YouTube Test-Funktion für Debugging

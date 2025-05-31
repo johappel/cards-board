@@ -13,6 +13,11 @@
   z-index: 1000;
 }
 
+/* Smart Paste Modal hat höhere Priorität */
+#smart-paste-modal {
+  z-index: 5000;
+}
+
 .modal-content {
   background: #fff;
   border-radius: 16px;
@@ -206,4 +211,169 @@ input#ai-include-column-context {
     padding: 2px 6px;
     color: #444;
     transition: color 0.2s;
+}
+
+/* Smart Paste Modal Styles */
+.modal-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-icon {
+    background: none;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+}
+
+.btn-icon:hover {
+    background-color: #f5f5f5;
+    border-color: #bbb;
+    transform: translateY(-1px);
+}
+
+.paste-btn {
+    color: #007acc;
+}
+
+.paste-btn:hover {
+    background-color: #e3f2fd;
+    border-color: #007acc;
+}
+
+.smart-paste-section {
+    margin-bottom: 20px;
+}
+
+.paste-instructions {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.paste-instructions h3 {
+    margin: 0 0 10px 0;
+    color: #333;
+    font-size: 18px;
+}
+
+.paste-instructions p {
+    margin: 0 0 10px 0;
+    color: #666;
+}
+
+.paste-instructions ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.paste-instructions li {
+    margin-bottom: 5px;
+    color: #666;
+}
+
+.paste-input-area {
+    margin-bottom: 20px;
+}
+
+#smart-paste-input {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px;
+    resize: vertical;
+    transition: border-color 0.2s ease;
+}
+
+#smart-paste-input:focus {
+    outline: none;
+    border-color: #007acc;
+    border-style: solid;
+}
+
+.paste-buttons {
+    margin-top: 10px;
+    text-align: center;
+}
+
+.paste-preview-area {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    border-left: 4px solid #007acc;
+}
+
+.paste-preview-area h4 {
+    margin: 0 0 15px 0;
+    color: #333;
+    font-size: 16px;
+}
+
+.paste-preview-content {
+    background-color: white;
+    border-radius: 6px;
+    padding: 15px;
+    border: 1px solid #e0e0e0;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.paste-preview-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+.paste-preview-content a {
+    color: #007acc;
+    text-decoration: none;
+}
+
+.paste-preview-content a:hover {
+    text-decoration: underline;
+}
+
+/* URL Preview in paste preview */
+.url-preview {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 10px 0;
+    background-color: #fafafa;
+}
+
+.url-preview .url-title {
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.url-preview .url-description {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.url-preview .url-link {
+    color: #007acc;
+    font-size: 12px;
+    text-decoration: none;
+}
+
+.url-preview .url-link:hover {
+    text-decoration: underline;
 }

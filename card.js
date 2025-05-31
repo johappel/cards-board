@@ -46,10 +46,15 @@ function selectCard(cardId, columnId) {
         card.classList.remove('selected');
     });
     
-    // Alle Spalten deselektieren (für Paste-Funktionalität)
-    document.querySelectorAll('.kanban-column').forEach(col => {
-        col.classList.remove('selected-for-paste');
-    });
+    // Paste-Spalte deselektieren (Karten-Auswahl und Paste-Auswahl sind separate Funktionen)
+    if (typeof selectedColumnForPaste !== 'undefined' && selectedColumnForPaste !== null) {
+        selectedColumnForPaste = null;
+        
+        // Visuelle Deselektierung aller Spalten für Paste
+        document.querySelectorAll('.kanban-column').forEach(col => {
+            col.classList.remove('selected-for-paste');
+        });
+    }
     
     // Karte auswählen
     const cardElement = document.querySelector(`[data-card-id="${cardId}"]`);
@@ -57,11 +62,7 @@ function selectCard(cardId, columnId) {
         cardElement.classList.add('selected');
         selectedCardData = { cardId, columnId };
         
-        // Spalte für Paste-Funktionalität markieren
-        const columnElement = cardElement.closest('.kanban-column');
-        if (columnElement && window.PasteFunctionality) {
-            window.PasteFunctionality.selectColumnForPaste(columnId);
-        }
+        console.log('🎯 Card selected:', cardId, 'in column:', columnId);
     }
 }
 

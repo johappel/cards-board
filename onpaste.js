@@ -15,16 +15,32 @@
 let selectedColumnForPaste = null;
 let selectedCardForPaste = null;
 
+// Smart Paste Modal Funktionalität
+let smartPasteContent = null;
+let smartPasteProcessedContent = null;
+
 function handlePaste(event) {
+    // Prüfe ob wir in einem Formular-Feld sind
+    if (isInFormField(event.target)) {
+        // Normales Paste-Verhalten in Formular-Feldern erlauben
+        return;
+    }
+    
     event.preventDefault();
     
     const clipboardData = event.clipboardData || window.clipboardData;
     const items = clipboardData.items;
     
-    if (!items) return;
-
+    if (!items) return;    
+    
     // Bestimme Ziel: ausgewählte Karte oder Spalte
     const target = determineCurrentPasteTarget();
+    
+    // Kein Ziel verfügbar - informiere Benutzer
+    if (!target) {
+        showPasteNotification('💡 Klicken Sie erst auf einen Spalten-Header um Inhalt einzufügen!', 4000);
+        return;
+    }
     
     // Verarbeite verschiedene Clipboard-Inhalte
     for (let i = 0; i < items.length; i++) {
@@ -54,26 +70,42 @@ function determineCurrentPasteTarget() {
         return { type: 'modal', element: 'card-content' };
     }
     
-    // 2. Prüfe ob eine Karte ausgewählt ist
+    // 2. Prüfe ob eine Karte ausgewählt ist - NICHT mehr automatisch in Spalte pasten
     if (selectedCardData) {
-        return { 
-            type: 'card', 
-            cardId: selectedCardData.cardId, 
-            columnId: selectedCardData.columnId 
-        };
+        // Karte ist ausgewählt, aber wir pasten NICHT automatisch in die Spalte
+        return null;
     }
     
-    // 3. Prüfe ob eine Spalte ausgewählt ist (oder nutze erste Spalte)
+    // 3. Prüfe ob eine Spalte ausgewählt ist (explizit vom Benutzer)
     if (selectedColumnForPaste) {
         return { type: 'column', columnId: selectedColumnForPaste };
     }
     
-    // 4. Fallback: Erste verfügbare Spalte
-    if (currentBoard && currentBoard.columns.length > 0) {
-        return { type: 'column', columnId: currentBoard.columns[0].id };
+    // 4. KEIN automatischer Fallback auf erste Spalte
+    return null;
+}
+
+// Hilfsfunktion: Prüft ob wir in einem Formular-Feld sind
+function isInFormField(target) {
+    if (!target) return false;
+    
+    // Prüfe Element-Typ
+    const tagName = target.tagName.toLowerCase();
+    if (['input', 'textarea', 'select'].includes(tagName)) {
+        return true;
     }
     
-    return null;
+    // Prüfe contenteditable
+    if (target.contentEditable === 'true') {
+        return true;
+    }
+    
+    // Prüfe ob Element in einem Formular ist
+    if (target.closest('form') || target.closest('.modal')) {
+        return true;
+    }
+    
+    return false;
 }
 
 function handleTextPaste(text, target) {
@@ -175,34 +207,22 @@ function appendToCard(cardId, columnId, text) {
     // Text an bestehenden Content anhängen
     card.content = (card.content || '') + '\n\n' + text;
     
+    // Board speichern und rendern
     saveAllBoards();
     renderColumns();
     
-    // Falls Full Card Modal offen ist, aktualisieren
-    updateFullCardModal(cardId);
-    
-    // Feedback
-    showPasteNotification('Inhalt zur Karte hinzugefügt!');
+    showPasteNotification('✅ Content zu Karte hinzugefügt', 2000);
 }
 
-function createCardFromPaste(columnId, text) {
+function createNewCardWithContent(columnId, text) {
     const column = currentBoard.columns.find(c => c.id === columnId);
     if (!column) return;
     
-    // Versuche Titel aus erstem Zeile zu extrahieren
-    const lines = text.split('\n');
-    let heading = 'Eingefügter Inhalt';
-    let content = text;
-    
-    if (lines.length > 0 && lines[0].trim().length > 0 && lines[0].trim().length < 100) {
-        heading = lines[0].trim();
-        content = lines.slice(1).join('\n').trim();
-    }
-      // Neue Karte erstellen
+    // Neue Karte erstellen
     const newCard = {
         id: generateId(),
-        heading: heading,
-        content: content,
+        heading: extractTitleFromContent(text),
+        content: text,
         color: 'color-gradient-1',
         thumbnail: '',
         comments: '',
@@ -211,15 +231,102 @@ function createCardFromPaste(columnId, text) {
     };
     
     column.cards.push(newCard);
+    
+    // Board speichern und rendern
     saveAllBoards();
     renderColumns();
     
-    // Feedback
-    showPasteNotification(`Neue Karte "${heading}" erstellt!`);
+    showPasteNotification('✅ Neue Karte erstellt', 2000);
 }
 
-function showPasteNotification(message) {
-    // Einfache Benachrichtigung erstellen
+function extractTitleFromContent(content) {
+    // Versuche Titel aus Content zu extrahieren
+    const lines = content.trim().split('\n');
+    let title = lines[0];
+    
+    // Falls erste Zeile zu lang ist, kürze sie
+    if (title.length > 50) {
+        title = title.substring(0, 47) + '...';
+    }
+    
+    // Falls leer, verwende Default
+    if (!title.trim()) {
+        title = 'Neue Karte';
+    }
+    
+    return title;
+}
+
+// Erweiterte URL-Text Behandlung
+async function handleTextPasteEnhanced(text, target) {
+    if (!target) return;
+    
+    // URL-Erkennung
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const urls = text.match(urlRegex);
+    
+    if (urls && urls.length === 1 && text.trim() === urls[0]) {
+        // Einzelne URL - zeige Preview
+        await showUrlPreviewAndPaste(urls[0], target);
+    } else if (urls) {
+        // Text mit URLs - URLs durch Markdown-Links ersetzen
+        let processedText = text;
+        urls.forEach(url => {
+            const linkText = url.replace(/https?:\/\//, '');
+            processedText = processedText.replace(url, `[${linkText}](${url})`);
+        });
+        finalizePasteAction(processedText, target);
+    } else {
+        // Einfacher Text ohne URLs
+        finalizePasteAction(text, target);
+    }
+}
+
+async function showUrlPreviewAndPaste(url, target) {
+    try {
+        // Zeige Lade-Notification
+        showPasteNotification('🔄 Lade URL-Vorschau...', 2000);
+        
+        // Versuche URL-Metadaten zu laden
+        const preview = await fetchUrlPreview(url);
+        
+        if (preview && preview.title) {
+            // Markdown mit Titel erstellen
+            const markdownLink = `[${preview.title}](${url})`;
+            finalizePasteAction(markdownLink, target);
+        } else {
+            // Fallback: Einfacher Link
+            const simpleLink = `[${url.replace(/https?:\/\//, '')}](${url})`;
+            finalizePasteAction(simpleLink, target);
+        }
+    } catch (error) {
+        console.warn('URL Preview failed:', error);
+        // Fallback: Einfacher Link
+        const simpleLink = `[${url.replace(/https?:\/\//, '')}](${url})`;
+        finalizePasteAction(simpleLink, target);
+    }
+}
+
+function finalizePasteAction(text, target) {
+    if (target.type === 'modal') {
+        // In Modal einfügen
+        insertIntoTextarea(target.element, text);
+    } else if (target.type === 'column') {
+        // Neue Karte in Spalte erstellen
+        createNewCardWithContent(target.columnId, text);
+    } else if (target.type === 'card') {
+        // Text zu bestehender Karte hinzufügen
+        appendToCard(target.cardId, target.columnId, text);
+    }
+}
+
+// Notification-System
+function showPasteNotification(message, duration = 3000) {
+    // Entferne existierende Notifications
+    const existing = document.querySelector('.paste-notification');
+    if (existing) existing.remove();
+    
+    // Erstelle neue Notification
     const notification = document.createElement('div');
     notification.className = 'paste-notification';
     notification.textContent = message;
@@ -227,91 +334,42 @@ function showPasteNotification(message) {
         position: fixed;
         top: 20px;
         right: 20px;
-        background: #4CAF50;
+        background: #2196F3;
         color: white;
-        padding: 12px 20px;
-        border-radius: 4px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        z-index: 10000;
+        padding: 12px 24px;
+        border-radius: 6px;
         font-size: 14px;
+        z-index: 10000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         animation: slideInRight 0.3s ease;
+        max-width: 400px;
+        word-wrap: break-word;
     `;
     
     document.body.appendChild(notification);
     
-    // Nach 3 Sekunden entfernen
+    // Auto-Hide
     setTimeout(() => {
-        notification.style.animation = 'slideOutRight 0.3s ease';
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
-        }, 300);
-    }, 3000);
-}
-
-// Paste Help Modal
-function showPasteHelp() {
-    const helpModal = document.createElement('div');
-    helpModal.className = 'modal show';
-    helpModal.id = 'paste-help-modal';
-    helpModal.innerHTML = `
-        <div class="modal-content" style="max-width: 600px;">
-            <div class="modal-header">
-                <h2>📋 Paste-Funktionalität</h2>
-                <button class="close-btn" onclick="closePasteHelp()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <h3>🎯 Einfügen in Karten und Spalten</h3>
-                <p>Sie können Inhalte aus der Zwischenablage direkt in Ihr Kanban-Board einfügen:</p>
-                
-                <h4>📝 Unterstützte Inhalte:</h4>
-                <ul>
-                    <li><strong>Text/Markdown:</strong> Wird direkt eingefügt</li>
-                    <li><strong>HTML:</strong> Wird automatisch zu Markdown konvertiert</li>
-                    <li><strong>Bilder:</strong> Screenshots werden als Base64 eingefügt</li>
-                    <li><strong>URLs:</strong> Werden zu Markdown-Links konvertiert</li>
-                </ul>
-                
-                <h4>🎮 Verwendung:</h4>
-                <ol>
-                    <li><strong>In Card Modal:</strong> Strg+V im Textbereich einfügen</li>
-                    <li><strong>In bestehende Karte:</strong> Karte anklicken → Strg+V</li>
-                    <li><strong>Neue Karte erstellen:</strong> Spalten-Header anklicken → Strg+V</li>
-                </ol>
-                
-                <h4>💡 Tipps:</h4>
-                <ul>
-                    <li>Klicken Sie auf eine Spalten-Überschrift, um sie für Paste auszuwählen</li>
-                    <li>Ausgewählte Spalten werden blau umrandet</li>
-                    <li>Screenshots aus der Zwischenablage werden automatisch eingefügt</li>
-                    <li>HTML von Webseiten wird zu Markdown konvertiert</li>
-                </ul>
-                
-                <div class="paste-hint">
-                    🚀 Probieren Sie es aus: Kopieren Sie Text, ein Bild oder eine URL und drücken Sie Strg+V!
-                </div>
-            </div>
-        </div>
-    `;
-    
-    helpModal.onclick = function(e) {
-        if (e.target === helpModal) closePasteHelp();
-    };
-    
-    document.body.appendChild(helpModal);
-}
-
-function closePasteHelp() {
-    const modal = document.getElementById('paste-help-modal');
-    if (modal) {
-        modal.remove();
-    }
+        if (notification.parentNode) {
+            notification.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => notification.remove(), 300);
+        }
+    }, duration);
 }
 
 // Event Listener für Spalten-Auswahl
 function selectColumnForPaste(columnId) {
     selectedColumnForPaste = columnId;
+    
+    // WICHTIG: Alle Karten deselektieren wenn Spalte ausgewählt wird
+    if (typeof selectedCardData !== 'undefined' && selectedCardData !== null) {
+        selectedCardData = null;
+        
+        // Visuelle Deselektierung aller Karten
+        document.querySelectorAll('.kanban-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+    }
     
     // Debugging-Ausgabe
     console.log('🎯 Column selected for paste:', columnId);
@@ -340,20 +398,21 @@ function selectColumnForPaste(columnId) {
 function initPasteFunctionality() {
     // Globaler Paste Event Listener
     document.addEventListener('paste', handlePaste);
-      // Spalten-Klick für Auswahl (mehrere Selektoren)
+    
+    // Spalten-Klick für Auswahl (nur für Spalten-Header)
     document.addEventListener('click', function(event) {
         // Ignoriere Klicks auf Menu-Dots und andere Buttons
         if (event.target.closest('.menu-dots') || 
             event.target.closest('button') || 
             event.target.closest('.dropdown-menu') ||
-            event.target.closest('.column-actions')) {
+            event.target.closest('.column-actions') ||
+            event.target.closest('.kanban-card')) { // Wichtig: Klicks auf Karten ignorieren
             return; // Lass diese Events normal durch
         }
         
-        // Mehrere Wege, um Spalten-Klicks zu erkennen
+        // Nur auf Spalten-Header und leere Spalten-Bereiche reagieren
         const columnHeader = event.target.closest('.column-header');
         const columnTitle = event.target.closest('.column-title');
-        const kanbanColumn = event.target.closest('.kanban-column');
         
         let columnElement = null;
         let columnId = null;
@@ -362,14 +421,18 @@ function initPasteFunctionality() {
             columnElement = columnHeader.closest('.kanban-column');
         } else if (columnTitle) {
             columnElement = columnTitle.closest('.kanban-column');
-        } else if (kanbanColumn && !event.target.closest('.kanban-card')) {
-            // Klick direkt auf die Spalte, aber nicht auf eine Karte
-            columnElement = kanbanColumn;
+        } else {
+            // Prüfe ob Klick in leerem Bereich einer Spalte (column-content ohne Karte)
+            const columnContent = event.target.closest('.column-content');
+            if (columnContent && !event.target.closest('.kanban-card')) {
+                columnElement = columnContent.closest('.kanban-column');
+            }
         }
         
         if (columnElement) {
             columnId = columnElement.dataset.columnId;
             if (columnId) {
+                console.log('🎯 Column header clicked for paste selection:', columnId);
                 event.preventDefault(); // Verhindere andere Event-Handler
                 event.stopPropagation();
                 selectColumnForPaste(columnId);
@@ -389,13 +452,14 @@ function initPasteFunctionality() {
             @keyframes slideOutRight {
                 from { transform: translateX(0); opacity: 1; }
                 to { transform: translateX(100%); opacity: 0; }
-            }            .kanban-column.selected-for-paste {
+            }
+            
+            .kanban-column.selected-for-paste {
                 box-shadow: 0 0 0 3px #2196F3 !important;
                 border-radius: 8px !important;
                 transition: box-shadow 0.2s ease !important;
                 position: relative !important;
             }
-            
         `;
         document.head.appendChild(style);
     }
@@ -419,65 +483,6 @@ async function fetchUrlMetadata(url) {
     // Spezielle Behandlung für YouTube-URLs
     if (isYouTubeUrl(url)) {
         return await fetchYouTubeMetadata(url);
-    }
-    
-    const corsProxies = [
-        'https://api.allorigins.win/get?url=',
-        'https://cors-anywhere.herokuapp.com/',
-        'https://thingproxy.freeboard.io/fetch/'
-    ];
-    
-    // Option 1: AllOrigins (bevorzugt für Metadaten)
-    try {
-        const response = await fetch(`${corsProxies[0]}${encodeURIComponent(url)}`);
-        if (response.ok) {
-            const data = await response.json();
-            if (data.contents) {
-                return parseHtmlForMetadata(data.contents, url);
-            }
-        }
-    } catch (error) {
-        console.warn('AllOrigins failed:', error.message);
-    }
-    
-    // Option 2: ThingProxy als Fallback
-    try {
-        const response = await fetch(`${corsProxies[2]}${url}`, {
-            method: 'GET',
-            headers: {
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-        });
-        
-        if (response.ok) {
-            const html = await response.text();
-            return parseHtmlForMetadata(html, url);
-        }
-    } catch (error) {
-        console.warn('ThingProxy failed:', error.message);
-    }
-    
-    // Option 3: Direkte Anfrage (falls CORS erlaubt)
-    try {
-        const response = await fetch(url, {
-            method: 'HEAD', // Erst HEAD-Request für Schnelligkeit
-            mode: 'cors'
-        });
-        
-        if (response.ok) {
-            // Falls HEAD erfolgreich, hole vollständige Antwort
-            const fullResponse = await fetch(url, { 
-                method: 'GET',
-                mode: 'cors'
-            });
-            if (fullResponse.ok) {
-                const html = await fullResponse.text();
-                return parseHtmlForMetadata(html, url);
-            }
-        }
-    } catch (error) {
-        console.warn('Direct fetch failed (CORS blocked):', error.message);
     }
     
     // Fallback: Basic URL Info basierend auf der Domain
@@ -529,94 +534,6 @@ async function fetchYouTubeMetadata(url) {
     };
 }
 
-function parseHtmlForMetadata(html, url) {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    
-    // Meta-Tags extrahieren
-    const getMetaContent = (property) => {
-        const meta = doc.querySelector(`meta[property="${property}"]`) || 
-                     doc.querySelector(`meta[name="${property}"]`) ||
-                     doc.querySelector(`meta[itemprop="${property}"]`);
-        return meta ? meta.getAttribute('content') : null;
-    };
-    
-    // Titel ermitteln (verschiedene Quellen)
-    let title = getMetaContent('og:title') || 
-                getMetaContent('twitter:title') || 
-                doc.querySelector('title')?.textContent ||
-                doc.querySelector('h1')?.textContent ||
-                extractDomainFromUrl(url);
-    
-    // Beschreibung ermitteln
-    let description = getMetaContent('og:description') || 
-                     getMetaContent('twitter:description') || 
-                     getMetaContent('description') ||
-                     doc.querySelector('meta[name="description"]')?.getAttribute('content') ||
-                     getFirstParagraphText(doc) ||
-                     `Webseite von ${extractDomainFromUrl(url)}`;
-    
-    // Bild ermitteln (verschiedene Quellen)
-    let image = getMetaContent('og:image') || 
-                getMetaContent('twitter:image') ||
-                getMetaContent('twitter:image:src') ||
-                doc.querySelector('link[rel="apple-touch-icon"]')?.getAttribute('href') ||
-                doc.querySelector('link[rel="icon"]')?.getAttribute('href') ||
-                doc.querySelector('img')?.getAttribute('src');
-    
-    // Relative URLs zu absoluten URLs konvertieren
-    let absoluteImage = null;
-    if (image) {
-        try {
-            if (image.startsWith('http')) {
-                absoluteImage = image;
-            } else if (image.startsWith('//')) {
-                absoluteImage = 'https:' + image;
-            } else if (image.startsWith('/')) {
-                const domain = new URL(url).origin;
-                absoluteImage = domain + image;
-            } else {
-                const basePath = url.substring(0, url.lastIndexOf('/') + 1);
-                absoluteImage = basePath + image;
-            }
-        } catch (error) {
-            console.warn('Error processing image URL:', error);
-            absoluteImage = null;
-        }
-    }
-    
-    // Fallback Favicon wenn kein Bild gefunden
-    if (!absoluteImage) {
-        const domain = extractDomainFromUrl(url);
-        absoluteImage = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
-    }
-    
-    return {
-        title: cleanText(title).substring(0, 100),
-        description: cleanText(description).substring(0, 300),
-        image: absoluteImage,
-        url: url
-    };
-}
-
-// Hilfsfunktion: Ersten Paragraph-Text extrahieren
-function getFirstParagraphText(doc) {
-    const paragraph = doc.querySelector('p');
-    if (paragraph && paragraph.textContent.trim().length > 20) {
-        return paragraph.textContent.trim();
-    }
-    return null;
-}
-
-// Hilfsfunktion: Text bereinigen
-function cleanText(text) {
-    if (!text) return '';
-    return text
-        .replace(/\s+/g, ' ')
-        .replace(/[\n\r]/g, ' ')
-        .trim();
-}
-
 function extractDomainFromUrl(url) {
     try {
         return new URL(url).hostname;
@@ -648,561 +565,257 @@ function getYouTubeThumbnail(videoId, quality = 'maxresdefault') {
     return `https://img.youtube.com/vi/${videoId}/${quality}.jpg`;
 }
 
-// Erweiterte URL-Text Behandlung
-async function handleTextPasteEnhanced(text, target) {
-    if (!target) return;
+// Smart Paste Modal Funktionalität
+function openSmartPasteModal() {
+    document.getElementById('smart-paste-modal').classList.add('show');
     
-    // URL-Erkennung
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const urls = text.match(urlRegex);
+    // Focus auf das Textarea setzen
+    setTimeout(() => {
+        const textarea = document.getElementById('smart-paste-input');
+        textarea.focus();
+        
+        // Event Listener für Paste im Smart Paste Modal
+        textarea.addEventListener('paste', handleSmartPaste);
+        
+        // Event Listener für manuelle Eingabe
+        textarea.addEventListener('input', handleSmartPasteInput);
+    }, 100);
     
-    if (urls && urls.length === 1 && text.trim() === urls[0]) {
-        // Einzelne URL - zeige Preview
-        await showUrlPreviewAndPaste(urls[0], target);
-    } else if (urls) {
-        // Text mit URLs - konvertiere URLs zu Markdown mit verbesserter Titel-Erkennung
-        let processedText = text;
-        for (const url of urls) {
-            try {
-                const preview = await fetchUrlPreview(url);
-                if (preview && preview.title !== extractDomainFromUrl(url)) {
-                    processedText = processedText.replace(url, `[${preview.title}](${url})`);
-                } else {
-                    processedText = processedText.replace(url, `[${url}](${url})`);
-                }
-            } catch (error) {
-                // Fallback für einzelne URL-Fehler
-                processedText = processedText.replace(url, `[${url}](${url})`);
+    resetSmartPasteModal();
+}
+
+function resetSmartPasteModal() {
+    document.getElementById('smart-paste-input').value = '';
+    document.getElementById('paste-preview-area').style.display = 'none';
+    document.getElementById('apply-smart-paste-btn').disabled = true;
+    smartPasteContent = null;
+    smartPasteProcessedContent = null;
+}
+
+function handleSmartPaste(event) {
+    event.preventDefault();
+    
+    const clipboardData = event.clipboardData || window.clipboardData;
+    const items = clipboardData.items;
+    
+    if (!items) return;
+    
+    // Verarbeite verschiedene Clipboard-Inhalte
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        
+        if (item.kind === 'file' && item.type.startsWith('image/')) {
+            // Bild aus Zwischenablage
+            handleSmartPasteImage(item);
+            return;
+        } else if (item.kind === 'string') {
+            if (item.type === 'text/html') {
+                // HTML-Inhalt
+                item.getAsString(html => handleSmartPasteHtml(html));
+                return;
+            } else if (item.type === 'text/plain') {
+                // Einfacher Text
+                item.getAsString(text => handleSmartPasteText(text));
+                return;
             }
         }
-        
-        // Verwende die normale Paste-Behandlung für verarbeiteten Text
-        handleTextPasteBasic(processedText, target);
-        showPasteNotification('📋 Text mit Links eingefügt!');
+    }
+}
+
+function handleSmartPasteInput(event) {
+    const text = event.target.value;
+    if (text.trim()) {
+        handleSmartPasteText(text);
     } else {
-        // Kein URL - normale Behandlung
-        handleTextPasteBasic(text, target);
-        showPasteNotification('📋 Text eingefügt!');
+        resetSmartPastePreview();
     }
 }
 
-// Basis-Implementierung für Text-Paste (ohne URL-Vorschau)
-function handleTextPasteBasic(text, target) {
-    if (!target) return;
+function handleSmartPasteText(text) {
+    smartPasteContent = text;
+    document.getElementById('smart-paste-input').value = text;
     
-    if (target.type === 'modal') {
-        insertIntoTextarea(target.element, text);
-    } else if (target.type === 'card') {
-        appendToCard(target.cardId, target.columnId, text);
-    } else if (target.type === 'column') {
-        createCardFromPaste(target.columnId, text);
-    }
-}
-
-async function showUrlPreviewAndPaste(url, target) {
-    // Zeige Loading-Nachricht
-    const loadingNotification = showPasteNotification('🔍 Lade URL-Vorschau...', 0);
+    // URL-Erkennung und Verarbeitung
+    const urlRegex = /(https?:\/\/[^\s]+)/gi;
+    const urls = text.match(urlRegex);
     
-    try {
-        const preview = await fetchUrlPreview(url);
-        
-        // Entferne Loading-Nachricht
-        if (loadingNotification && loadingNotification.parentNode) {
-            loadingNotification.parentNode.removeChild(loadingNotification);
-        }
-        
-        if (preview) {
-            showUrlPreviewModal(preview, target);
-        } else {
-            // Fallback bei fehlschlagender Preview
-            handleTextPaste(`[${url}](${url})`, target);
-            showPasteNotification('⚠️ Konnte keine Vorschau laden - URL als Link eingefügt');
-        }
-    } catch (error) {
-        console.error('URL Preview Error:', error);
-        // Entferne Loading-Nachricht
-        if (loadingNotification && loadingNotification.parentNode) {
-            loadingNotification.parentNode.removeChild(loadingNotification);
-        }
-        
-        // Fallback
-        handleTextPaste(`[${url}](${url})`, target);
-        showPasteNotification('⚠️ URL-Vorschau fehlgeschlagen - Link eingefügt');
-    }
-}
-
-function showUrlPreviewModal(preview, target) {
-    const modal = document.createElement('div');
-    modal.className = 'modal show';
-    modal.id = 'url-preview-modal';
-    
-    // Generiere besseren Standardinhalt basierend auf Ziel
-    let defaultContent;
-    if (preview.description && preview.description.length > 10) {
-        defaultContent = `# ${preview.title}
-
-${preview.description}
-
-[🔗 Zur Webseite](${preview.url})`;
+    if (urls && urls.length > 0) {
+        // Erste URL verarbeiten
+        const url = urls[0];
+        processUrlForSmartPaste(url, text);
     } else {
-        defaultContent = `# ${preview.title}
-
-[🔗 ${preview.url}](${preview.url})`;
+        // Einfacher Text
+        smartPasteProcessedContent = text;
+        showSmartPastePreview(text, 'text');
     }
+}
 
-    // YouTube-spezifische Inhalte
-    const isYouTube = preview.isYouTube;
-    const videoTabs = isYouTube ? `
-        <div class="video-tabs">
-            <button class="tab-btn active" onclick="showVideoTab('thumbnail')" data-tab="thumbnail">
-                🖼️ Thumbnail
-            </button>
-            <button class="tab-btn" onclick="showVideoTab('player')" data-tab="player">
-                ▶️ Video Player
-            </button>
-        </div>
-    ` : '';
+function handleSmartPasteHtml(html) {
+    smartPasteContent = html;
+    const markdown = htmlToMarkdown(html);
+    smartPasteProcessedContent = markdown;
+    
+    document.getElementById('smart-paste-input').value = markdown;
+    showSmartPastePreview(markdown, 'html');
+}
 
-    const thumbnailContent = `
-        <div class="url-preview-image">
-            <img src="${preview.image}" alt="Preview" onerror="this.style.display='none'; this.parentElement.style.display='none';" 
-                 onload="this.style.opacity='1';" style="opacity: 0; transition: opacity 0.3s;">
-        </div>
-    `;    const playerContent = isYouTube ? `
-        <div class="youtube-video-container" id="video-player-tab" style="display: none;">
-            <iframe 
-                id="youtube-iframe-${preview.videoId}"
-                src="${preview.embedUrl}" 
-                frameborder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                allowfullscreen
-                loading="lazy"
-                referrerpolicy="strict-origin-when-cross-origin"
-                title="YouTube Video Player"
-                onload="console.log('✅ YouTube Video geladen:', '${preview.videoId}')"
-                onerror="handleYouTubeEmbedError('${preview.videoId}', '${preview.url}')">
-            </iframe>
-            <div id="youtube-fallback-${preview.videoId}" style="display: none; padding: 1.5rem; text-align: center; background: #f8f9fa; border-radius: 8px; margin: 1rem 0; border: 2px dashed #dee2e6;">
-                <p style="margin: 0 0 1rem 0; color: #666; font-size: 1.1rem;">⚠️ Video kann nicht eingebettet werden</p>
-                <div style="margin: 1rem 0;">
-                    <button onclick="retryYouTubeEmbed('${preview.videoId}', '${preview.url}')" 
-                            style="background: #28a745; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; margin: 0 0.5rem;">
-                        🔄 Nochmal versuchen
-                    </button>
-                    <a href="${preview.url}" target="_blank" 
-                       style="background: #007bff; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; display: inline-block; margin: 0 0.5rem;">
-                        🔗 Auf YouTube öffnen
-                    </a>
-                </div>
-                <small style="color: #999;">Manche Videos erlauben kein Embedding aufgrund von Urheberrechtseinstellungen.</small>
-            </div>
-        </div>
-    ` : '';
+function handleSmartPasteImage(item) {
+    const file = item.getAsFile();
+    if (!file) return;
     
-    modal.innerHTML = `
-        <div class="modal-content" style="max-width: 650px;">
-            <div class="modal-header">
-                <h2>${isYouTube ? '🎥' : '🔗'} ${isYouTube ? 'YouTube Video' : 'URL-Vorschau'}</h2>
-                <button class="close-btn" onclick="closeUrlPreviewModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                ${videoTabs}
-                <div class="url-preview-container">
-                    <div id="thumbnail-tab" class="tab-content active">
-                        ${preview.image ? thumbnailContent : ''}
-                    </div>
-                    ${playerContent}
-                    <div class="url-preview-content">
-                        <h3 class="url-preview-title">${preview.title}</h3>
-                        <p class="url-preview-description">${preview.description}</p>
-                        <small class="url-preview-url">${isYouTube ? '🎥' : '🌐'} ${preview.url}</small>
-                        ${isYouTube && preview.authorName ? `<br><small style="color: #666;">📺 Kanal: ${preview.authorName}</small>` : ''}
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="use-as-thumbnail" ${preview.image ? 'checked' : 'disabled'}>
-                        <span>${isYouTube ? 'Video-Thumbnail als Karten-Thumbnail verwenden' : 'Bild als Karten-Thumbnail verwenden'}</span>
-                        ${!preview.image ? '<small style="color: #999;"> (Kein Bild verfügbar)</small>' : ''}
-                    </label>
-                </div>
-                
-                <div class="form-group">
-                    <label for="preview-card-title">Karten-Titel:</label>
-                    <input type="text" id="preview-card-title" value="${preview.title}" maxlength="100" 
-                           placeholder="Titel für die Karte eingeben...">
-                </div>
-                
-                <div class="form-group">
-                    <label for="preview-content">Inhalt (Markdown):</label>
-                    <textarea id="preview-content" rows="6" placeholder="Markdown-Inhalt für die Karte...">${defaultContent}</textarea>
-                    <small style="color: #666; font-size: 0.85rem;">
-                        💡 Sie können den Inhalt bearbeiten. Markdown wird unterstützt.
-                    </small>
-                </div>
-                  <div class="modal-actions">
-                    <button class="btn btn-primary" onclick="confirmUrlPreviewPaste()">
-                        ${isYouTube ? '🎥 Mit Video-Player einfügen' : '📝 ' + (target.type === 'column' ? 'Neue Karte erstellen' : 'Einfügen')}
-                    </button>
-                    ${isYouTube ? `<button class="btn btn-secondary" onclick="pasteYouTubeAsLink()">
-                        🔗 Nur als Link einfügen
-                    </button>` : `<button class="btn btn-secondary" onclick="pasteUrlAsSimpleLink()">
-                        🔗 Als einfacher Link
-                    </button>`}
-                    <button class="btn btn-secondary" onclick="closeUrlPreviewModal()">
-                        ❌ Abbrechen
-                    </button>
-                </div>
-                
-                <div style="margin-top: 1rem; padding: 0.75rem; background: #f8f9fa; border-radius: 4px; font-size: 0.85rem; color: #666;">
-                    <strong>Ziel:</strong> 
-                    ${target.type === 'modal' ? '📝 Card Modal (aktuell geöffnet)' :
-                      target.type === 'card' ? '📋 Bestehende Karte (wird erweitert)' :
-                      target.type === 'column' ? '➕ Neue Karte in Spalte' : 'Unbekannt'}
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Daten für Confirm-Funktion speichern
-    modal.dataset.targetType = target.type;
-    modal.dataset.targetData = JSON.stringify(target);
-    modal.dataset.originalUrl = preview.url;
-    modal.dataset.previewImage = preview.image || '';
-    
-    modal.onclick = function(e) {
-        if (e.target === modal) closeUrlPreviewModal();
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const base64Data = e.target.result;
+        const markdown = `![Eingefügtes Bild](${base64Data})`;
+        
+        smartPasteContent = file;
+        smartPasteProcessedContent = markdown;
+        
+        document.getElementById('smart-paste-input').value = markdown;
+        showSmartPastePreview(markdown, 'image');
     };
-    
-    document.body.appendChild(modal);
-    
-    // Fokus auf Titel-Input setzen
-    setTimeout(() => {
-        const titleInput = document.getElementById('preview-card-title');
-        if (titleInput) {
-            titleInput.focus();
-            titleInput.select();
-        }
-    }, 100);
+    reader.readAsDataURL(file);
 }
 
-// YouTube Video Tab-Switching Funktionalität
-function showVideoTab(tabName) {
-    // Tab-Buttons aktualisieren
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    const activeBtn = document.querySelector(`[data-tab="${tabName}"]`);
-    if (activeBtn) {
-        activeBtn.classList.add('active');
+function processUrlForSmartPaste(url, fullText) {
+    console.log('🔗 Processing URL for Smart Paste:', url);
+    
+    // YouTube URL spezielle Behandlung
+    if (isYouTubeUrl(url)) {
+        const embedUrl = convertToYouTubeEmbed(url);
+        const videoId = getYouTubeVideoId(url);
+        const markdown = `[![YouTube Video](https://img.youtube.com/vi/${videoId}/maxresdefault.jpg)](${url})\n\n${embedUrl}`;
+        smartPasteProcessedContent = markdown;
+        showSmartPastePreview(markdown, 'youtube');
+        return;
     }
     
-    // Tab-Inhalte umschalten
-    const thumbnailTab = document.getElementById('thumbnail-tab');
-    const playerTab = document.getElementById('video-player-tab');
-    
-    if (tabName === 'thumbnail') {
-        if (thumbnailTab) {
-            thumbnailTab.style.display = 'block';
-            thumbnailTab.classList.add('active');
-        }
-        if (playerTab) {
-            playerTab.style.display = 'none';
-            playerTab.classList.remove('active');
-        }
-    } else if (tabName === 'player') {
-        if (thumbnailTab) {
-            thumbnailTab.style.display = 'none';
-            thumbnailTab.classList.remove('active');
-        }
-        if (playerTab) {
-            playerTab.style.display = 'block';
-            playerTab.classList.add('active');
-        }
+    // Für andere URLs - einfach als Link formatieren
+    let processedText = fullText;
+    if (fullText.trim() === url) {
+        // Nur URL eingefügt - als Link formatieren
+        processedText = `[${url}](${url})`;
+    } else {
+        // URL in Text - bestehende URLs durch Markdown-Links ersetzen
+        processedText = fullText.replace(/(https?:\/\/[^\s]+)/gi, '[$1]($1)');
     }
+    
+    smartPasteProcessedContent = processedText;
+    showSmartPastePreview(processedText, 'url');
 }
 
-// Globale Funktion für Tab-Switching verfügbar machen
-window.showVideoTab = showVideoTab;
-
-function closeUrlPreviewModal() {
-    const modal = document.getElementById('url-preview-modal');
-    if (modal) {
-        modal.remove();
+function showSmartPastePreview(content, type) {
+    const previewArea = document.getElementById('paste-preview-area');
+    const previewContent = document.getElementById('paste-preview-content');
+    
+    // Markdown zu HTML für Vorschau rendern
+    let htmlContent = renderMarkdownToHtml(content);
+    
+    // Typ-spezifische Hinweise hinzufügen
+    let typeIndicator = '';
+    switch (type) {
+        case 'youtube':
+            typeIndicator = '<div style="color: #ff0000; font-weight: bold; margin-bottom: 10px;">🎥 YouTube Video erkannt</div>';
+            break;
+        case 'url':
+            typeIndicator = '<div style="color: #007acc; font-weight: bold; margin-bottom: 10px;">🔗 URL als Link formatiert</div>';
+            break;
+        case 'image':
+            typeIndicator = '<div style="color: #28a745; font-weight: bold; margin-bottom: 10px;">🖼️ Bild eingefügt</div>';
+            break;
+        case 'html':
+            typeIndicator = '<div style="color: #6f42c1; font-weight: bold; margin-bottom: 10px;">📄 HTML zu Markdown konvertiert</div>';
+            break;
+        case 'text':
+            typeIndicator = '<div style="color: #666; font-weight: bold; margin-bottom: 10px;">📝 Text eingefügt</div>';
+            break;
     }
+    
+    previewContent.innerHTML = typeIndicator + htmlContent;
+    previewArea.style.display = 'block';
+    
+    // Apply-Button aktivieren
+    document.getElementById('apply-smart-paste-btn').disabled = false;
 }
 
-// YouTube Video Tab-Switching Funktionalität
-function showVideoTab(tabName) {
-    // Tab-Buttons aktualisieren
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    const activeBtn = document.querySelector(`[data-tab="${tabName}"]`);
-    if (activeBtn) {
-        activeBtn.classList.add('active');
-    }
-    
-    // Tab-Inhalte umschalten
-    const thumbnailTab = document.getElementById('thumbnail-tab');
-    const playerTab = document.getElementById('video-player-tab');
-    
-    if (tabName === 'thumbnail') {
-        if (thumbnailTab) {
-            thumbnailTab.style.display = 'block';
-            thumbnailTab.classList.add('active');
-        }
-        if (playerTab) {
-            playerTab.style.display = 'none';
-            playerTab.classList.remove('active');
-        }
-    } else if (tabName === 'player') {
-        if (thumbnailTab) {
-            thumbnailTab.style.display = 'none';
-            thumbnailTab.classList.remove('active');
-        }
-        if (playerTab) {
-            playerTab.style.display = 'block';
-            playerTab.classList.add('active');
-        }
-    }
+function resetSmartPastePreview() {
+    document.getElementById('paste-preview-area').style.display = 'none';
+    document.getElementById('apply-smart-paste-btn').disabled = true;
+    smartPasteProcessedContent = null;
 }
 
-// Globale Funktion für Tab-Switching verfügbar machen
-window.showVideoTab = showVideoTab;
-
-function confirmUrlPreviewPaste() {
-    const modal = document.getElementById('url-preview-modal');
-    if (!modal) return;
+function triggerManualPaste() {
+    // Versuche, programmatisch paste zu triggern
+    const textarea = document.getElementById('smart-paste-input');
+    textarea.focus();
     
-    const target = JSON.parse(modal.dataset.targetData);
-    const title = document.getElementById('preview-card-title').value;
-    let content = document.getElementById('preview-content').value;
-    const useAsThumbnail = document.getElementById('use-as-thumbnail').checked;
-    const thumbnailUrl = useAsThumbnail ? modal.dataset.previewImage : '';
-    const originalUrl = modal.dataset.originalUrl;
-    
-    // Prüfe ob es sich um ein YouTube-Video handelt und erweitere den Inhalt
-    if (isYouTubeUrl(originalUrl)) {
-        const videoId = extractYouTubeVideoId(originalUrl);
-        if (videoId) {
-            const embedUrl = getYouTubeEmbedUrl(videoId);
-            
-            // Erstelle erweiterten YouTube-Inhalt mit eingebettetem Player
-            content = `# ${title}
-
-## 🎥 Video Player
-<div class="youtube-embed" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; background: #000; border-radius: 8px; margin: 1rem 0;">
-<iframe 
-    src="${embedUrl}" 
-    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" 
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-    allowfullscreen
-    title="YouTube Video: ${title}">
-</iframe>
-</div>
----
-[🔗 Auf YouTube öffnen](${originalUrl})
-
-`;
-        }
-    }
-    
-    if (target.type === 'modal') {
-        // In offenes Card Modal einfügen
-        document.getElementById('card-heading').value = title;
-        insertIntoTextarea('card-content', content);
-        if (thumbnailUrl) {
-            document.getElementById('card-thumbnail').value = thumbnailUrl;
-        }
-    } else if (target.type === 'card') {
-        // An bestehende Karte anhängen
-        appendToCard(target.cardId, target.columnId, content);
-    } else if (target.type === 'column') {
-        // Neue Karte mit allen Daten erstellen
-        createEnhancedCardFromPaste(target.columnId, title, content, thumbnailUrl);
-    }
-    
-    closeUrlPreviewModal();
-    showPasteNotification('✅ URL-Vorschau eingefügt!');
+    // Fallback: Benutzer informieren
+    showPasteNotification('💡 Bitte drücken Sie Strg+V um Inhalt einzufügen', 3000);
 }
 
-function pasteUrlAsSimpleLink() {
-    const modal = document.getElementById('url-preview-modal');
-    if (!modal) return;
-    
-    const target = JSON.parse(modal.dataset.targetData);
-    const url = modal.dataset.originalUrl;
-    
-    handleTextPaste(`[${url}](${url})`, target);
-    closeUrlPreviewModal();
-    showPasteNotification('🔗 URL als einfacher Link eingefügt');
-}
-
-function pasteYouTubeAsLink() {
-    const modal = document.getElementById('url-preview-modal');
-    if (!modal) return;
-    
-    const target = JSON.parse(modal.dataset.targetData);
-    const title = document.getElementById('preview-card-title').value;
-    const originalUrl = modal.dataset.originalUrl;
-    const useAsThumbnail = document.getElementById('use-as-thumbnail').checked;
-    const thumbnailUrl = useAsThumbnail ? modal.dataset.previewImage : '';
-    
-    // Erstelle einfachen Link-Inhalt für YouTube
-    const content = `# ${title}
-
-[🎥 Video auf YouTube ansehen](${originalUrl})
-
----
-*YouTube-Link eingefügt*`;
-    
-    if (target.type === 'modal') {
-        document.getElementById('card-heading').value = title;
-        insertIntoTextarea('card-content', content);
-        if (thumbnailUrl) {
-            document.getElementById('card-thumbnail').value = thumbnailUrl;
-        }
-    } else if (target.type === 'card') {
-        appendToCard(target.cardId, target.columnId, content);
-    } else if (target.type === 'column') {
-        createEnhancedCardFromPaste(target.columnId, title, content, thumbnailUrl);
+function applySmartPaste() {
+    if (!smartPasteProcessedContent) {
+        showPasteNotification('❌ Kein Inhalt zum Einfügen verfügbar', 3000);
+        return;
     }
     
-    closeUrlPreviewModal();
-    showPasteNotification('🔗 YouTube-Video als Link eingefügt!');
-}
-
-function createEnhancedCardFromPaste(columnId, title, content, thumbnailUrl = '') {
-    const column = currentBoard.columns.find(c => c.id === columnId);
-    if (!column) return;
-      // Neue Karte mit erweiterten Daten erstellen
-    const newCard = {
-        id: generateId(),
-        heading: title || 'Eingefügter Inhalt',
-        content: content,
-        color: 'color-gradient-1',
-        thumbnail: thumbnailUrl,
-        comments: '',
-        url: '',
-        inactive: false
-    };
-    
-    column.cards.push(newCard);
-    saveAllBoards();
-    renderColumns();
-}
-
-// showPasteNotification erweitern für dauerhafte Anzeige
-function showPasteNotification(message, duration = 3000) {
-    const notification = document.createElement('div');
-    notification.className = 'paste-notification';
-    notification.textContent = message;
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #4CAF50;
-        color: white;
-        padding: 12px 20px;
-        border-radius: 4px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        z-index: 10000;
-        font-size: 14px;
-        animation: slideInRight 0.3s ease;
-    `;
-      document.body.appendChild(notification);
-    
-    if (duration > 0) {
-        setTimeout(() => {
-            notification.style.animation = 'slideOutRight 0.3s ease';
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 300);
-        }, duration);
-    }
-    
-    return notification;
-}
-
-// Erweiterte YouTube-Embedding-Funktionen
-function handleYouTubeEmbedError(videoId, originalUrl) {
-    console.warn('❌ YouTube Embed fehlgeschlagen für Video:', videoId);
-    const iframe = document.getElementById(`youtube-iframe-${videoId}`);
-    const fallback = document.getElementById(`youtube-fallback-${videoId}`);
-    
-    if (iframe) {
-        iframe.style.display = 'none';
-    }
-    if (fallback) {
-        fallback.style.display = 'block';
-    }
-}
-
-function retryYouTubeEmbed(videoId, originalUrl) {
-    console.log('🔄 Retry YouTube Embed für Video:', videoId);
-    const iframe = document.getElementById(`youtube-iframe-${videoId}`);
-    const fallback = document.getElementById(`youtube-fallback-${videoId}`);
-    
-    if (!iframe) return;
-    
-    // Verstecke Fallback und zeige Iframe
-    if (fallback) fallback.style.display = 'none';
-    iframe.style.display = 'block';
-    
-    // Versuche verschiedene Embedding-URLs
-    const embedUrls = [
-        `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=0&rel=0&modestbranding=1&fs=1`,
-        `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0`,
-        `https://www.youtube-nocookie.com/embed/${videoId}`,
-        `https://www.youtube.com/embed/${videoId}`
-    ];
-    
-    let currentTry = 0;
-    
-    function tryNextUrl() {
-        if (currentTry >= embedUrls.length) {
-            console.warn('❌ Alle YouTube Embed URLs fehlgeschlagen für:', videoId);
-            handleYouTubeEmbedError(videoId, originalUrl);
-            return;
+    // Inhalt in das card-content Feld einfügen
+    const cardContentTextarea = document.getElementById('card-content');
+    if (cardContentTextarea) {
+        const currentValue = cardContentTextarea.value;
+        const newValue = currentValue ? currentValue + '\n\n' + smartPasteProcessedContent : smartPasteProcessedContent;
+        cardContentTextarea.value = newValue;
+        
+        // Auto-Save triggern falls aktiviert
+        if (typeof autoSaveCardHandler === 'function') {
+            autoSaveCardHandler({ target: cardContentTextarea });
         }
         
-        const url = embedUrls[currentTry];
-        console.log(`🔄 Versuche URL ${currentTry + 1}/${embedUrls.length}:`, url);
-        
-        iframe.src = url;
-        iframe.onload = function() {
-            console.log('✅ YouTube Embed erfolgreich mit URL:', url);
-        };
-        iframe.onerror = function() {
-            currentTry++;
-            setTimeout(tryNextUrl, 1000); // Warte 1 Sekunde zwischen Versuchen
-        };
+        showPasteNotification('✅ Inhalt erfolgreich eingefügt!', 2000);
+        closeModal('smart-paste-modal');
+    } else {
+        showPasteNotification('❌ Ziel-Feld nicht gefunden', 3000);
     }
-    
-    tryNextUrl();
 }
 
-// Globale Funktionen verfügbar machen
-window.handleYouTubeEmbedError = handleYouTubeEmbedError;
-window.retryYouTubeEmbed = retryYouTubeEmbed;
-window.pasteYouTubeAsLink = pasteYouTubeAsLink;
+function renderMarkdownToHtml(markdown) {
+    // Einfache Markdown zu HTML Konvertierung für Preview
+    let html = markdown
+        // Überschriften
+        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+        // Fett
+        .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
+        .replace(/__(.*?)__/gim, '<strong>$1</strong>')
+        // Kursiv
+        .replace(/\*(.*)\*/gim, '<em>$1</em>')
+        .replace(/_(.*?)_/gim, '<em>$1</em>')
+        // Links
+        .replace(/\[([^\]]+)\]\(([^\)]+)\)/gim, '<a href="$2" target="_blank">$1</a>')
+        // Bilder
+        .replace(/!\[([^\]]*)\]\(([^\)]+)\)/gim, '<img src="$2" alt="$1" style="max-width: 100%; height: auto;">')
+        // Zeilenumbrüche
+        .replace(/\n\n/gim, '</p><p>')
+        .replace(/\n/gim, '<br>');
+    
+    // In Paragraphen wrappen
+    html = '<p>' + html + '</p>';
+    
+    return html;
+}
 
-// Export für globale Nutzung
-window.PasteFunctionality = {
-    handlePaste,
-    initPasteFunctionality,
-    selectColumnForPaste,
-    handleTextPaste,
-    handleImagePaste,
-    showUrlPreviewModal,
-    fetchUrlMetadata,
-    isYouTubeUrl,
-    extractYouTubeVideoId,
-    getYouTubeThumbnail,
-    getYouTubeEmbedUrl,
-    pasteYouTubeAsLink
-};
+// Hilfsfunktionen für URL-Verarbeitung
+function isYouTubeUrl(url) {
+    return /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i.test(url);
+}
+
+function getYouTubeVideoId(url) {
+    const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+    return match ? match[1] : null;
+}
+
+function convertToYouTubeEmbed(url) {
+    const videoId = getYouTubeVideoId(url);
+    return videoId ? `<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>` : url;
+}
