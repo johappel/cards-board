@@ -33,6 +33,25 @@ document.addEventListener('DOMContentLoaded', async function() {
         await window.KanbanStorage?.saveBoards?.(boards);
     }
     
+    // Auto-load test data if available (für Test-Features)
+    const savedTestData = localStorage.getItem('test-n8n-data');
+    if (savedTestData) {
+        try {
+            const testData = JSON.parse(savedTestData);
+            localStorage.removeItem('test-n8n-data');
+            
+            // Warte bis Board geladen ist, dann lade Test-Daten
+            setTimeout(() => {
+                if (window.addColumnWithCards && testData.cards) {
+                    window.addColumnWithCards(testData.column, testData.cards);
+                    console.log('Test-Daten automatisch geladen:', testData);
+                }
+            }, 1000);
+        } catch (e) {
+            console.error('Fehler beim Laden der Test-Daten:', e);
+        }
+    }
+    
     if (boardId) {
         const board = boards.find(b => b.id === boardId);
         if (board) {

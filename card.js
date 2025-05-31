@@ -112,12 +112,13 @@ function openCardModal(columnId, cardId = null) {
           // Verwende die gefundene Spalte, nicht die übergebene
         currentCard = foundCard;
         currentColumn = foundColumn;
-        columnId = foundColumn.id; // Update columnId für den Rest der Funktion
-          document.getElementById('modal-title').textContent = 'Edit Card';
+        columnId = foundColumn.id; // Update columnId für den Rest der Funktion        document.getElementById('modal-title').textContent = 'Edit Card';
         document.getElementById('card-heading').value = currentCard.heading;
         document.getElementById('card-content').value = currentCard.content;
         document.getElementById('card-color').value = currentCard.color || 'color-gradient-1';
         document.getElementById('card-thumbnail').value = currentCard.thumbnail || '';
+        document.getElementById('card-comments').value = currentCard.comments || '';
+        document.getElementById('card-url').value = currentCard.url || '';
         setSelectedColor('card-color-palette', currentCard.color || 'color-gradient-1');
         
         // Delete-Button anzeigen bei bestehenden Karten
@@ -130,10 +131,11 @@ function openCardModal(columnId, cardId = null) {
             console.error('Column not found for new card:', columnId);
             return;
         }
-        currentCard = null;        document.getElementById('modal-title').textContent = 'Create New Card';
-        document.getElementById('card-form').reset();
+        currentCard = null;        document.getElementById('modal-title').textContent = 'Create New Card';        document.getElementById('card-form').reset();
         document.getElementById('card-color').value = 'color-gradient-1';
         document.getElementById('card-thumbnail').value = '';
+        document.getElementById('card-comments').value = '';
+        document.getElementById('card-url').value = '';
         setSelectedColor('card-color-palette', 'color-gradient-1');
         
         // Delete-Button verstecken bei neuen Karten
@@ -163,12 +165,15 @@ function saveCard(e, keepOpen) {
     const columnId = document.getElementById('card-column').value;
     const color = document.getElementById('card-color').value;
     const thumbnail = document.getElementById('card-thumbnail').value;
+    const comments = document.getElementById('card-comments').value;
+    const url = document.getElementById('card-url').value;
     const cardData = {
         heading,
         content,
         color,
         thumbnail,
-        comments: currentCard?.comments || '',
+        comments,
+        url,
         inactive: currentCard?.inactive || false
     };
     const targetColumn = currentBoard.columns.find(c => c.id === columnId);
@@ -257,8 +262,23 @@ function createCardElement(card, columnId) {
             previewText = html;
         } else {
             previewText = markdownPreview.replace(/\n/g, '<br>');
-        }
-    }    return `
+        }    }
+
+    // Kommentar und URL-Bereiche generieren
+    let commentHtml = '';
+    let urlHtml = '';
+    
+    if (card.comments && card.comments.trim()) {
+        commentHtml = `<div class="card-comment">💬 ${card.comments}</div>`;
+    }
+    
+    if (card.url && card.url.trim()) {
+        // URL verkürzen für Anzeige
+        let displayUrl = card.url.length > 40 ? card.url.substring(0, 37) + '...' : card.url;
+        urlHtml = `<div class="card-url"><a href="${card.url}" class="card-url-link" onclick="event.stopPropagation()" target="_blank" rel="noopener noreferrer">🔗 ${displayUrl}</a></div>`;
+    }
+
+    return `
         <div class="kanban-card ${colorClass}"
              data-card-id="${card.id}"
              onclick="selectCard('${card.id}', '${columnId}')"
@@ -276,6 +296,8 @@ function createCardElement(card, columnId) {
             <div class="card-preview-content" style="padding-top:0.1rem;padding-bottom:0.1rem;">
                 <ul style="margin-top:0.2em;margin-bottom:0.2em;">${previewText}</ul>
             </div>
+            ${commentHtml}
+            ${urlHtml}
         </div>
     `;
 }
@@ -346,6 +368,8 @@ function showCardFullModal(cardId, columnId) {
             </div>
             ${foundCard.thumbnail ? `<div class='card-thumb-modal'><img src='${foundCard.thumbnail}' alt='thumbnail' /></div>` : ''}
             <div class="card-content-full">${window.renderMarkdownToHtml ? window.renderMarkdownToHtml(foundCard.content || '') : (foundCard.content || '')}</div>
+            ${foundCard.comments ? `<div class="card-comment" style="margin: 1rem; color: #fff;">💬 ${foundCard.comments}</div>` : ''}
+            ${foundCard.url ? `<div class="card-url" style="margin: 1rem;"><a href="${foundCard.url}" class="card-url-link" target="_blank" rel="noopener noreferrer" style="color: #4a90e2;">🔗 ${foundCard.url}</a></div>` : ''}
         </div>
     `;
     modal.onclick = function(e) { if (e.target === modal) closeCardFullModal(); };
@@ -368,8 +392,7 @@ function updateFullCardModal(cardId) {
         const c = col.cards.find(card => card.id === cardId);
         if (c) { card = c; column = col; break; }
     }
-    if (!card || !column) return;
-    // Modal-Inhalt neu setzen (wie in showCardFullModal)
+    if (!card || !column) return;    // Modal-Inhalt neu setzen (wie in showCardFullModal)
     modal.innerHTML = `
         <div class="modal-content ${card.color || ''}" style="max-width:600px;">
             <div class="modal-header">
@@ -381,6 +404,8 @@ function updateFullCardModal(cardId) {
             </div>
             ${card.thumbnail ? `<div class='card-thumb-modal'><img src='${card.thumbnail}' alt='thumbnail' /></div>` : ''}
             <div class="card-content-full">${window.renderMarkdownToHtml ? window.renderMarkdownToHtml(card.content || '') : (card.content || '')}</div>
+            ${card.comments ? `<div class="card-comment" style="margin: 1rem; color: #fff;">💬 ${card.comments}</div>` : ''}
+            ${card.url ? `<div class="card-url" style="margin: 1rem;"><a href="${card.url}" class="card-url-link" target="_blank" rel="noopener noreferrer" style="color: #4a90e2;">🔗 ${card.url}</a></div>` : ''}
         </div>
     `;
     modal.onclick = function(e) { if (e.target === modal) closeCardFullModal(); };
@@ -396,6 +421,8 @@ function setupCardAutoSave() {
         'card-content',
         'card-color',
         'card-thumbnail',
+        'card-comments',
+        'card-url',
         'card-column'
     ];
     fields.forEach(id => {
@@ -445,12 +472,15 @@ saveCard = function(e, keepOpen) {
     const columnId = document.getElementById('card-column').value;
     const color = document.getElementById('card-color').value;
     const thumbnail = document.getElementById('card-thumbnail').value;
+    const comments = document.getElementById('card-comments').value;
+    const url = document.getElementById('card-url').value;
     const cardData = {
         heading,
         content,
         color,
         thumbnail,
-        comments: currentCard?.comments || '',
+        comments,
+        url,
         inactive: currentCard?.inactive || false
     };
     const targetColumn = currentBoard.columns.find(c => c.id === columnId);
@@ -509,7 +539,8 @@ function addCardToColumn(columnId, cardData) {
         content: cardData.content || cardData.fragment || '',
         color: cardData.color || 'color-gradient-1',
         thumbnail: cardData.thumbnail || '',
-        comments: '',
+        comments: cardData.comments || cardData.comment || '',
+        url: cardData.url || '',
         inactive: false
     };
     column.cards.push(newCard);

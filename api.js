@@ -58,13 +58,13 @@ window.KanbanAPI = {    // Column API
         if (!board) return { error: 'Board not found' };
           const column = board.columns.find(c => c.id === columnId);
         if (!column) return { error: 'Column not found' };
-          
-        const newCard = {
+            const newCard = {
             id: generateId(),
             heading: heading,
             content: content,
             color: 'color-gradient-1',
             comments: '',
+            url: '',
             inactive: false
         };
         

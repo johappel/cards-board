@@ -198,8 +198,7 @@ function createCardFromPaste(columnId, text) {
         heading = lines[0].trim();
         content = lines.slice(1).join('\n').trim();
     }
-    
-    // Neue Karte erstellen
+      // Neue Karte erstellen
     const newCard = {
         id: generateId(),
         heading: heading,
@@ -207,6 +206,7 @@ function createCardFromPaste(columnId, text) {
         color: 'color-gradient-1',
         thumbnail: '',
         comments: '',
+        url: '',
         inactive: false
     };
     
@@ -1077,8 +1077,7 @@ function pasteYouTubeAsLink() {
 function createEnhancedCardFromPaste(columnId, title, content, thumbnailUrl = '') {
     const column = currentBoard.columns.find(c => c.id === columnId);
     if (!column) return;
-    
-    // Neue Karte mit erweiterten Daten erstellen
+      // Neue Karte mit erweiterten Daten erstellen
     const newCard = {
         id: generateId(),
         heading: title || 'Eingefügter Inhalt',
@@ -1086,6 +1085,7 @@ function createEnhancedCardFromPaste(columnId, title, content, thumbnailUrl = ''
         color: 'color-gradient-1',
         thumbnail: thumbnailUrl,
         comments: '',
+        url: '',
         inactive: false
     };
     

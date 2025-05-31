@@ -50,8 +50,7 @@ function addCardToColumn(columnName, cardData) {
             cards: []
         };
         currentBoard.columns.push(column);
-    }
-    // Card anlegen
+    }    // Card anlegen
     const newCard = {
         id: generateId(),
         heading: cardData.title || 'Unbenannt',
@@ -59,6 +58,7 @@ function addCardToColumn(columnName, cardData) {
         color: 'color-gradient-1',
         thumbnail: cardData.thumbnail || '',
         comments: cardData.comment || '',
+        url: cardData.url || '',
         inactive: false
     };
     column.cards.push(newCard);
@@ -83,14 +83,14 @@ function addColumnWithCards(columnName, cards) {
     // Karten nur hinzufügen, wenn sie noch nicht existieren (nach Titel vergleichen)
     cards.forEach(cardData => {
         const exists = column.cards.some(card => card.heading === (cardData.title || 'Unbenannt'));
-        if (!exists) {
-            const newCard = {
+        if (!exists) {            const newCard = {
                 id: generateId(),
                 heading: cardData.title || 'Unbenannt',
                 content: cardData.content || '',
                 color: 'color-gradient-1',
                 thumbnail: cardData.thumbnail || '',
                 comments: cardData.comment || '',
+                url: cardData.url || '',
                 inactive: false
             };
             column.cards.push(newCard);
