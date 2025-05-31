@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Preview Plugin Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .test-title {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        
+        .test-button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .test-button:hover {
+            background: #2980b9;
+        }
+        
+        .test-button.success {
+            background: #27ae60;
+        }
+        
+        .test-button.warning {
+            background: #f39c12;
+        }
+        
+        .test-button.danger {
+            background: #e74c3c;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-success { background: #27ae60; }
+        .status-error { background: #e74c3c; }
+        .status-warning { background: #f39c12; }
+        
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        
+        .log-output {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        
+        .test-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 5px 0;
+        }
+        
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 class="test-title">🔗 URL Preview Plugin Test</h1>
+        
+        <div class="test-section">
+            <h3>Plugin Status</h3>
+            <div id="plugin-status">
+                <p><span class="status-indicator status-warning"></span>Prüfe Plugin-Status...</p>
+            </div>
+            <button class="test-button" onclick="checkPluginStatus()">Plugin Status prüfen</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>URL Preview Tests</h3>
+            <p>Teste verschiedene URL-Typen mit der erweiterten Preview-Funktionalität:</p>
+            
+            <div style="margin: 15px 0;">
+                <label>Test-URL eingeben:</label>
+                <input type="text" id="test-url" class="test-input" 
+                       value="https://www.youtube.com/watch?v=dQw4w9WgXcQ" 
+                       placeholder="Füge eine URL zum Testen ein...">
+                <button class="test-button" onclick="testUrlPreview()">URL Preview testen</button>
+            </div>
+            
+            <div style="margin: 15px 0;">
+                <h4>Vordefinierte Tests:</h4>
+                <button class="test-button" onclick="testYouTubeUrl()">YouTube Video testen</button>
+                <button class="test-button" onclick="testRegularUrl()">Normale Website testen</button>
+                <button class="test-button" onclick="testMultipleUrls()">Text mit mehreren URLs</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Mock Kanban Umgebung</h3>
+            <p>Simuliert die grundlegenden Funktionen für URL-Tests:</p>
+            
+            <div style="margin: 15px 0;">
+                <button class="test-button success" onclick="selectMockColumn()">Spalte auswählen</button>
+                <button class="test-button warning" onclick="simulatePasteEvent()">Paste Event simulieren</button>
+                <button class="test-button danger" onclick="clearTests()">Tests zurücksetzen</button>
+            </div>
+            
+            <div id="mock-target" style="margin: 10px 0; padding: 10px; border: 2px dashed #bdc3c7; border-radius: 4px; min-height: 60px;">
+                <em>Ziel für Paste-Tests (simuliert Kanban-Spalte)</em>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Console Log</h3>
+            <div id="log-output" class="log-output"></div>
+            <button class="test-button" onclick="clearLog()">Log leeren</button>
+        </div>
+    </div>
+
+    <!-- Mock Modal für URL Preview Tests -->
+    <div id="url-preview-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>URL Preview Test Modal</h3>
+                <button class="close-btn" onclick="closeTestModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="test-preview-content">
+                    <!-- Preview-Inhalt wird hier eingefügt -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lade notwendige Abhängigkeiten -->
+    <script>
+        // Mock-Funktionen für Tests
+        let selectedColumnForPaste = null;
+        let mockTarget = null;
+        
+        // Console-Logging für UI
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        const originalConsoleWarn = console.warn;
+        
+        function logToUI(message, type = 'log') {
+            const logOutput = document.getElementById('log-output');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#e74c3c' : type === 'warn' ? '#f39c12' : '#2ecc71';
+            
+            logOutput.innerHTML += `<div style="color: ${color};">[${timestamp}] ${message}</div>`;
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+        
+        console.log = function(message) {
+            originalConsoleLog.apply(console, arguments);
+            logToUI(message, 'log');
+        };
+        
+        console.error = function(message) {
+            originalConsoleError.apply(console, arguments);
+            logToUI(message, 'error');
+        };
+        
+        console.warn = function(message) {
+            originalConsoleWarn.apply(console, arguments);
+            logToUI(message, 'warn');
+        };
+        
+        // Mock-Implementierungen
+        function showPasteNotification(message, duration = 3000) {
+            console.log(`📢 Notification: ${message}`);
+            
+            // Zeige visuelle Notification
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #2c3e50;
+                color: white;
+                padding: 12px 20px;
+                border-radius: 6px;
+                z-index: 9999;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                animation: slideIn 0.3s ease;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            if (duration > 0) {
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, duration);
+            }
+            
+            return notification;
+        }
+        
+        function selectColumnForPaste(columnId) {
+            selectedColumnForPaste = columnId;
+            console.log(`🎯 Column selected for paste: ${columnId}`);
+        }
+        
+        // Test-Funktionen
+        function checkPluginStatus() {
+            const statusDiv = document.getElementById('plugin-status');
+            
+            if (typeof URLPreviewPlugin !== 'undefined') {
+                statusDiv.innerHTML = `
+                    <p><span class="status-indicator status-success"></span>URL Preview Plugin ist geladen ✅</p>
+                    <p><strong>Verfügbare Funktionen:</strong></p>
+                    <ul>
+                        <li>🔗 URLPreviewPlugin.init()</li>
+                        <li>📊 URLPreviewPlugin.fetchUrlMetadata()</li>
+                        <li>🎥 URLPreviewPlugin.isYouTubeUrl()</li>
+                        <li>🎨 URLPreviewPlugin.showUrlPreviewModal()</li>
+                    </ul>
+                `;
+                console.log('✅ URL Preview Plugin erfolgreich geladen');
+            } else {
+                statusDiv.innerHTML = `
+                    <p><span class="status-indicator status-error"></span>URL Preview Plugin nicht gefunden ❌</p>
+                    <p>Das Plugin wurde möglicherweise nicht korrekt geladen.</p>
+                `;
+                console.error('❌ URL Preview Plugin nicht gefunden');
+            }
+        }
+        
+        function selectMockColumn() {
+            selectedColumnForPaste = 'test-column-1';
+            mockTarget = { type: 'column', columnId: 'test-column-1' };
+            
+            const targetDiv = document.getElementById('mock-target');
+            targetDiv.style.borderColor = '#3498db';
+            targetDiv.style.backgroundColor = '#ebf3fd';
+            targetDiv.innerHTML = '<strong>✅ Spalte "test-column-1" ausgewählt</strong><br><em>Bereit für Paste-Tests</em>';
+            
+            console.log('🎯 Mock-Spalte für Tests ausgewählt');
+        }
+        
+        function testUrlPreview() {
+            const url = document.getElementById('test-url').value.trim();
+            if (!url) {
+                showPasteNotification('❌ Bitte gebe eine URL ein', 3000);
+                return;
+            }
+            
+            if (!mockTarget) {
+                showPasteNotification('⚠️ Bitte wähle zuerst eine Spalte aus', 3000);
+                return;
+            }
+            
+            console.log(`🔍 Teste URL Preview für: ${url}`);
+            
+            if (typeof URLPreviewPlugin !== 'undefined' && URLPreviewPlugin.showEnhancedUrlPreview) {
+                URLPreviewPlugin.showEnhancedUrlPreview(url, mockTarget);
+            } else {
+                console.error('❌ URLPreviewPlugin.showEnhancedUrlPreview nicht verfügbar');
+                showPasteNotification('❌ URL Preview Plugin nicht verfügbar', 3000);
+            }
+        }
+        
+        function testYouTubeUrl() {
+            document.getElementById('test-url').value = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+            testUrlPreview();
+        }
+        
+        function testRegularUrl() {
+            document.getElementById('test-url').value = 'https://github.com/microsoft/vscode';
+            testUrlPreview();
+        }
+        
+        function testMultipleUrls() {
+            const text = 'Schaue dir diese Videos an: https://www.youtube.com/watch?v=dQw4w9WgXcQ und diese Seite: https://github.com/microsoft/vscode';
+            
+            if (!mockTarget) {
+                showPasteNotification('⚠️ Bitte wähle zuerst eine Spalte aus', 3000);
+                return;
+            }
+            
+            console.log(`🔍 Teste Text mit mehreren URLs: ${text}`);
+            
+            if (typeof window.handleTextPasteEnhanced === 'function') {
+                window.handleTextPasteEnhanced(text, mockTarget);
+            } else {
+                console.error('❌ handleTextPasteEnhanced nicht verfügbar');
+                showPasteNotification('❌ Text Paste Handler nicht verfügbar', 3000);
+            }
+        }
+        
+        function simulatePasteEvent() {
+            if (!mockTarget) {
+                showPasteNotification('⚠️ Bitte wähle zuerst eine Spalte aus', 3000);
+                return;
+            }
+            
+            const url = document.getElementById('test-url').value.trim() || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+            
+            console.log(`📋 Simuliere Paste Event für: ${url}`);
+            
+            // Simuliere ein Paste-Event
+            const mockEvent = {
+                preventDefault: () => console.log('🚫 Default prevented'),
+                clipboardData: {
+                    items: [{
+                        kind: 'string',
+                        type: 'text/plain',
+                        getAsString: (callback) => callback(url)
+                    }]
+                }
+            };
+            
+            if (typeof window.handleTextPasteEnhanced === 'function') {
+                window.handleTextPasteEnhanced(url, mockTarget);
+            } else if (typeof window.handlePaste === 'function') {
+                // Direkter Test des Paste-Handlers ist schwierig, also simulieren wir das Ergebnis
+                console.log('📋 Paste Handler gefunden, aber direkte Simulation komplex');
+                testUrlPreview(); // Fallback zum direkten URL-Test
+            } else {
+                console.error('❌ Keine Paste-Handler verfügbar');
+                showPasteNotification('❌ Paste-Funktionalität nicht verfügbar', 3000);
+            }
+        }
+        
+        function clearTests() {
+            selectedColumnForPaste = null;
+            mockTarget = null;
+            
+            const targetDiv = document.getElementById('mock-target');
+            targetDiv.style.borderColor = '#bdc3c7';
+            targetDiv.style.backgroundColor = 'transparent';
+            targetDiv.innerHTML = '<em>Ziel für Paste-Tests (simuliert Kanban-Spalte)</em>';
+            
+            document.getElementById('test-url').value = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+            
+            console.log('🔄 Tests zurückgesetzt');
+        }
+        
+        function clearLog() {
+            document.getElementById('log-output').innerHTML = '';
+        }
+        
+        function closeTestModal() {
+            const modal = document.getElementById('url-preview-modal');
+            modal.classList.add('hidden');
+        }
+        
+        // Animation hinzufügen
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            
+            .modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                z-index: 1000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .modal-content {
+                background: white;
+                border-radius: 8px;
+                padding: 20px;
+                max-width: 600px;
+                width: 90%;
+                max-height: 80vh;
+                overflow-y: auto;
+            }
+            
+            .modal-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 15px;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 10px;
+            }
+            
+            .close-btn {
+                background: none;
+                border: none;
+                font-size: 24px;
+                cursor: pointer;
+                padding: 0;
+                width: 30px;
+                height: 30px;
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Initial Plugin Status Check
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 URL Preview Test-Seite geladen');
+            
+            // Warte kurz und prüfe dann Plugin-Status
+            setTimeout(() => {
+                checkPluginStatus();
+            }, 500);
+        });
+    </script>
+
+    <!-- Lade die notwendigen Scripts -->
+    <script src="onpaste.js"></script>
+    <script src="onpaste-url-plugin.js"></script>
+</body>
+</html>

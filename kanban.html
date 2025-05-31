@@ -472,6 +472,7 @@
     <script src="import_export.js"></script>
     <script src="drag_drop.js"></script>
     <script src="onpaste.js"></script>
+    <script src="onpaste-url-plugin.js"></script>
     <script src="init.js"></script>
     <script src="api.js"></script>
     <script src="colors.js"></script>
@@ -488,6 +489,14 @@
                 console.log('🎯 Paste functionality initialized from kanban.html');
             } else {
                 console.warn('❌ initPasteFunctionality function not found');
+            }
+            
+            // URL Preview Plugin initialisieren
+            if (typeof URLPreviewPlugin !== 'undefined' && URLPreviewPlugin.init) {
+                URLPreviewPlugin.init();
+                console.log('🔗 URL Preview Plugin initialized from kanban.html');
+            } else {
+                console.warn('❌ URLPreviewPlugin not found');
             }
             
             // YouTube Test-Funktion für Debugging

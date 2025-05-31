@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Preview Demo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .demo-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .demo-title {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .demo-subtitle {
+            text-align: center;
+            font-size: 1.2em;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+        
+        .demo-step {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 12px;
+            border-left: 4px solid #00d4ff;
+        }
+        
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #00d4ff;
+            color: #333;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        
+        .demo-button {
+            background: linear-gradient(45deg, #00d4ff, #5b86e5);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+        }
+        
+        .demo-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4);
+        }
+        
+        .url-example {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .feature-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .feature-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .launch-button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            font-size: 18px;
+            padding: 15px 30px;
+            display: block;
+            margin: 30px auto;
+            border-radius: 30px;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .launch-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1 class="demo-title">🔗 URL Preview Plugin</h1>
+        <p class="demo-subtitle">Erweiterte URL-Behandlung für das Kanban-Board</p>
+        
+        <div class="feature-list">
+            <div class="feature-item">
+                <div class="feature-icon">🎥</div>
+                <h3>YouTube Integration</h3>
+                <p>Automatische Video-Erkennung mit Rich-Previews</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🌐</div>
+                <h3>Website-Metadaten</h3>
+                <p>Titel, Beschreibung und Thumbnails extrahieren</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🔄</div>
+                <h3>CORS-Fallbacks</h3>
+                <p>Mehrere Proxy-Server für maximale Kompatibilität</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">📱</div>
+                <h3>Responsive Design</h3>
+                <p>Optimiert für Desktop und Mobile</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="demo-container">
+        <h2>🎯 Demo-Schritte</h2>
+        
+        <div class="demo-step">
+            <span class="step-number">1</span>
+            <strong>Kanban-Board öffnen:</strong> Navigiere zum Hauptboard
+            <button class="demo-button" onclick="openKanban()">Board öffnen</button>
+        </div>
+        
+        <div class="demo-step">
+            <span class="step-number">2</span>
+            <strong>Spalte auswählen:</strong> Klicke auf einen Spalten-Header
+            <p style="margin: 10px 0; opacity: 0.8;">💡 Die ausgewählte Spalte wird blau umrandet</p>
+        </div>
+        
+        <div class="demo-step">
+            <span class="step-number">3</span>
+            <strong>URL pasten:</strong> Verwende eine der Test-URLs:
+            
+            <div class="url-example" onclick="copyToClipboard(this.textContent)">
+                https://www.youtube.com/watch?v=dQw4w9WgXcQ
+            </div>
+            <button class="demo-button" onclick="copyYouTubeUrl()">YouTube URL kopieren</button>
+            
+            <div class="url-example" onclick="copyToClipboard(this.textContent)">
+                https://github.com/microsoft/vscode
+            </div>
+            <button class="demo-button" onclick="copyGitHubUrl()">GitHub URL kopieren</button>
+        </div>
+        
+        <div class="demo-step">
+            <span class="step-number">4</span>
+            <strong>Preview betrachten:</strong> Das URL-Preview-Modal öffnet sich automatisch
+            <p style="margin: 10px 0; opacity: 0.8;">
+                🎥 YouTube-Videos zeigen Video-Player und Thumbnail-Tabs<br>
+                🌐 Normale URLs zeigen Titel, Beschreibung und Favicon
+            </p>
+        </div>
+        
+        <div class="demo-step">
+            <span class="step-number">5</span>
+            <strong>URL-Feld Integration:</strong> Aktiviere die Checkbox für automatische URL-Feld Population
+            <p style="margin: 10px 0; opacity: 0.8;">
+                ✅ URL wird sowohl im Card-Content als auch im URL-Feld gespeichert
+            </p>
+        </div>
+    </div>
+    
+    <div class="demo-container">
+        <h2>🔧 Erweiterte Features</h2>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+            <div>
+                <h3>📋 Text mit mehreren URLs</h3>
+                <p>Füge Text mit mehreren URLs ein - sie werden automatisch zu Markdown-Links konvertiert:</p>
+                <div class="url-example">
+Schaue dir diese Ressourcen an:
+https://www.youtube.com/watch?v=dQw4w9WgXcQ
+https://github.com/microsoft/vscode
+                </div>
+                <button class="demo-button" onclick="copyMultiUrlText()">Multi-URL Text kopieren</button>
+            </div>
+            
+            <div>
+                <h3>🎮 Console-Debugging</h3>
+                <p>Verwende Browser-Konsole für erweiterte Tests:</p>
+                <div class="url-example">
+URLPreviewPlugin.fetchUrlMetadata('https://example.com')
+                </div>
+                <button class="demo-button" onclick="openDevTools()">DevTools öffnen</button>
+            </div>
+        </div>
+    </div>
+    
+    <button class="demo-button launch-button" onclick="startDemo()">
+        🚀 Demo starten
+    </button>
+    
+    <script>
+        function openKanban() {
+            window.open('kanban.html', '_blank');
+        }
+        
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification('📋 URL kopiert!');
+            }).catch(() => {
+                showNotification('❌ Kopieren fehlgeschlagen');
+            });
+        }
+        
+        function copyYouTubeUrl() {
+            copyToClipboard('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+        }
+        
+        function copyGitHubUrl() {
+            copyToClipboard('https://github.com/microsoft/vscode');
+        }
+        
+        function copyMultiUrlText() {
+            const text = `Schaue dir diese Ressourcen an:
+https://www.youtube.com/watch?v=dQw4w9WgXcQ
+https://github.com/microsoft/vscode
+https://stackoverflow.com/questions/tagged/javascript`;
+            copyToClipboard(text);
+        }
+        
+        function openDevTools() {
+            showNotification('🔧 Drücke F12 um die Browser-Konsole zu öffnen');
+        }
+        
+        function startDemo() {
+            // Öffne sowohl das Kanban-Board als auch die Test-Seite
+            window.open('kanban.html', 'kanban');
+            setTimeout(() => {
+                window.open('test-url-preview.html', 'test');
+            }, 1000);
+            
+            showNotification('🚀 Demo gestartet! Board und Test-Seite geöffnet.');
+        }
+        
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: rgba(0, 212, 255, 0.9);
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                z-index: 9999;
+                box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+                backdrop-filter: blur(10px);
+                animation: slideIn 0.3s ease;
+                font-weight: 500;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.style.animation = 'slideOut 0.3s ease';
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 300);
+                }
+            }, 3000);
+        }
+        
+        // Animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Easter Egg
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.altKey && e.code === 'KeyU') {
+                showNotification('🎉 URL Preview Plugin v1.0 - Ready for action!');
+            }
+        });
+        
+        console.log('🔗 URL Preview Demo geladen - Drücke Ctrl+Alt+U für Easter Egg!');
+    </script>
+</body>
+</html>
