@@ -1,17 +1,18 @@
 /* Card Styles */
 .kanban-card {
-    border-radius: 8px;
+    border-radius: 4px;
     border: 1px solid #777777;
-    padding: 1rem;
+    padding: 0rem;
     margin-bottom: 0.5rem;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     cursor: grab;
     transition: all 0.3s ease;
-    max-height: 400px;
-    min-height: 120px;
+    max-height: 800px;
+    min-height: 150px;
     overflow: hidden;
     position: relative;
-    padding-top: 3.2rem; /* Platz für Header schaffen */
+    height: fit-content;
+    padding-top: 2.2rem; /* Platz für Header schaffen */
 }
 
 .kanban-card:hover {
@@ -34,14 +35,13 @@
     margin: 0;
     padding: 0.5rem 1rem; /* Innenabstand im Header */
     border-radius: 0;
-    background: #fff;
     box-shadow: 0 1px 4px rgba(0,0,0,0.04);
     width: calc(100% + 2rem); /* Überdeckt den Padding-Bereich der Karte */
     position: absolute;
     left: 0;
     top: 0;
     z-index: 1;
-    background: linear-gradient(120deg, rgba(207, 211, 214, 0.8) 0%, rgba(226, 224, 231, 0.5) 30%, rgb(254, 253, 255) 100%) !important;
+    background: linear-gradient(195deg, rgba(253, 152, 62, 0.53) 0%,rgba(253, 252, 222, 0.53) 50%, rgba(186, 74, 226, 0.79) 100%);
 }
 
 .card-title {
@@ -79,7 +79,7 @@
     color: #5a6c7d;
     margin-bottom: 0.5rem;
     transition: max-height 0.3s cubic-bezier(.4,0,.2,1), opacity 0.2s;
-    max-height: 300px;
+    max-height: auto;
     overflow: hidden;
 }
 
@@ -169,7 +169,6 @@
     margin: 0;
     padding: 0.5rem 1rem; /* Innenabstand im Header */
     border-radius: 0;
-    background: #fff;
     box-shadow: 0 1px 4px rgba(0,0,0,0.04);
     width: calc(100% + 0rem); /* Überdeckt den Padding-Bereich der Karte */
     position: absolute;
@@ -200,8 +199,7 @@
     display: block;
 }
 .card-thumb img {
-    width: 100%;
-    height: 100%;
+    max-width: 100%;
     object-fit: cover;
     border-top-left-radius: 6px;
     border-top-right-radius: 6px;
@@ -214,6 +212,13 @@
     margin-bottom: 0.5rem;
     min-height: 1.5em;
     padding: 0 0.5rem;
+    max-height: fit-content;
+}
+.card-preview-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 .kanban-card .card-title {
     padding: 0.rem 0.5rem 0.1rem 0.5rem;
@@ -235,9 +240,11 @@
 #full-card-modal .modal-content {
     border-radius: 12px;
     padding: 0;
-    width: 100%;
-    max-width: 650px;
-    max-height: 90vh;
+    min-width: 650px;   
+    max-width: 95vw;
+    width: fit-content;
+    max-height: 95vh;
+    height: fit-content;
     box-shadow: 0 12px 48px rgba(0,0,0,0.25);
     position: relative;
     overflow: hidden;
@@ -407,8 +414,7 @@
     background: #f7fafc;
     border-radius: 8px;
     border: 1px solid #e2e8f0;
-    min-height: 200px;
-    max-height: 50vh;
+    min-height: 400px;
     overflow: auto;
 }
 
@@ -579,12 +585,12 @@
 
 /* Selected card styling for keyboard deletion */
 .kanban-card.selected {
-    box-shadow: 0 0 0 3px #4a90e2;
-    transform: translateY(-2px);
+    /* box-shadow: 0 0 0 3px #4a90e2;
+    transform: translateY(-2px); */
 }
 
 .kanban-card.selected .card-header {
-    background: #e3f2fd;
+    background: linear-gradient(135deg, rgba(74, 144, 226, 0.2) 0%, rgba(74, 144, 226, 0.1) 100%);
 }
 
 .kanban-card .card-btn.card-delete{

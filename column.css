@@ -11,7 +11,7 @@
 .kanban-column {
     flex: 0 0 var(--kanban-column-width, 300px);
     border-radius: 8px;
-    padding: 4rem 0.5rem 0.5rem 0.5rem;
+    padding: 3.5rem 0.1rem 0.1rem 0.1rem;
     display: flex;
     flex-direction: column;
     transition: all 0.3s ease;
@@ -159,12 +159,12 @@
 }
 
 .kanban-column .column-content {
-    flex: 1 1 auto;
+    flex: 1 0 auto;
     min-height: 100px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.005rem;
 }
 
 /* Schieberegler-Label und Wert */
@@ -203,9 +203,9 @@
 }
 
 .kanban-column.selected-for-paste {
-    box-shadow: 0 0 0 3px #2196F3 !important;
+    /* box-shadow: 0 0 0 3px #2196F3 !important;
     border-radius: 8px !important;
-    transition: box-shadow 0.2s ease !important;
+    transition: box-shadow 0.2s ease !important; */
     background-blend-mode: multiply;
     background-color: rgba(138, 138, 138, 0.15) !important;
 
@@ -214,7 +214,7 @@
 
 .kanban-column.selected-for-paste .column-header {
     background-blend-mode: lighten;
-    background: linear-gradient(135deg, rgba(33, 150, 243, 0.8) 0%, rgba(80, 77, 95, 0.5) 30%, rgba(80, 77, 95, 1) 100%) !important;
-    color: white !important;
+    background: linear-gradient(135deg, rgba(33, 150, 243, 1) 0%, rgba(80, 77, 95, 1) 30%, rgba(80, 77, 95, 1) 100%) !important;
+    color: rgb(0, 0, 0) !important;
     border-radius: 8px 8px 0 0 !important;
 }

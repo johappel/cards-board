@@ -383,12 +383,6 @@ function selectColumnForPaste(columnId) {
     if (columnElement) {
         columnElement.classList.add('selected-for-paste');
         console.log('✅ Column visual selection applied to:', columnElement);
-        
-        // Erzwinge Stil-Update
-        columnElement.style.setProperty('box-shadow', '0 0 0 3px #2196F3', 'important');
-        
-        // Feedback-Nachricht mit Spalten-Namen - nur bei Paste-Aktion
-        // showPasteNotification entfernt - wird nur bei echtem Paste aufgerufen
     } else {
         console.warn('❌ Column element not found for ID:', columnId);
     }

@@ -263,20 +263,22 @@ function createCardElement(card, columnId) {
             previewText = html;
         } else {
             previewText = markdownPreview.replace(/\n/g, '<br>');
-        }    }
-
+        }    
+    }
+    // doch alles rendern, damit es in der Vorschau angezeigt wird
+    previewText = window.marked.parse(card.content)
     // Kommentar und URL-Bereiche generieren
     let commentHtml = '';
     let urlHtml = '';
     
     if (card.comments && card.comments.trim()) {
-        commentHtml = `<div class="card-comment">💬 ${card.comments}</div>`;
+        //commentHtml = `<div class="card-comment">💬 ${card.comments}</div>`;
     }
     
     if (card.url && card.url.trim()) {
         // URL verkürzen für Anzeige
         let displayUrl = card.url.length > 40 ? card.url.substring(0, 37) + '...' : card.url;
-        urlHtml = `<div class="card-url"><a href="${card.url}" class="card-url-link" onclick="event.stopPropagation()" target="_blank" rel="noopener noreferrer">🔗 ${displayUrl}</a></div>`;
+        urlHtml = `<div class="card-url"><a href="${card.url}" class="card-url-link" onclick="event.stopPropagation()" target="_blank" rel="noopener noreferrer">🔗 Link</a></div>`;
     }
 
     return `
@@ -298,7 +300,11 @@ function createCardElement(card, columnId) {
                 <ul style="margin-top:0.2em;margin-bottom:0.2em;">${previewText}</ul>
             </div>
             ${commentHtml}
-            ${urlHtml}
+            <div class="card-footer">
+                <div class="card-footer-actions">
+                 💬 0 ${urlHtml}
+                </div>
+            </div>
         </div>
     `;
 }
