@@ -32,8 +32,10 @@ let connectionStatusInterval = null;
 let reconnectTimeout = null;
 let heartbeatInterval = null;
 let lastPongTimestamp = null;
+let temporaryStatusTimeout = null; // Für temporäre Statusmeldungen
 const HEARTBEAT_INTERVAL = 30000; // 30 Sekunden
 const RECONNECT_DELAY = 3000; // 3 Sekunden
+const TEMPORARY_STATUS_DURATION = 5000; // 5 Sekunden für temporäre Fehlermeldungen
 
 // Hilfsfunktionen für das Board
 function addCardToColumn(columnName, cardData) {
@@ -133,6 +135,17 @@ function renderMarkdownToHtml(markdownText) {
 }
 
 function displayMessage(textOrHtml, sender = 'bot') {
+    // System-Messages mit Fehlerindikatoren erhalten temporäre Anzeige
+    if (sender === 'system') {
+        const hasError = textOrHtml.includes('⚠️') || textOrHtml.includes('Fehler') || textOrHtml.includes('Netzwerkfehler');
+        if (hasError) {
+            showTemporaryStatus(textOrHtml, true);
+        } else {
+            updateConnectionStatus(textOrHtml, false);
+        }
+        return;
+    }
+    
     const chatbox = document.getElementById('chatbox');
     const messageElement = document.createElement('div');
     const senderClass = sender + '-message';
@@ -143,7 +156,7 @@ function displayMessage(textOrHtml, sender = 'bot') {
     chatbox.appendChild(messageElement);
     chatbox.scrollTop = chatbox.scrollHeight;
     
-    // Chat-Nachrichten für aktuelles Board speichern
+    // Chat-Nachrichten für aktuelles Board speichern (nur Bot und User Messages, keine System-Messages)
     const boardId = window.currentBoard && window.currentBoard.id ? window.currentBoard.id : 'default';
     const currentMessages = getCurrentChatMessages();
     saveChatMessages(boardId, currentMessages);
@@ -160,17 +173,47 @@ function updateConnectionStatus(message, isError = false) {
     }
 }
 
+// Neue Funktion für temporäre Statusmeldungen
+function showTemporaryStatus(message, isError = false, duration = TEMPORARY_STATUS_DURATION) {
+    // Vorherigen Timeout löschen
+    if (temporaryStatusTimeout) {
+        clearTimeout(temporaryStatusTimeout);
+    }
+    
+    // Temporäre Nachricht anzeigen
+    updateConnectionStatus(message, isError);
+    
+    // Nach der angegebenen Zeit zur normalen Anzeige zurückkehren
+    temporaryStatusTimeout = setTimeout(() => {
+        temporaryStatusTimeout = null;
+        // Zurück zur normalen Verbindungsanzeige
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            showConnectionId();
+        } else {
+            updateConnectionStatus('Verbindung zum Chat Agenten abgebrochen!', true);
+        }
+    }, duration);
+}
+
 function showConnectionId() {
     const connectionStatus = document.getElementById('connectionStatus');
     const boardId = window.currentBoard && window.currentBoard.id ? window.currentBoard.id : 'default';
     const serverAssignedConnectionId = getServerAssignedConnectionId(boardId);
     if (serverAssignedConnectionId) {
-        connectionStatus.textContent = `Verbunden (ID: ${serverAssignedConnectionId})`;
-        connectionStatus.style.color = '#555';
+        // Verbunden-Symbol anzeigen statt langer ID
+        connectionStatus.textContent = '🟢 Verbunden';
+        connectionStatus.style.color = '#28a745';
+        // Connection-ID nur in die Entwicklerkonsole loggen
+        console.log(`[Chatbot] Verbunden mit Board ${boardId}, Connection-ID: ${serverAssignedConnectionId}`);
     }
 }
 
 function checkWebSocketStatus() {
+    // Nur prüfen, wenn keine temporäre Statusmeldung aktiv ist
+    if (temporaryStatusTimeout) {
+        return; // Temporären Status nicht überschreiben
+    }
+    
     if (!socket || socket.readyState !== WebSocket.OPEN) {
         updateConnectionStatus('Verbindung zum Chat Agenten abgebrochen!', true);
     } else {
@@ -243,6 +286,13 @@ function getWebSocketUrlForBoard(boardId) {
     }
     // Nutze global konfiguriertes websocketUrl
     let url = websocketUrl;
+    
+    // Null/undefined-Prüfung hinzufügen
+    if (!url) {
+        console.error('WebSocket URL ist nicht konfiguriert. Bitte in den AI-Settings einstellen.');
+        return null;
+    }
+    
     if (!/^wss?:\/\//.test(url)) url = 'wss://' + url.replace(/^https?:\/\//, '');
     return url + '/?clientId=' + encodeURIComponent(connectionId);
 }
@@ -252,8 +302,16 @@ function connectWebSocket() {
     // Board-ID bestimmen (z.B. window.currentBoard.id)
     const boardId = window.currentBoard && window.currentBoard.id ? window.currentBoard.id : 'default';
     const wsUrl = getWebSocketUrlForBoard(boardId);
+    
+    // Prüfung, ob wsUrl gültig ist
+    if (!wsUrl) {
+        updateConnectionStatus('WebSocket URL fehlt. Bitte AI-Settings konfigurieren.', true);
+        displayMessage('⚠️ Fehler: WebSocket URL ist nicht konfiguriert. Bitte öffnen Sie die AI-Settings und konfigurieren Sie die WebSocket URL.', 'system');
+        return;
+    }
+    
     updateConnectionStatus('Verbinde mit WebSocket-Server...');
-    socket = new WebSocket(wsUrl);    socket.onopen = function () {
+    socket = new WebSocket(wsUrl);socket.onopen = function () {
         updateConnectionStatus('Verbunden mit WebSocket-Server.');
         displayMessage('Verbindung zum Chat Agenten hergestellt.', 'system');
         // Connection-ID aus URL extrahieren und speichern
@@ -287,9 +345,8 @@ function connectWebSocket() {
                     renderSuggestions([suggestionText]);
                 } else if (Array.isArray(data.suggestions)) {
                     renderSuggestions(data.suggestions);
-                }
-            } else if (data.type === 'thinking' && (data.message || data.text)) {
-                displayMessage('<div class="think"><details open><summary>Denken...</summary>' + (data.message || data.text) + '</details></div>', 'system');
+                }            } else if (data.type === 'thinking' && (data.message || data.text)) {
+                displayMessage('<div class="think"><details open><summary>Denken...</summary>' + (data.message || data.text) + '</details></div>', 'bot');
             } else if (data.type === 'cards' && Array.isArray(data.cards)) {
                 let targetColumn = data.column || 'Material';
                 const wasCreated = addColumnWithCards(targetColumn, data.cards);
@@ -367,6 +424,13 @@ function stopHeartbeat() {
 // sendQueryToN8NAgent muss vor allen Event-Handlern deklariert werden!
 function sendQueryToN8NAgent(queryText) {
     if (!queryText) return;
+    
+    // Prüfung, ob n8nAgentWebhookUrl konfiguriert ist
+    if (!n8nAgentWebhookUrl) {
+        displayMessage('⚠️ Fehler: N8N Agent Webhook URL ist nicht konfiguriert. Bitte öffnen Sie die AI-Settings und konfigurieren Sie die Webhook URL.', 'system');
+        return;
+    }
+    
     if (!socket || socket.readyState !== WebSocket.OPEN) {
         displayMessage('Kann Nachricht nicht senden: WebSocket nicht verbunden.', 'system');
         return;
@@ -628,15 +692,21 @@ function getCurrentChatMessages() {
         const isBotMessage = el.classList.contains('bot-message');
         const isSystemMessage = el.classList.contains('system-message');
         
-        let sender = 'bot';
-        if (isUserMessage) sender = 'user';
-        else if (isSystemMessage) sender = 'system';
-        
-        messages.push({
-            content: el.innerHTML,
-            sender: sender,
-            timestamp: Date.now()
-        });
+        // Nur Bot- und User-Messages speichern, keine System-Messages
+        if (isUserMessage) {
+            messages.push({
+                content: el.innerHTML,
+                sender: 'user',
+                timestamp: Date.now()
+            });
+        } else if (isBotMessage) {
+            messages.push({
+                content: el.innerHTML,
+                sender: 'bot',
+                timestamp: Date.now()
+            });
+        }
+        // System-Messages werden übersprungen
     });
     
     return messages;
@@ -649,13 +719,15 @@ function restoreChatMessages(messages) {
     // Chat leeren
     chatbox.innerHTML = '';
     
-    // Nachrichten wiederherstellen
+    // Nur Bot- und User-Messages wiederherstellen, keine System-Messages
     messages.forEach(msg => {
-        const messageElement = document.createElement('div');
-        const senderClass = msg.sender + '-message';
-        messageElement.classList.add('message', senderClass);
-        messageElement.innerHTML = msg.content;
-        chatbox.appendChild(messageElement);
+        if (msg.sender === 'user' || msg.sender === 'bot') {
+            const messageElement = document.createElement('div');
+            const senderClass = msg.sender + '-message';
+            messageElement.classList.add('message', senderClass);
+            messageElement.innerHTML = msg.content;
+            chatbox.appendChild(messageElement);
+        }
     });
     
     // Zum Ende scrollen
