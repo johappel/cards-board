@@ -345,8 +345,9 @@ function connectWebSocket() {
                     renderSuggestions([suggestionText]);
                 } else if (Array.isArray(data.suggestions)) {
                     renderSuggestions(data.suggestions);
-                }            } else if (data.type === 'thinking' && (data.message || data.text)) {
-                displayMessage('<div class="think"><details open><summary>Denken...</summary>' + (data.message || data.text) + '</details></div>', 'bot');
+                }              } else if (data.type === 'thinking' && (data.message || data.text)) {
+                const thinkingLabel = data.label || 'Denken...';
+                displayMessage('<div class="think"><details open><summary>' + thinkingLabel + '</summary>' + (data.message || data.text) + '</details></div>', 'bot');
             } else if (data.type === 'cards' && Array.isArray(data.cards)) {
                 let targetColumn = data.column || 'Material';
                 const wasCreated = addColumnWithCards(targetColumn, data.cards);
