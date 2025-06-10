@@ -237,6 +237,11 @@ function loadBoardSettings() {
     if (boardSummaryInput) boardSummaryInput.value = currentBoard.summary || '';
     if (boardBgColorInput) boardBgColorInput.value = currentBoard.backgroundColor || '#f5f7fa';
     
+    // Load board color settings
+    if (typeof loadBoardColorSettings === 'function') {
+        setTimeout(() => loadBoardColorSettings(currentBoard), 200);
+    }
+    
     // Load AI settings
     const aiProvider = document.getElementById('ai-provider');
     const aiBaseUrl = document.getElementById('ai-base-url');

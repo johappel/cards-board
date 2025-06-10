@@ -215,12 +215,43 @@ function appendToCard(cardId, columnId, text) {
 }
 
 function createNewCardWithContent(columnId, text) {
+    console.log('🔍 createNewCardWithContent called with:', { columnId, text: text.substring(0, 50) + '...' });
+    console.log('🔍 currentBoard:', currentBoard);
+    console.log('🔍 currentBoard.columns:', currentBoard?.columns);
+    
+    if (!currentBoard) {
+        console.error('❌ currentBoard is not defined');
+        showPasteNotification('❌ Board nicht verfügbar', 3000);
+        return;
+    }
+    
+    if (!currentBoard.columns) {
+        console.error('❌ currentBoard.columns is not defined');
+        showPasteNotification('❌ Spalten nicht verfügbar', 3000);
+        return;
+    }
+    
     const column = currentBoard.columns.find(c => c.id === columnId);
-    if (!column) return;
-      // Neue Karte erstellen
+    if (!column) {
+        console.error('❌ Target column not found:', columnId);
+        console.log('🔍 Available columns:', currentBoard.columns.map(c => ({ id: c.id, title: c.title })));
+        showPasteNotification(`❌ Spalte nicht gefunden: ${columnId}`, 3000);
+        return;
+    }
+    
+    console.log('✅ Target column found:', { id: column.id, title: column.title });
+    
+    // Titel aus Content extrahieren mit Debugging
+    const extractedTitle = extractTitleFromContent(text);
+    console.log('📝 Title extraction:', { 
+        originalText: text.substring(0, 100) + '...', 
+        extractedTitle: extractedTitle 
+    });
+    
+    // Neue Karte erstellen
     const newCard = {
         id: generateId(),
-        heading: extractTitleFromContent(text),
+        heading: extractedTitle,
         content: text,
         color: 'color-gradient-1',
         thumbnail: '',
@@ -230,6 +261,8 @@ function createNewCardWithContent(columnId, text) {
         inactive: false
     };
     
+    console.log('📝 Created new card:', { id: newCard.id, heading: newCard.heading });
+    
     column.cards.push(newCard);
     
     // Board speichern und rendern
@@ -237,21 +270,108 @@ function createNewCardWithContent(columnId, text) {
     renderColumns();
     
     showPasteNotification('✅ Neue Karte erstellt', 2000);
+    console.log('✅ Card successfully added to column');
 }
 
 function extractTitleFromContent(content) {
     // Versuche Titel aus Content zu extrahieren
     const lines = content.trim().split('\n');
-    let title = lines[0];
+    let title = '';
     
-    // Falls erste Zeile zu lang ist, kürze sie
-    if (title.length > 50) {
-        title = title.substring(0, 47) + '...';
+    // Spezielle Behandlung für verschiedene Content-Typen
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        // Überspringe leere Zeilen
+        if (!line) continue;
+        
+        // Überspringe Markdown-Bilder
+        if (line.startsWith('![') && line.includes('](')) {
+            // Extrahiere Alt-Text aus Bild-Markdown
+            const altTextMatch = line.match(/!\[([^\]]*)\]/);
+            if (altTextMatch && altTextMatch[1]) {
+                title = altTextMatch[1];
+                break;
+            }
+            continue;
+        }
+        
+        // Überspringe HTML-Tags (iframes, etc.)
+        if (line.startsWith('<') && line.includes('>')) {
+            continue;
+        }
+        
+        // Überspringe YouTube-Thumbnails
+        if (line.startsWith('[![') && line.includes('youtube')) {
+            title = 'YouTube Video';
+            break;
+        }
+        
+        // Überspringe reine URLs
+        if (line.match(/^https?:\/\//)) {
+            // Extrahiere Domain als Titel
+            try {
+                const url = new URL(line);
+                title = url.hostname.replace('www.', '');
+                break;
+            } catch {
+                title = 'Link';
+                break;
+            }
+        }
+        
+        // Überspringe Markdown-Links und extrahiere Link-Text
+        const linkMatch = line.match(/\[([^\]]+)\]\([^\)]+\)/);
+        if (linkMatch && linkMatch[1]) {
+            title = linkMatch[1];
+            break;
+        }
+        
+        // Behandle Markdown-Überschriften
+        const headingMatch = line.match(/^#+\s*(.+)$/);
+        if (headingMatch && headingMatch[1]) {
+            title = headingMatch[1];
+            break;
+        }
+        
+        // Verwende erste sinnvolle Textzeile
+        if (line.length > 0) {
+            title = line;
+            break;
+        }
     }
     
-    // Falls leer, verwende Default
+    // Falls kein Titel gefunden, verwende intelligente Defaults basierend auf Content
     if (!title.trim()) {
-        title = 'Neue Karte';
+        if (content.includes('![') && content.includes('data:image/')) {
+            title = 'Eingefügtes Bild';
+        } else if (content.includes('youtube.com') || content.includes('youtu.be')) {
+            title = 'YouTube Video';
+        } else if (content.match(/https?:\/\//)) {
+            title = 'Link';
+        } else if (content.includes('<iframe')) {
+            title = 'Eingebetteter Inhalt';
+        } else {
+            title = 'Neue Karte';
+        }
+    }
+    
+    // Falls Titel zu lang ist, kürze ihn intelligent
+    if (title.length > 50) {
+        // Versuche an Wortgrenzen zu kürzen
+        const words = title.split(' ');
+        let shortTitle = '';
+        
+        for (const word of words) {
+            if ((shortTitle + ' ' + word).length <= 47) {
+                shortTitle += (shortTitle ? ' ' : '') + word;
+            } else {
+                break;
+            }
+        }
+        
+        title = shortTitle || title.substring(0, 47);
+        title += '...';
     }
     
     return title;
@@ -359,10 +479,14 @@ function showPasteNotification(message, duration = 3000) {
 
 // Event Listener für Spalten-Auswahl
 function selectColumnForPaste(columnId) {
+    console.log('🎯 selectColumnForPaste called with:', columnId);
+    console.log('🔍 Previous selectedColumnForPaste:', selectedColumnForPaste);
+    
     selectedColumnForPaste = columnId;
     
     // WICHTIG: Alle Karten deselektieren wenn Spalte ausgewählt wird
     if (typeof selectedCardData !== 'undefined' && selectedCardData !== null) {
+        console.log('🔄 Deselecting card:', selectedCardData);
         selectedCardData = null;
         
         // Visuelle Deselektierung aller Karten
@@ -373,6 +497,7 @@ function selectColumnForPaste(columnId) {
     
     // Debugging-Ausgabe
     console.log('🎯 Column selected for paste:', columnId);
+    console.log('🔍 Current board columns:', currentBoard?.columns?.map(c => ({ id: c.id, title: c.title })));
     
     // Visuelle Hervorhebung der ausgewählten Spalte
     document.querySelectorAll('.kanban-column').forEach(col => {
@@ -385,6 +510,8 @@ function selectColumnForPaste(columnId) {
         console.log('✅ Column visual selection applied to:', columnElement);
     } else {
         console.warn('❌ Column element not found for ID:', columnId);
+        console.log('🔍 Available column elements:', 
+            Array.from(document.querySelectorAll('.kanban-column')).map(el => el.dataset.columnId));
     }
 }
 
@@ -563,6 +690,9 @@ function getYouTubeThumbnail(videoId, quality = 'maxresdefault') {
 function openSmartPasteModal() {
     document.getElementById('smart-paste-modal').classList.add('show');
     
+    // Zeige die aktuell ausgewählte Spalte an
+    showSelectedColumnInModal();
+    
     // Focus auf das Textarea setzen
     setTimeout(() => {
         const textarea = document.getElementById('smart-paste-input');
@@ -576,6 +706,31 @@ function openSmartPasteModal() {
     }, 100);
     
     resetSmartPasteModal();
+}
+
+function showSelectedColumnInModal() {
+    // Zeige Information über die ausgewählte Spalte
+    let selectedInfo = '';
+    
+    if (selectedColumnForPaste) {
+        // Finde die Spalte im aktuellen Board
+        const column = currentBoard && currentBoard.columns ? 
+            currentBoard.columns.find(c => c.id === selectedColumnForPaste) : null;
+        
+        if (column) {
+            selectedInfo = `🎯 Ziel-Spalte: "${column.title}"`;
+        } else {
+            selectedInfo = `🎯 Ziel-Spalte: ${selectedColumnForPaste} (nicht gefunden)`;
+        }
+    } else {
+        selectedInfo = '💡 Keine Spalte ausgewählt - bitte zuerst eine Spalte anklicken';
+    }
+    
+    // Zeige die Information in einer Notification oder im Modal
+    console.log('Smart Paste Modal opened:', selectedInfo);
+    
+    // Optional: Zeige die Info als temporäre Notification
+    showPasteNotification(selectedInfo, 3000);
 }
 
 function resetSmartPasteModal() {
@@ -753,23 +908,26 @@ function applySmartPaste() {
         return;
     }
     
-    // Inhalt in das card-content Feld einfügen
-    const cardContentTextarea = document.getElementById('card-content');
-    if (cardContentTextarea) {
-        const currentValue = cardContentTextarea.value;
-        const newValue = currentValue ? currentValue + '\n\n' + smartPasteProcessedContent : smartPasteProcessedContent;
-        cardContentTextarea.value = newValue;
-        
-        // Auto-Save triggern falls aktiviert
-        if (typeof autoSaveCardHandler === 'function') {
-            autoSaveCardHandler({ target: cardContentTextarea });
+    // Bestimme das Ziel wie bei normalem Paste
+    const target = determineCurrentPasteTarget();
+    
+    if (!target) {
+        // Fallback: Verwende die zuletzt ausgewählte Spalte
+        if (selectedColumnForPaste) {
+            console.log('🎯 Using selected column for smart paste:', selectedColumnForPaste);
+            finalizePasteAction(smartPasteProcessedContent, { type: 'column', columnId: selectedColumnForPaste });
+            closeModal('smart-paste-modal');
+            return;
+        } else {
+            showPasteNotification('💡 Bitte wählen Sie erst eine Spalte aus!', 4000);
+            return;
         }
-        
-        showPasteNotification('✅ Inhalt erfolgreich eingefügt!', 2000);
-        closeModal('smart-paste-modal');
-    } else {
-        showPasteNotification('❌ Ziel-Feld nicht gefunden', 3000);
     }
+    
+    // Verwende das bestimmte Ziel
+    console.log('🎯 Smart paste target determined:', target);
+    finalizePasteAction(smartPasteProcessedContent, target);
+    closeModal('smart-paste-modal');
 }
 
 function renderMarkdownToHtml(markdown) {

@@ -25,10 +25,29 @@ function updateBoardView() {
     document.getElementById('board-title').textContent = currentBoard.name;
     document.getElementById('board-authors').textContent = 'Authors: ' + currentBoard.authors.join(', ');
     document.getElementById('board-summary').textContent = currentBoard.summary || 'No summary yet...';
-    
-    // Apply background color and custom styles
+      // Apply background colors
+    const boardHeader = document.querySelector('.board-header');
     const boardView = document.getElementById('board-view');
-    boardView.style.backgroundColor = currentBoard.backgroundColor;
+    
+    if (boardHeader) {
+        if (currentBoard.headerRGBA) {
+            // Header uses white with transparency to let board color show through
+            boardHeader.style.backgroundColor = currentBoard.headerRGBA;
+        } else if (currentBoard.backgroundColor) {
+            // Fallback to old hex color
+            boardHeader.style.backgroundColor = currentBoard.backgroundColor;
+        }
+    }
+    
+    if (boardView) {
+        if (currentBoard.backgroundHex) {
+            // Board background uses full color without transparency
+            boardView.style.backgroundColor = currentBoard.backgroundHex;
+        } else if (currentBoard.backgroundColor) {
+            // Fallback to old hex color
+            boardView.style.backgroundColor = currentBoard.backgroundColor;
+        }
+    }
     
     if (currentBoard.customStyle) {
         applyCustomStyle('board-custom-style', currentBoard.customStyle);

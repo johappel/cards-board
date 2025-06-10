@@ -5,6 +5,12 @@ function openBoardSettings() {
     document.getElementById('board-summary-input').value = currentBoard.summary;
     document.getElementById('board-bg-color').value = currentBoard.backgroundColor;
     document.getElementById('board-custom-style').value = currentBoard.customStyle || '';
+    
+    // Load board color settings
+    if (typeof loadBoardColorSettings === 'function') {
+        loadBoardColorSettings(currentBoard);
+    }
+    
     // AI-Konfiguration wird nicht mehr pro Board angezeigt!
     document.getElementById('ai-provider').parentElement.style.display = 'none';
     document.getElementById('ai-api-key').parentElement.style.display = 'none';
@@ -32,6 +38,17 @@ function saveBoardSettings(e) {
     currentBoard.summary = document.getElementById('board-summary-input').value;
     currentBoard.backgroundColor = document.getElementById('board-bg-color').value;
     currentBoard.customStyle = document.getElementById('board-custom-style').value;
+    
+    // Save board color settings
+    if (typeof saveBoardColorSettings === 'function') {
+        saveBoardColorSettings(currentBoard);
+    }
+    
+    // Save board background hex separately (without transparency)
+    if (typeof getCurrentBoardBackgroundHex === 'function') {
+        currentBoard.backgroundHex = getCurrentBoardBackgroundHex();
+    }
+    
     currentBoard.aiConfig = {
         provider: document.getElementById('ai-provider').value,
         apiKey: document.getElementById('ai-api-key').value,
@@ -39,6 +56,12 @@ function saveBoardSettings(e) {
         baseUrl: document.getElementById('ai-base-url').value
     };
     updateBoardView();
+    
+    // Apply board background style
+    if (typeof applyBoardBackgroundStyle === 'function') {
+        applyBoardBackgroundStyle();
+    }
+    
     saveAllBoards();
     closeModal('board-settings-modal');
 }

@@ -303,8 +303,33 @@
                             <textarea id="board-summary-input"></textarea>
                         </div>
                         <div class="form-group">
-                            <label for="board-bg-color">Background Color</label>
-                            <input type="color" id="board-bg-color" value="#f5f7fa">
+                            <label>Board Header Background</label>
+                            <div class="board-color-section">
+                                <div class="board-color-palette" id="board-color-palette">
+                                    <!-- Color options will be populated by JavaScript -->
+                                </div>
+                                <div class="transparency-control">
+                                    <div class="transparency-header">
+                                        <span class="transparency-label">Transparenz</span>
+                                        <span class="transparency-value" id="transparency-value">80%</span>
+                                    </div>
+                                    <label for="transparency-slider" class="transparency-label">Transparenz einstellen:</label>
+                                    <input type="range" 
+                                           id="transparency-slider" 
+                                           class="transparency-slider" 
+                                           min="0" 
+                                           max="100" 
+                                           value="80" 
+                                           step="5">
+                                </div>
+                                <div class="color-preview">
+                                    <div class="color-preview-sample" id="color-preview-sample"></div>
+                                    <div id="color-preview-text">Vorschau: rgba(245, 247, 250, 0.8)</div>
+                                </div>
+                            </div>
+                            <!-- Hidden fields for compatibility -->
+                            <input type="hidden" id="board-bg-color" value="#f5f7fa">
+                            <input type="hidden" id="board-transparency" value="80">
                         </div>
                         <div class="ai-section">
                             <h3>AI Configuration</h3>
@@ -566,6 +591,7 @@
     <script src="duplicate.js"></script>
     <script src="sortable-duplicate.js"></script>
     <script src="sidebar.js"></script>
+    <script src="board-colors.js"></script>
     <script>
         // Initialize column width changer
         document.addEventListener('DOMContentLoaded', function() {

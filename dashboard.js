@@ -18,6 +18,18 @@ function renderDashboard() {
 function createBoardCard(board) {
     const card = document.createElement('div');
     card.className = 'board-card';
+      // Apply board background color if available
+    if (board.headerRGBA) {
+        // Dashboard cards use white with transparency to let board color show through
+        card.style.backgroundColor = board.headerRGBA;
+        // Set board color as background behind the transparent header
+        if (board.backgroundHex) {
+            card.style.background = `linear-gradient(${board.headerRGBA}, ${board.headerRGBA}), ${board.backgroundHex}`;
+        }
+    } else if (board.backgroundColor) {
+        // Fallback to hex color for older boards
+        card.style.backgroundColor = board.backgroundColor;
+    }
     
     const totalCards = board.columns.reduce((sum, col) => sum + col.cards.length, 0);
     
