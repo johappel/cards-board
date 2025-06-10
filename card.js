@@ -281,13 +281,14 @@ function createCardElement(card, columnId) {
         // URL verkürzen für Anzeige
         let displayUrl = card.url.length > 40 ? card.url.substring(0, 37) + '...' : card.url;
         urlHtml = `<a href="${card.url}" class="card-url-link" onclick="event.stopPropagation()" target="_blank" rel="noopener noreferrer" title="${card.url}">🔗</a>`;
-    }
-
-    // Labels verarbeiten
+    }    // Labels verarbeiten
     if (card.labels && card.labels.trim()) {
         const labels = card.labels.split(',').map(label => label.trim()).filter(label => label.length > 0);
         if (labels.length > 0) {
-            const labelTags = labels.map(label => `<span class="card-label">${label}</span>`).join('');
+            const labelTags = labels.map(label => {
+                const colorClass = getLabelColorClass(label);
+                return `<span class="card-label ${colorClass}">${label}</span>`;
+            }).join('');
             labelsHtml = `<div class="card-labels">${labelTags}</div>`;
         }
     }
@@ -397,7 +398,10 @@ function showCardFullModal(cardId, columnId) {
                 <div class="card-content-full">${window.renderMarkdownToHtml ? window.renderMarkdownToHtml(foundCard.content || '') : (foundCard.content || '')}</div>
                 ${foundCard.comments ? `<div class="card-comment">${foundCard.comments}</div>` : ''}
                 ${foundCard.url ? `<div class="card-url"><a href="${foundCard.url}" class="card-url-link" target="_blank" rel="noopener noreferrer">${foundCard.url}</a></div>` : ''}
-                ${foundCard.labels ? `<div class="card-labels-full">${foundCard.labels.split(',').map(label => `<span class="card-label-full">${label.trim()}</span>`).join('')}</div>` : ''}
+                ${foundCard.labels ? `<div class="card-labels-full">${foundCard.labels.split(',').map(label => {
+                    const colorClass = getLabelColorClass(label.trim());
+                    return `<span class="card-label-full ${colorClass}">${label.trim()}</span>`;
+                }).join('')}</div>` : ''}
             </div>
         </div>
     `;
@@ -444,7 +448,10 @@ function updateFullCardModal(cardId) {
                 <div class="card-content-full">${window.renderMarkdownToHtml ? window.renderMarkdownToHtml(card.content || '') : (card.content || '')}</div>
                 ${card.comments ? `<div class="card-comment">${card.comments}</div>` : ''}
                 ${card.url ? `<div class="card-url"><a href="${card.url}" class="card-url-link" target="_blank" rel="noopener noreferrer">${card.url}</a></div>` : ''}
-                ${card.labels ? `<div class="card-labels-full">${card.labels.split(',').map(label => `<span class="card-label-full">${label.trim()}</span>`).join('')}</div>` : ''}
+                ${card.labels ? `<div class="card-labels-full">${card.labels.split(',').map(label => {
+                    const colorClass = getLabelColorClass(label.trim());
+                    return `<span class="card-label-full ${colorClass}">${label.trim()}</span>`;
+                }).join('')}</div>` : ''}
             </div>
         </div>
     `;
@@ -515,6 +522,7 @@ saveCard = function(e, keepOpen) {
     const thumbnail = document.getElementById('card-thumbnail').value;
     const comments = document.getElementById('card-comments').value;
     const url = document.getElementById('card-url').value;
+    const labels = document.getElementById('card-labels').value;
     const cardData = {
         heading,
         content,
@@ -522,6 +530,7 @@ saveCard = function(e, keepOpen) {
         thumbnail,
         comments,
         url,
+        labels,
         inactive: currentCard?.inactive || false
     };
     const targetColumn = currentBoard.columns.find(c => c.id === columnId);
@@ -597,4 +606,19 @@ function deleteCurrentCard() {
     }
     
     deleteCard(currentCard.id, currentColumn.id);
+}
+
+// Hilfsfunktion: Konsistente Farbklasse basierend auf Label-Text
+function getLabelColorClass(labelText) {
+    // Einfacher Hash-Algorithmus für konsistente Farben
+    let hash = 0;
+    for (let i = 0; i < labelText.length; i++) {
+        const char = labelText.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // 32-bit integer
+    }
+    
+    // Verwende absoluten Wert und modulo für Farbe 1-10
+    const colorNumber = (Math.abs(hash) % 10) + 1;
+    return `label-color-${colorNumber}`;
 }

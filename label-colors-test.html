@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Label Colors Test</title>
+    <link rel="stylesheet" href="card.css">
+</head>
+<body>
+    <div style="padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+        <h1>🎨 Label Colors Test</h1>
+        
+        <h2>Individuelle Label-Farben</h2>
+        <p>Labels bekommen automatisch konsistente Farben basierend auf ihrem Text:</p>
+        
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0;">
+            <span class="card-label label-color-1">Frontend</span>
+            <span class="card-label label-color-2">Backend</span>
+            <span class="card-label label-color-3">React</span>
+            <span class="card-label label-color-4">API</span>
+            <span class="card-label label-color-5">Sprint1</span>
+            <span class="card-label label-color-6">Wichtig</span>
+            <span class="card-label label-color-7">Bug</span>
+            <span class="card-label label-color-8">Feature</span>
+            <span class="card-label label-color-9">Review</span>
+            <span class="card-label label-color-10">Testing</span>
+        </div>
+
+        <h3>Full Modal Size</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0;">
+            <span class="card-label-full label-color-1">Frontend</span>
+            <span class="card-label-full label-color-2">Backend</span>
+            <span class="card-label-full label-color-3">React</span>
+            <span class="card-label-full label-color-4">API</span>
+            <span class="card-label-full label-color-5">Sprint1</span>
+        </div>
+
+        <h3>✨ Features</h3>
+        <ul>
+            <li>🎯 <strong>Konsistente Farben:</strong> Gleiche Labels haben immer die gleiche Farbe</li>
+            <li>🌈 <strong>10 Farbvarianten:</strong> Von Rot bis Blau mit schönen Gradienten</li>
+            <li>⚡ <strong>Hash-basiert:</strong> Basiert auf Text-Inhalt, nicht auf Position</li>
+            <li>🔄 <strong>Automatisch:</strong> Keine manuelle Farbzuweisung nötig</li>
+        </ul>
+
+        <h3>🧪 Test Labels</h3>
+        <p>Teste verschiedene Labels - sie bekommen automatisch passende Farben:</p>
+        <div id="test-labels" style="margin: 20px 0;"></div>
+        
+        <input type="text" id="test-input" placeholder="Label eingeben..." style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-right: 10px;">
+        <button onclick="addTestLabel()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Hinzufügen</button>
+    </div>
+
+    <script src="card.js"></script>
+    <script>
+        function addTestLabel() {
+            const input = document.getElementById('test-input');
+            const container = document.getElementById('test-labels');
+            const labelText = input.value.trim();
+            
+            if (labelText) {
+                const colorClass = getLabelColorClass(labelText);
+                const span = document.createElement('span');
+                span.className = `card-label ${colorClass}`;
+                span.textContent = labelText;
+                span.style.margin = '0 5px 5px 0';
+                container.appendChild(span);
+                input.value = '';
+            }
+        }
+        
+        // Enter-Taste im Input
+        document.getElementById('test-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addTestLabel();
+            }
+        });
+    </script>
+</body>
+</html>
