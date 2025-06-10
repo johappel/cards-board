@@ -65,11 +65,12 @@ function saveColumn(e) {
 }
 
 function deleteColumn(columnId) {
-    if (confirm('Are you sure you want to delete this column?')) {
+    // if (confirm('Are you sure you want to delete this column?')) {
         currentBoard.columns = currentBoard.columns.filter(c => c.id !== columnId);
         saveAllBoards();
         renderColumns();
-    }
+        closeModal('column-modal');
+    // }
 }
 
 function exportColumn(columnId) {
