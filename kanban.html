@@ -364,7 +364,13 @@
             <div class="chatbot-input-row">
                 <input id="userInput" type="text" placeholder="Nachricht eingeben...">
                 <button id="sendButton" class="btn btn-primary">Senden</button>
-                <span id="progressIndicator" class="hide">⏳</span>
+                <span id="progressIndicator" class="hide">
+                    <div class="bouncing-dots">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                </span>
             </div>
             <div class="chatbot-statusbar-container">
                 <div id="connectionStatus"></div>
@@ -383,11 +389,11 @@
           <form id="ai-settings-form">
             <div class="form-group">
               <label for="ai-websocket-url">WebSocket Endpoint</label>
-              <input type="url" id="ai-websocket-url" required placeholder="wss://n8n.rpi-virtuell.de/chat-websocket-endpoint">
+              <input type="url" id="ai-websocket-url" required placeholder="wss://exaample.com/chat-websocket-endpoint">
             </div>
             <div class="form-group">
               <label for="ai-webhook-url">n8n Webhook Endpoint</label>
-              <input type="url" id="ai-webhook-url" required placeholder="https://n8n.rpi-virtuell.de/webhook/relichat-materialpool">
+              <input type="url" id="ai-webhook-url" required placeholder="https://n8n.io/webhook/chat-endpoint">
             </div>
             <div class="form-group">
               <label for="ai-provider">LLM Provider</label>
