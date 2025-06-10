@@ -273,6 +273,104 @@ function createNewCardWithContent(columnId, text) {
     console.log('✅ Card successfully added to column');
 }
 
+function createNewCardWithContentAndUrl(columnId, text, url) {
+    console.log('🔍 createNewCardWithContentAndUrl called with:', { 
+        columnId, 
+        text: text.substring(0, 50) + '...', 
+        url: url 
+    });
+    
+    if (!currentBoard) {
+        console.error('❌ currentBoard is not defined');
+        showPasteNotification('❌ Board nicht verfügbar', 3000);
+        return;
+    }
+    
+    if (!currentBoard.columns) {
+        console.error('❌ currentBoard.columns is not defined');
+        showPasteNotification('❌ Spalten nicht verfügbar', 3000);
+        return;
+    }
+    
+    const column = currentBoard.columns.find(c => c.id === columnId);
+    if (!column) {
+        console.error('❌ Target column not found:', columnId);
+        console.log('🔍 Available columns:', currentBoard.columns.map(c => ({ id: c.id, title: c.title })));
+        showPasteNotification(`❌ Spalte nicht gefunden: ${columnId}`, 3000);
+        return;
+    }
+    
+    console.log('✅ Target column found:', { id: column.id, title: column.title });
+    
+    // Titel aus Content extrahieren mit Debugging
+    const extractedTitle = extractTitleFromContent(text);
+    console.log('📝 Title extraction:', { 
+        originalText: text.substring(0, 100) + '...', 
+        extractedTitle: extractedTitle 
+    });
+    
+    // Neue Karte erstellen mit URL
+    const newCard = {
+        id: generateId(),
+        heading: extractedTitle,
+        content: text,
+        color: 'color-gradient-1',
+        thumbnail: '',
+        comments: '',
+        url: url || '',
+        labels: '',
+        inactive: false
+    };
+    
+    console.log('📝 Created new card with URL:', { 
+        id: newCard.id, 
+        heading: newCard.heading, 
+        url: newCard.url 
+    });
+    
+    column.cards.push(newCard);
+    
+    // Board speichern und rendern
+    saveAllBoards();
+    renderColumns();
+    
+    const message = url ? '✅ Neue Karte mit URL erstellt' : '✅ Neue Karte erstellt';
+    showPasteNotification(message, 2000);
+    console.log('✅ Card successfully added to column with URL');
+}
+
+function appendToCardWithUrl(cardId, columnId, text, url) {
+    console.log('🔍 appendToCardWithUrl called with:', { cardId, columnId, text: text.substring(0, 50) + '...', url });
+    
+    const column = currentBoard.columns.find(c => c.id === columnId);
+    if (!column) {
+        console.error('❌ Column not found:', columnId);
+        return;
+    }
+    
+    const card = column.cards.find(c => c.id === cardId);
+    if (!card) {
+        console.error('❌ Card not found:', cardId);
+        return;
+    }
+    
+    // Text an bestehenden Content anhängen
+    card.content = (card.content || '') + '\n\n' + text;
+    
+    // URL setzen falls noch nicht vorhanden
+    if (url && !card.url) {
+        card.url = url;
+        console.log('🔗 URL added to existing card:', url);
+    }
+    
+    // Board speichern und rendern
+    saveAllBoards();
+    renderColumns();
+    
+    const message = url && !card.url ? '✅ Content und URL zu Karte hinzugefügt' : '✅ Content zu Karte hinzugefügt';
+    showPasteNotification(message, 2000);
+}
+
 function extractTitleFromContent(content) {
     // Versuche Titel aus Content zu extrahieren
     const lines = content.trim().split('\n');
@@ -306,17 +404,30 @@ function extractTitleFromContent(content) {
             title = 'YouTube Video';
             break;
         }
-        
-        // Überspringe reine URLs
+          // Überspringe reine URLs
         if (line.match(/^https?:\/\//)) {
-            // Extrahiere Domain als Titel
-            try {
-                const url = new URL(line);
-                title = url.hostname.replace('www.', '');
-                break;
-            } catch {
-                title = 'Link';
-                break;
+            // Spezielle Behandlung für Bild-URLs
+            if (isImageUrl(line)) {
+                try {
+                    const url = new URL(line);
+                    const filename = url.pathname.split('/').pop();
+                    const extension = getImageExtensionFromUrl(line);
+                    title = filename || `Bild.${extension}` || 'Bild';
+                    break;
+                } catch {
+                    title = 'Bild';
+                    break;
+                }
+            } else {
+                // Normale URL - extrahiere Domain als Titel
+                try {
+                    const url = new URL(line);
+                    title = url.hostname.replace('www.', '');
+                    break;
+                } catch {
+                    title = 'Link';
+                    break;
+                }
             }
         }
         
@@ -340,13 +451,16 @@ function extractTitleFromContent(content) {
             break;
         }
     }
-    
-    // Falls kein Titel gefunden, verwende intelligente Defaults basierend auf Content
+      // Falls kein Titel gefunden, verwende intelligente Defaults basierend auf Content
     if (!title.trim()) {
         if (content.includes('![') && content.includes('data:image/')) {
             title = 'Eingefügtes Bild';
+        } else if (content.includes('![') && content.match(/https?:\/\/.*\.(jpg|jpeg|png|gif|webp|bmp|svg)/i)) {
+            title = 'Bild (URL)';
         } else if (content.includes('youtube.com') || content.includes('youtu.be')) {
             title = 'YouTube Video';
+        } else if (content.match(/https?:\/\/.*\.(jpg|jpeg|png|gif|webp|bmp|svg)/i)) {
+            title = 'Bild-Link';
         } else if (content.match(/https?:\/\//)) {
             title = 'Link';
         } else if (content.includes('<iframe')) {
@@ -386,16 +500,40 @@ async function handleTextPasteEnhanced(text, target) {
     const urls = text.match(urlRegex);
     
     if (urls && urls.length === 1 && text.trim() === urls[0]) {
-        // Einzelne URL - zeige Preview
-        await showUrlPreviewAndPaste(urls[0], target);
+        // Einzelne URL - prüfe ob es ein Bild ist
+        const url = urls[0];
+        
+        if (isImageUrl(url)) {
+            // Bild-URL - erstelle img-tag und speichere URL
+            const imageMarkdown = `![Bild](${url})`;
+            finalizePasteActionWithUrl(imageMarkdown, url, target);
+        } else {
+            // Normale URL - zeige Preview
+            await showUrlPreviewAndPaste(url, target);
+        }
     } else if (urls) {
-        // Text mit URLs - URLs durch Markdown-Links ersetzen
+        // Text mit URLs - URLs durch entsprechende Markdown ersetzen
         let processedText = text;
+        let extractedUrl = null;
+        
         urls.forEach(url => {
-            const linkText = url.replace(/https?:\/\//, '');
-            processedText = processedText.replace(url, `[${linkText}](${url})`);
+            if (isImageUrl(url)) {
+                // Bild-URL als img-tag
+                const imageMarkdown = `![Bild](${url})`;
+                processedText = processedText.replace(url, imageMarkdown);
+            } else {
+                // Normale URL als Link
+                const linkText = url.replace(/https?:\/\//, '');
+                processedText = processedText.replace(url, `[${linkText}](${url})`);
+            }
+            
+            // Erste URL als Karten-URL verwenden
+            if (!extractedUrl) {
+                extractedUrl = url;
+            }
         });
-        finalizePasteAction(processedText, target);
+        
+        finalizePasteActionWithUrl(processedText, extractedUrl, target);
     } else {
         // Einfacher Text ohne URLs
         finalizePasteAction(text, target);
@@ -413,17 +551,17 @@ async function showUrlPreviewAndPaste(url, target) {
         if (preview && preview.title) {
             // Markdown mit Titel erstellen
             const markdownLink = `[${preview.title}](${url})`;
-            finalizePasteAction(markdownLink, target);
+            finalizePasteActionWithUrl(markdownLink, url, target);
         } else {
             // Fallback: Einfacher Link
             const simpleLink = `[${url.replace(/https?:\/\//, '')}](${url})`;
-            finalizePasteAction(simpleLink, target);
+            finalizePasteActionWithUrl(simpleLink, url, target);
         }
     } catch (error) {
         console.warn('URL Preview failed:', error);
         // Fallback: Einfacher Link
         const simpleLink = `[${url.replace(/https?:\/\//, '')}](${url})`;
-        finalizePasteAction(simpleLink, target);
+        finalizePasteActionWithUrl(simpleLink, url, target);
     }
 }
 
@@ -437,6 +575,26 @@ function finalizePasteAction(text, target) {
     } else if (target.type === 'card') {
         // Text zu bestehender Karte hinzufügen
         appendToCard(target.cardId, target.columnId, text);
+    }
+}
+
+function finalizePasteActionWithUrl(text, url, target) {
+    if (target.type === 'modal') {
+        // In Modal einfügen
+        insertIntoTextarea(target.element, text);
+        
+        // URL im Modal-Formular setzen falls verfügbar
+        const urlField = document.getElementById('card-url');
+        if (urlField && url) {
+            urlField.value = url;
+            console.log('🔗 URL saved to modal field:', url);
+        }
+    } else if (target.type === 'column') {
+        // Neue Karte in Spalte erstellen mit URL
+        createNewCardWithContentAndUrl(target.columnId, text, url);
+    } else if (target.type === 'card') {
+        // Text zu bestehender Karte hinzufügen mit URL
+        appendToCardWithUrl(target.cardId, target.columnId, text, url);
     }
 }
 
@@ -560,6 +718,24 @@ function initPasteFunctionality() {
             }
         }
     }, true); // useCapture = true für höhere Priorität
+      // Keyboard Shortcut für Smart Paste Modal (Ctrl+Shift+V)
+    document.addEventListener('keydown', function(event) {
+        // Ctrl+Shift+V für Smart Paste Modal
+        if (event.ctrlKey && event.shiftKey && event.key === 'V') {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            // Prüfe ob eine Spalte ausgewählt ist
+            if (selectedColumnForPaste) {
+                console.log('⌨️ Smart Paste Modal opened via shortcut for column:', selectedColumnForPaste);
+                openSmartPasteModal();
+            } else {
+                // Zeige Hinweis, dass erst eine Spalte ausgewählt werden muss
+                showPasteNotification('💡 Bitte wählen Sie zuerst eine Spalte aus (Klick auf Spalten-Header)', 4000);
+                console.log('⌨️ Smart Paste shortcut triggered but no column selected');
+            }
+        }
+    });
     
     // CSS für Paste-Animationen hinzufügen
     if (!document.getElementById('paste-styles')) {
@@ -585,7 +761,7 @@ function initPasteFunctionality() {
         document.head.appendChild(style);
     }
     
-    console.log('✅ Paste functionality initialized with enhanced column selection');
+    console.log('✅ Paste functionality initialized with enhanced column selection and keyboard shortcuts');
 }
 
 // URL Preview Funktionalität
@@ -663,6 +839,17 @@ function extractDomainFromUrl(url) {
     }
 }
 
+// URL-Typ Erkennung
+function isImageUrl(url) {
+    const imageExtensions = /\.(jpg|jpeg|png|gif|webp|bmp|svg|ico)(\?.*)?$/i;
+    return imageExtensions.test(url);
+}
+
+function getImageExtensionFromUrl(url) {
+    const match = url.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg|ico)(\?.*)?$/i);
+    return match ? match[1].toLowerCase() : null;
+}
+
 // YouTube-spezifische Funktionen
 function isYouTubeUrl(url) {
     const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
@@ -731,6 +918,19 @@ function showSelectedColumnInModal() {
     
     // Optional: Zeige die Info als temporäre Notification
     showPasteNotification(selectedInfo, 3000);
+    
+    // Zeige auch Shortcut-Hinweis beim ersten Öffnen
+    const modalHeader = document.querySelector('#smart-paste-modal .modal-header h2');
+    if (modalHeader && selectedColumnForPaste) {
+        const shortcutHint = modalHeader.querySelector('.shortcut-hint');
+        if (!shortcutHint) {
+            const hint = document.createElement('small');
+            hint.className = 'shortcut-hint';
+            hint.style.cssText = 'display: block; font-weight: normal; color: #666; font-size: 0.8em; margin-top: 5px;';
+            hint.textContent = '💡 Tipp: Verwenden Sie Ctrl+Shift+V um dieses Modal schnell zu öffnen';
+            modalHeader.appendChild(hint);
+        }
+    }
 }
 
 function resetSmartPasteModal() {
@@ -839,6 +1039,14 @@ function processUrlForSmartPaste(url, fullText) {
         return;
     }
     
+    // Bild-URL spezielle Behandlung
+    if (isImageUrl(url)) {
+        const imageMarkdown = `![Bild](${url})`;
+        smartPasteProcessedContent = imageMarkdown;
+        showSmartPastePreview(imageMarkdown, 'image-url');
+        return;
+    }
+    
     // Für andere URLs - einfach als Link formatieren
     let processedText = fullText;
     if (fullText.trim() === url) {
@@ -859,8 +1067,7 @@ function showSmartPastePreview(content, type) {
     
     // Markdown zu HTML für Vorschau rendern
     let htmlContent = renderMarkdownToHtml(content);
-    
-    // Typ-spezifische Hinweise hinzufügen
+      // Typ-spezifische Hinweise hinzufügen
     let typeIndicator = '';
     switch (type) {
         case 'youtube':
@@ -871,6 +1078,9 @@ function showSmartPastePreview(content, type) {
             break;
         case 'image':
             typeIndicator = '<div style="color: #28a745; font-weight: bold; margin-bottom: 10px;">🖼️ Bild eingefügt</div>';
+            break;
+        case 'image-url':
+            typeIndicator = '<div style="color: #28a745; font-weight: bold; margin-bottom: 10px;">🖼️ Bild-URL erkannt</div>';
             break;
         case 'html':
             typeIndicator = '<div style="color: #6f42c1; font-weight: bold; margin-bottom: 10px;">📄 HTML zu Markdown konvertiert</div>';
@@ -908,6 +1118,13 @@ function applySmartPaste() {
         return;
     }
     
+    // Extrahiere URLs aus dem verarbeiteten Content
+    const urlRegex = /(https?:\/\/[^\s\)]+)/g;
+    const urls = smartPasteProcessedContent.match(urlRegex);
+    const extractedUrl = urls && urls.length > 0 ? urls[0] : null;
+    
+    console.log('🔗 Extracted URL from smart paste content:', extractedUrl);
+    
     // Bestimme das Ziel wie bei normalem Paste
     const target = determineCurrentPasteTarget();
     
@@ -915,7 +1132,11 @@ function applySmartPaste() {
         // Fallback: Verwende die zuletzt ausgewählte Spalte
         if (selectedColumnForPaste) {
             console.log('🎯 Using selected column for smart paste:', selectedColumnForPaste);
-            finalizePasteAction(smartPasteProcessedContent, { type: 'column', columnId: selectedColumnForPaste });
+            if (extractedUrl) {
+                finalizePasteActionWithUrl(smartPasteProcessedContent, extractedUrl, { type: 'column', columnId: selectedColumnForPaste });
+            } else {
+                finalizePasteAction(smartPasteProcessedContent, { type: 'column', columnId: selectedColumnForPaste });
+            }
             closeModal('smart-paste-modal');
             return;
         } else {
@@ -926,7 +1147,11 @@ function applySmartPaste() {
     
     // Verwende das bestimmte Ziel
     console.log('🎯 Smart paste target determined:', target);
-    finalizePasteAction(smartPasteProcessedContent, target);
+    if (extractedUrl) {
+        finalizePasteActionWithUrl(smartPasteProcessedContent, extractedUrl, target);
+    } else {
+        finalizePasteAction(smartPasteProcessedContent, target);
+    }
     closeModal('smart-paste-modal');
 }
 
