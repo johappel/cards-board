@@ -7,35 +7,35 @@ function deleteCard(cardId, columnId) {
     // if (!confirm('Sind Sie sicher, dass Sie diese Karte löschen möchten?')) {
     //     return;
     // }
-    
+
     const column = currentBoard.columns.find(c => c.id === columnId);
     if (!column) {
         console.error('Column not found:', columnId);
         return;
     }
-    
+
     const cardIndex = column.cards.findIndex(c => c.id === cardId);
     if (cardIndex === -1) {
         console.error('Card not found:', cardId);
         return;
     }
-    
+
     // Karte aus der Spalte entfernen
     column.cards.splice(cardIndex, 1);
-    
+
     // Speichern und Anzeige aktualisieren
     saveAllBoards();
     renderColumns();
-    
+
     // Eventuell offenes Full Card Modal schließen
     const fullModal = document.getElementById('full-card-modal');
     if (fullModal) {
         closeCardFullModal();
     }
-    
+
     // Card Modal schließen, falls es offen ist
     closeModal('card-modal');
-    
+
     // Ausgewählte Karte zurücksetzen
     selectedCardData = null;
 }
@@ -45,34 +45,34 @@ function selectCard(cardId, columnId) {
     document.querySelectorAll('.kanban-card').forEach(card => {
         card.classList.remove('selected');
     });
-    
+
     // Paste-Spalte deselektieren (Karten-Auswahl und Paste-Auswahl sind separate Funktionen)
     if (typeof selectedColumnForPaste !== 'undefined' && selectedColumnForPaste !== null) {
         selectedColumnForPaste = null;
-        
+
         // Visuelle Deselektierung aller Spalten für Paste
         document.querySelectorAll('.kanban-column').forEach(col => {
             col.classList.remove('selected-for-paste');
         });
     }
-    
+
     // Karte auswählen
     const cardElement = document.querySelector(`[data-card-id="${cardId}"]`);
     if (cardElement) {
         cardElement.classList.add('selected');
         selectedCardData = { cardId, columnId };
-        
+
         console.log('🎯 Card selected:', cardId, 'in column:', columnId);
     }
 }
 
 // Keyboard Event Listener für DEL-Taste
-document.addEventListener('keydown', function(event) {
+document.addEventListener('keydown', function (event) {
     if (event.key === 'Delete' && selectedCardData) {
         event.preventDefault();
         deleteCard(selectedCardData.cardId, selectedCardData.columnId);
     }
-    
+
     // ESC-Taste zum Deselektieren
     if (event.key === 'Escape' && selectedCardData) {
         document.querySelectorAll('.kanban-card').forEach(card => {
@@ -83,7 +83,7 @@ document.addEventListener('keydown', function(event) {
 });
 
 // Click außerhalb einer Karte deselektiert alle Karten
-document.addEventListener('click', function(event) {
+document.addEventListener('click', function (event) {
     if (!event.target.closest('.kanban-card') && selectedCardData) {
         document.querySelectorAll('.kanban-card').forEach(card => {
             card.classList.remove('selected');
@@ -105,23 +105,23 @@ function openCardModal(columnId, cardId = null) {
                 break;
             }
         }
-        
+
         if (!foundCard || !foundColumn) {
             console.error('Card not found anywhere:', cardId);
             return;
         }
-          // Verwende die gefundene Spalte, nicht die übergebene
+        // Verwende die gefundene Spalte, nicht die übergebene
         currentCard = foundCard;
         currentColumn = foundColumn;
         columnId = foundColumn.id; // Update columnId für den Rest der Funktion        document.getElementById('modal-title').textContent = 'Edit Card';
         document.getElementById('card-heading').value = currentCard.heading;
-        document.getElementById('card-content').value = currentCard.content;        document.getElementById('card-color').value = currentCard.color || 'color-gradient-1';
+        document.getElementById('card-content').value = currentCard.content; document.getElementById('card-color').value = currentCard.color || 'color-gradient-1';
         document.getElementById('card-thumbnail').value = currentCard.thumbnail || '';
         document.getElementById('card-comments').value = currentCard.comments || '';
         document.getElementById('card-url').value = currentCard.url || '';
         document.getElementById('card-labels').value = currentCard.labels || '';
         setSelectedColor('card-color-palette', currentCard.color || 'color-gradient-1');
-        
+
         // Delete-Button anzeigen bei bestehenden Karten
         const deleteBtn = document.getElementById('delete-card-btn');
         if (deleteBtn) deleteBtn.style.display = 'inline-block';
@@ -132,18 +132,18 @@ function openCardModal(columnId, cardId = null) {
             console.error('Column not found for new card:', columnId);
             return;
         }
-        currentCard = null;        document.getElementById('modal-title').textContent = 'Create New Card';        document.getElementById('card-form').reset();        document.getElementById('card-color').value = 'color-gradient-1';
+        currentCard = null; document.getElementById('modal-title').textContent = 'Create New Card'; document.getElementById('card-form').reset(); document.getElementById('card-color').value = 'color-gradient-1';
         document.getElementById('card-thumbnail').value = '';
         document.getElementById('card-comments').value = '';
         document.getElementById('card-url').value = '';
         document.getElementById('card-labels').value = '';
         setSelectedColor('card-color-palette', 'color-gradient-1');
-        
+
         // Delete-Button verstecken bei neuen Karten
         const deleteBtn = document.getElementById('delete-card-btn');
         if (deleteBtn) deleteBtn.style.display = 'none';
     }
-    
+
     // Populate column select
     const columnSelect = document.getElementById('card-column');
     columnSelect.innerHTML = '';
@@ -154,7 +154,7 @@ function openCardModal(columnId, cardId = null) {
         option.selected = col.id === columnId;
         columnSelect.appendChild(option);
     });
-    
+
     openModal('card-modal');
 }
 
@@ -184,7 +184,7 @@ function saveCard(e, keepOpen) {
         console.error('Target column not found:', columnId);
         return;
     }
-    
+
     if (currentCard) {
         // Update existing card
         Object.assign(currentCard, cardData);
@@ -240,19 +240,19 @@ function toggleCardExpand(event, cardId, columnId) {
 
 function createCardElement(card, columnId) {
     const colorClass = card.color || 'color-gradient-1';
-    let previewText = '';    if (card.content) {
+    let previewText = ''; if (card.content) {
         // Für die Vorschau: YouTube-Embed-Blöcke entfernen (mehrzeilig)
         let markdownPreview = card.content.replace(/<div class="youtube-embed"[\s\S]*?<\/div>/g, '');
-        
+
         // Zusätzlich: Gesamte YouTube-Einbettungsblöcke entfernen (inklusive Überschriften)
         markdownPreview = markdownPreview.replace(/## 🎥 Video Player[\s\S]*?(?=##|$)/g, '');
-        
+
         // Erste 6 Zeilen und max. 240 Zeichen für Vorschau
         markdownPreview = markdownPreview.split('\n').slice(0, 6).join('\n'); // max. 6 Zeilen
         console.log('### DEBUG - Rendering card content:', card.content);
-        
+
         if (markdownPreview.length > 240) markdownPreview = markdownPreview.substring(0, 240) + '...';
-        
+
         // Nur einfache Markdown-Elemente rendern (keine Überschriften, keine Links, kein Codeblock)
         if (window.marked) {
             // marked.parseInline rendert nur Inline-Elemente, aber wir wollen auch Listen und Zeilenumbrüche
@@ -265,18 +265,18 @@ function createCardElement(card, columnId) {
             previewText = html;
         } else {
             previewText = markdownPreview.replace(/\n/g, '<br>');
-        }    
+        }
     }
     // doch alles rendern, damit es in der Vorschau angezeigt wird
     previewText = window.marked.parse(card.content)    // Kommentar und URL-Bereiche generieren
     let commentHtml = '';
     let urlHtml = '';
     let labelsHtml = '';
-    
+
     if (card.comments && card.comments.trim()) {
         //commentHtml = `<div class="card-comment">💬 ${card.comments}</div>`;
     }
-    
+
     if (card.url && card.url.trim()) {
         // URL verkürzen für Anzeige
         let displayUrl = card.url.length > 40 ? card.url.substring(0, 37) + '...' : card.url;
@@ -339,8 +339,8 @@ function setPassiveTouchListeners() {
     document.querySelectorAll('.kanban-card').forEach(card => {
         card.removeEventListener('touchstart', card._touchStartHandler, { passive: false });
         card.removeEventListener('touchend', card._touchEndHandler, { passive: false });
-        card._touchStartHandler = function(e) { cardTouchStart(e, card.dataset.cardId, card.closest('.kanban-column').dataset.columnId); };
-        card._touchEndHandler = function(e) { cardTouchEnd(e); };
+        card._touchStartHandler = function (e) { cardTouchStart(e, card.dataset.cardId, card.closest('.kanban-column').dataset.columnId); };
+        card._touchEndHandler = function (e) { cardTouchEnd(e); };
         card.addEventListener('touchstart', card._touchStartHandler, { passive: true });
         card.addEventListener('touchend', card._touchEndHandler, { passive: true });
     });
@@ -364,11 +364,11 @@ function showCardFullModal(cardId, columnId) {
             break;
         }
     }
-      if (!foundCard || !foundColumn) {
+    if (!foundCard || !foundColumn) {
         console.error('Card not found anywhere for showCardFullModal:', cardId);
         return;
     }
-    
+
     let modal = document.getElementById('full-card-modal');
     if (!modal) {
         modal = document.createElement('div');
@@ -393,19 +393,18 @@ function showCardFullModal(cardId, columnId) {
                         <button class="close-btn" onclick="closeCardFullModal()" title="Schließen">&times;</button>
                     </div>
                 </div>
-            </div>
-            <div class="modal-body">                ${foundCard.thumbnail ? `<div class='card-thumb-modal'><img src='${foundCard.thumbnail}' alt='thumbnail' /></div>` : ''}
+            </div>            <div class="modal-body">                ${foundCard.thumbnail ? `<div class='card-thumb-modal'><img src='${foundCard.thumbnail}' alt='thumbnail' /></div>` : ''}
                 <div class="card-content-full">${window.renderMarkdownToHtml ? window.renderMarkdownToHtml(foundCard.content || '') : (foundCard.content || '')}</div>
-                ${foundCard.comments ? `<div class="card-comment">${foundCard.comments}</div>` : ''}
+                ${foundCard.comments ? `<div class="card-comment">${window.renderMarkdownToHtml ? window.renderMarkdownToHtml(foundCard.comments) : foundCard.comments}</div>` : ''}
                 ${foundCard.url ? `<div class="card-url"><a href="${foundCard.url}" class="card-url-link" target="_blank" rel="noopener noreferrer">${foundCard.url}</a></div>` : ''}
                 ${foundCard.labels ? `<div class="card-labels-full">${foundCard.labels.split(',').map(label => {
-                    const colorClass = getLabelColorClass(label.trim());
-                    return `<span class="card-label-full ${colorClass}">${label.trim()}</span>`;
-                }).join('')}</div>` : ''}
+        const colorClass = getLabelColorClass(label.trim());
+        return `<span class="card-label-full ${colorClass}">${label.trim()}</span>`;
+    }).join('')}</div>` : ''}
             </div>
         </div>
     `;
-    modal.onclick = function(e) { if (e.target === modal) closeCardFullModal(); };
+    modal.onclick = function (e) { if (e.target === modal) closeCardFullModal(); };
 }
 function closeCardFullModal() {
     const modal = document.getElementById('full-card-modal');
@@ -443,19 +442,18 @@ function updateFullCardModal(cardId) {
                         <button class="close-btn" onclick="closeCardFullModal()" title="Schließen">&times;</button>
                     </div>
                 </div>
-            </div>
-            <div class="modal-body">                ${card.thumbnail ? `<div class='card-thumb-modal'><img src='${card.thumbnail}' alt='thumbnail' /></div>` : ''}
+            </div>            <div class="modal-body">                ${card.thumbnail ? `<div class='card-thumb-modal'><img src='${card.thumbnail}' alt='thumbnail' /></div>` : ''}
                 <div class="card-content-full">${window.renderMarkdownToHtml ? window.renderMarkdownToHtml(card.content || '') : (card.content || '')}</div>
-                ${card.comments ? `<div class="card-comment">${card.comments}</div>` : ''}
+                ${card.comments ? `<div class="card-comment">${window.renderMarkdownToHtml ? window.renderMarkdownToHtml(card.comments) : card.comments}</div>` : ''}
                 ${card.url ? `<div class="card-url"><a href="${card.url}" class="card-url-link" target="_blank" rel="noopener noreferrer">${card.url}</a></div>` : ''}
                 ${card.labels ? `<div class="card-labels-full">${card.labels.split(',').map(label => {
-                    const colorClass = getLabelColorClass(label.trim());
-                    return `<span class="card-label-full ${colorClass}">${label.trim()}</span>`;
-                }).join('')}</div>` : ''}
+        const colorClass = getLabelColorClass(label.trim());
+        return `<span class="card-label-full ${colorClass}">${label.trim()}</span>`;
+    }).join('')}</div>` : ''}
             </div>
         </div>
     `;
-    modal.onclick = function(e) { if (e.target === modal) closeCardFullModal(); };
+    modal.onclick = function (e) { if (e.target === modal) closeCardFullModal(); };
 }
 
 // Automatisches Speichern im Card-Modal bei Änderungen
@@ -512,7 +510,7 @@ function autoSaveCardHandler(e) {
 if (typeof origSaveCard !== 'function') {
     var origSaveCard = saveCard;
 }
-saveCard = function(e, keepOpen) {
+saveCard = function (e, keepOpen) {
     if (e) e.preventDefault();
     // Hole Werte wie im Original
     const heading = document.getElementById('card-heading').value;
@@ -538,7 +536,7 @@ saveCard = function(e, keepOpen) {
         console.error('Target column not found:', columnId);
         return;
     }
-    
+
     if (currentCard) {
         // Update existing card
         Object.assign(currentCard, cardData);
@@ -574,7 +572,7 @@ saveCard = function(e, keepOpen) {
 if (typeof origOpenCardModal !== 'function') {
     var origOpenCardModal = openCardModal;
 }
-openCardModal = function(columnId, cardId = null) {
+openCardModal = function (columnId, cardId = null) {
     origOpenCardModal(columnId, cardId);
     setupCardAutoSave();
 }
@@ -604,7 +602,7 @@ function deleteCurrentCard() {
         console.error('No current card selected for deletion');
         return;
     }
-    
+
     deleteCard(currentCard.id, currentColumn.id);
 }
 
@@ -617,7 +615,7 @@ function getLabelColorClass(labelText) {
         hash = ((hash << 5) - hash) + char;
         hash = hash & hash; // 32-bit integer
     }
-    
+
     // Verwende absoluten Wert und modulo für Farbe 1-10
     const colorNumber = (Math.abs(hash) % 10) + 1;
     return `label-color-${colorNumber}`;
