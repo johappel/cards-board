@@ -58,11 +58,23 @@ function column_width_changer() {
         // Apply direct styling for immediate effect
         if (window.updateColumnWidth) {
             window.updateColumnWidth(val);
+        } else {
+            // Fallback: apply directly
+            const columns = document.querySelectorAll('.kanban-column');
+            columns.forEach(column => {
+                column.style.width = val + 'px';
+                column.style.minWidth = val + 'px';
+                column.style.maxWidth = val + 'px';
+            });
+            localStorage.setItem('kanban-column-width', val);
         }
     }
     
+    // Initialize with stored value
+    const savedWidth = localStorage.getItem('kanban-column-width') || '300';
+    setColumnWidth(savedWidth);
+    
     if(colWidthSlider) {
-        setColumnWidth(colWidthSlider.value);
         colWidthSlider.addEventListener('input', e => setColumnWidth(e.target.value));
     }
     
@@ -203,6 +215,35 @@ function renderColumns() {
     addColumnBtn.textContent = '+ Add Column';
     addColumnBtn.onclick = addNewColumn;
     boardContainer.appendChild(addColumnBtn);
+    
+    // Apply saved column width after rendering
+    applyStoredColumnWidth();
+}
+
+// Apply stored column width to all columns
+function applyStoredColumnWidth() {
+    const savedWidth = localStorage.getItem('kanban-column-width') || '300';
+    const columns = document.querySelectorAll('.kanban-column');
+    
+    columns.forEach(column => {
+        column.style.width = savedWidth + 'px';
+        column.style.minWidth = savedWidth + 'px';
+        column.style.maxWidth = savedWidth + 'px';
+    });
+    
+    // Update CSS custom property
+    document.documentElement.style.setProperty('--kanban-column-width', savedWidth + 'px');
+    
+    // Update slider values if they exist
+    const mainSlider = document.getElementById('column-width-slider');
+    const mainValue = document.getElementById('column-width-value');
+    const sidebarSlider = document.getElementById('sidebar-column-width-slider');
+    const sidebarValue = document.getElementById('sidebar-width-value');
+    
+    if (mainSlider) mainSlider.value = savedWidth;
+    if (mainValue) mainValue.textContent = savedWidth + 'px';
+    if (sidebarSlider) sidebarSlider.value = savedWidth;
+    if (sidebarValue) sidebarValue.textContent = savedWidth + 'px';
 }
 
 // Nach jedem Render Columns SortableJS initialisieren
@@ -211,4 +252,7 @@ window.renderColumns = function() {
     if (origRenderColumns) origRenderColumns();
     if (window.initSortableKanban) window.initSortableKanban();
     if (window.setPassiveTouchListeners) window.setPassiveTouchListeners();
+    
+    // Apply column width after rendering
+    setTimeout(() => applyStoredColumnWidth(), 50);
 };

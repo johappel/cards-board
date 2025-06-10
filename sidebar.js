@@ -83,8 +83,22 @@ function updateColumnWidth(width) {
         column.style.maxWidth = width + 'px';
     });
     
+    // Update CSS custom property for consistent styling
+    document.documentElement.style.setProperty('--kanban-column-width', width + 'px');
+    
     // Save to localStorage
     localStorage.setItem('kanban-column-width', width);
+    
+    // Update all slider values
+    const mainSlider = document.getElementById('column-width-slider');
+    const mainValue = document.getElementById('column-width-value');
+    const sidebarSlider = document.getElementById('sidebar-column-width-slider');
+    const sidebarValue = document.getElementById('sidebar-width-value');
+    
+    if (mainSlider) mainSlider.value = width;
+    if (mainValue) mainValue.textContent = width + 'px';
+    if (sidebarSlider) sidebarSlider.value = width;
+    if (sidebarValue) sidebarValue.textContent = width + 'px';
 }
 
 // Close sidebar with Escape key
@@ -115,7 +129,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (sidebarValue) sidebarValue.textContent = savedWidth + 'px';
         if (mainSlider) mainSlider.value = savedWidth;
         if (mainValue) mainValue.textContent = savedWidth + 'px';
+        
+        // Also ensure the CSS custom property is set
+        document.documentElement.style.setProperty('--kanban-column-width', savedWidth + 'px');
     }, 100);
+    
+    // Make updateColumnWidth globally available
+    window.updateColumnWidth = updateColumnWidth;
 });
 
 // Enhanced showPasteHelp function that closes sidebar first
