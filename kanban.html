@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="colors.css">
     <link rel="stylesheet" href="markdown.css">
     <link rel="stylesheet" href="duplicate.css">
+    <link rel="stylesheet" href="sidebar.css">
     <!-- SortableJS für Drag&Drop -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 </head>
@@ -22,10 +23,7 @@
         <div class="dashboard-header">
             <h1>Kanban Board Dashboard</h1>
             <div class="file-actions">
-                <button class="btn btn-secondary" onclick="exportAllBoards()">Export All Boards</button>
-                <label for="import-file" class="btn btn-secondary">📥 Import Boards</label>
-                <input type="file" id="import-file" class="file-input" accept=".json" onchange="importBoards(event)">
-                <button class="btn btn-secondary" onclick="openAISettingsModal()">🌐 AI/n8n Settings</button>
+                <button class="settings-toggle" onclick="openSettingsSidebar()" title="Einstellungen">⚙️</button>
             </div>
         </div>
         <div class="boards-grid" id="boards-grid">
@@ -42,24 +40,100 @@
                 <div class="board-summary" id="board-summary">Board summary will appear here...</div>
             </div>
             <div class="board-header-actions">
-                <button class=" btn btn-ai" onclick="openChatbotModal()">💬 Chatbot</button>
-                <button class="btn btn-secondary" onclick="generateBoardSummary()">🤖 Generate Summary</button>
-                <button class="btn btn-secondary" onclick="showPasteHelp()">📋 Paste Help</button>
-                <button class="btn btn-secondary" onclick="openBoardSettings()">⚙️ Settings</button>
-                <button class="btn btn-secondary" onclick="exportBoard()">📥 Export</button>
+                <button class="btn btn-ai" onclick="openChatbotModal()">💬 Chatbot</button>
                 <button class="btn btn-secondary" onclick="backToDashboard()">← Dashboard</button>
-                 <!-- Spaltenbreite Schieberegler -->
-                <label for="column-width-slider" class="column-width-label">
-                    <span class="column-width-label-text">Spaltenbreite:</span>
-                    <input type="range" id="column-width-slider" class="board-bg-slider" min="220" max="600" value="300" step="10" title="Spaltenbreite einstellen">
-                    <span id="column-width-value" class="column-width-value">300px</span>
-                </label>
-                
-                
+                <button class="settings-toggle" onclick="openSettingsSidebar()" title="Einstellungen">⚙️</button>
             </div>
         </div>
         <div class="kanban-board" id="kanban-board">
             <!-- Columns will be inserted here -->
+        </div>
+    </div>
+
+    <!-- Settings Sidebar -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSettingsSidebar()"></div>
+    <div class="settings-sidebar" id="settings-sidebar">
+        <div class="sidebar-header">
+            <h3>⚙️ Einstellungen</h3>
+            <button class="sidebar-close" onclick="closeSettingsSidebar()">&times;</button>
+        </div>
+        <div class="sidebar-body">
+            <!-- Board Actions Section -->
+            <div class="sidebar-section" id="board-actions-section" style="display: none;">
+                <h4>Board Aktionen</h4>
+                
+                <div class="sidebar-action" onclick="openBoardSettings()">
+                    <div class="sidebar-action-icon">⚙️</div>
+                    <div class="sidebar-action-content">
+                        <div class="sidebar-action-title">Board Einstellungen</div>
+                        <div class="sidebar-action-desc">Name, Farbe, AI-Konfiguration</div>
+                    </div>
+                </div>
+                
+                <div class="sidebar-action" onclick="exportBoard()">
+                    <div class="sidebar-action-icon">📥</div>
+                    <div class="sidebar-action-content">
+                        <div class="sidebar-action-title">Board Exportieren</div>
+                        <div class="sidebar-action-desc">Als JSON-Datei herunterladen</div>
+                    </div>
+                </div>
+                
+                <div class="sidebar-action" onclick="showPasteHelp()">
+                    <div class="sidebar-action-icon">📋</div>
+                    <div class="sidebar-action-content">
+                        <div class="sidebar-action-title">Paste Hilfe</div>
+                        <div class="sidebar-action-desc">Smart Paste Funktionen</div>
+                    </div>
+                </div>
+                
+                <!-- Column Width Control -->
+                <div class="sidebar-width-control">
+                    <div class="width-control-header">
+                        <span class="width-control-label">📏 Spaltenbreite</span>
+                        <span class="width-control-value" id="sidebar-width-value">300px</span>
+                    </div>
+                    <input type="range" 
+                           id="sidebar-column-width-slider" 
+                           class="width-slider" 
+                           min="220" 
+                           max="600" 
+                           value="300" 
+                           step="10" 
+                           title="Spaltenbreite einstellen">
+                </div>
+            </div>
+            
+            <!-- Global Actions Section -->
+            <div class="sidebar-section">
+                <h4>Globale Aktionen</h4>
+                
+                <div class="sidebar-action" onclick="openAISettingsModal()">
+                    <div class="sidebar-action-icon">🌐</div>
+                    <div class="sidebar-action-content">
+                        <div class="sidebar-action-title">AI & n8n Einstellungen</div>
+                        <div class="sidebar-action-desc">Globale KI-Konfiguration</div>
+                    </div>
+                </div>
+                
+                <div class="sidebar-action" onclick="exportAllBoards()">
+                    <div class="sidebar-action-icon">📤</div>
+                    <div class="sidebar-action-content">
+                        <div class="sidebar-action-title">Alle Boards Exportieren</div>
+                        <div class="sidebar-action-desc">Kompletten Workspace exportieren</div>
+                    </div>
+                </div>
+                
+                <div class="sidebar-action" onclick="document.getElementById('import-file').click()">
+                    <div class="sidebar-action-icon">📥</div>
+                    <div class="sidebar-action-content">
+                        <div class="sidebar-action-title">Boards Importieren</div>
+                        <div class="sidebar-action-desc">JSON-Datei importieren</div>
+                    </div>
+                </div>
+                
+                <!-- Hidden file input -->
+                <input type="file" id="import-file" class="file-input" accept=".json" onchange="importBoards(event)" style="display: none;">
+            </div>
         </div>
     </div>
 
@@ -491,8 +565,13 @@
     <script src="chatbot.js"></script>
     <script src="duplicate.js"></script>
     <script src="sortable-duplicate.js"></script>
+    <script src="sidebar.js"></script>
     <script>
-        column_width_changer();
+        // Initialize column width changer
+        document.addEventListener('DOMContentLoaded', function() {
+            column_width_changer();
+        });
+        
         // Paste-Funktionalität initialisieren
         document.addEventListener('DOMContentLoaded', function() {
             if (typeof initPasteFunctionality === 'function') {
