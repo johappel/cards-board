@@ -61,6 +61,7 @@ function addCardToColumn(columnName, cardData) {
         thumbnail: cardData.thumbnail || '',
         comments: cardData.comment || '',
         url: cardData.url || '',
+        labels: cardData.labels || '',
         inactive: false
     };
     column.cards.push(newCard);
@@ -87,8 +88,7 @@ function addColumnWithCards(columnName, cards) {
         //const exists = column.cards.some(card => card.heading === (cardData.title || 'Unbenannt'));
         const exists = column.cards.some(card => card.content === (cardData.content || 'Kein Inhalt'));
         if (!exists) {            
-            
-            const newCard = {
+              const newCard = {
                 id: generateId(),
                 heading: cardData.title || 'Unbenannt',
                 content: cardData.content || '',
@@ -96,6 +96,7 @@ function addColumnWithCards(columnName, cards) {
                 thumbnail: cardData.thumbnail || '',
                 comments: cardData.comment || '',
                 url: cardData.url || '',
+                labels: cardData.labels || '',
                 inactive: false
             };
             column.cards.push(newCard);

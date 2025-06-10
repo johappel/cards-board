@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Labels Demo - Kanban Board</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="card.css">
+    <link rel="stylesheet" href="colors.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Labels Implementierung Demo</h1>
+        
+        <div class="demo-section">
+            <h2>Funktionen der neuen Labels</h2>
+            
+            <div class="feature-list">
+                <div class="feature">
+                    <h3>🏷️ Label-Eingabe im Card-Modal</h3>
+                    <p>Neues Eingabefeld "Labels" mit komma-getrennter Eingabe</p>
+                    <code>Beispiel: "Wichtig, Frontend, Sprint1"</code>
+                </div>
+                
+                <div class="feature">
+                    <h3>🎨 Anzeige in Card-Footer</h3>
+                    <p>Labels werden als farbige Tags in der Bottom-Leiste angezeigt</p>
+                    <p>Neben Kommentar-Zähler und URL-Link</p>
+                </div>
+                
+                <div class="feature">
+                    <h3>🤖 Chatbot Integration</h3>
+                    <p>Labels können über den Chatbot gesetzt werden:</p>
+                    <code>cardData.labels = "Backend, API, Dringend"</code>
+                </div>
+                
+                <div class="feature">
+                    <h3>📱 Responsive Design</h3>
+                    <p>Labels passen sich automatisch an die Kartengröße an</p>
+                    <p>Ellipsis bei zu langen Labels</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-card-preview">
+            <h2>Card-Vorschau mit Labels</h2>
+            
+            <!-- Demo Karte -->
+            <div class="kanban-card color-gradient-1" style="max-width: 300px; margin: 20px auto;">
+                <div class="card-header">
+                    <div class="card-title">Feature: Labels implementieren</div>
+                    <div class="card-actions">
+                        <button class="card-btn">⋮</button>
+                    </div>
+                </div>
+                <div class="card-preview-content" style="padding: 0.5rem;">
+                    <p>Diese Karte zeigt die neue Labels-Funktionalität in Aktion.</p>
+                </div>
+                <div class="card-footer">
+                    <div class="card-footer-actions">
+                        <span class="card-comments-count">💬 2</span>
+                        <a href="#" class="card-url-link">🔗</a>
+                        <div class="card-labels">
+                            <span class="card-label">Frontend</span>
+                            <span class="card-label">Sprint1</span>
+                            <span class="card-label">Wichtig</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-modal-preview">
+            <h2>Full Modal Labels-Anzeige</h2>
+            <div class="card-labels-full" style="justify-content: center; margin: 20px 0;">
+                <span class="card-label-full">Frontend</span>
+                <span class="card-label-full">React</span>
+                <span class="card-label-full">Component</span>
+                <span class="card-label-full">Sprint 1</span>
+                <span class="card-label-full">High Priority</span>
+            </div>
+        </div>
+
+        <div class="usage-instructions">
+            <h2>Verwendung</h2>
+            
+            <div class="instruction">
+                <h3>1. Über Card-Modal</h3>
+                <ol>
+                    <li>Karte öffnen oder neue Karte erstellen</li>
+                    <li>Im "Labels" Feld Labels eingeben: <code>Label1, Label2, Label3</code></li>
+                    <li>Karte speichern</li>
+                </ol>
+            </div>
+            
+            <div class="instruction">
+                <h3>2. Über Chatbot</h3>
+                <p>Der Chatbot kann Labels über das <code>cardData.labels</code> Feld setzen:</p>
+                <pre><code>cardData = {
+    title: "Neue Aufgabe",
+    content: "Beschreibung der Aufgabe",
+    labels: "Backend, API, Sprint2"
+}</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .demo-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .feature-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .feature {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #4a90e2;
+        }
+
+        .feature h3 {
+            margin: 0 0 8px 0;
+            color: #2c3e50;
+        }
+
+        .feature p {
+            margin: 5px 0;
+            color: #5a6c7d;
+        }
+
+        .feature code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        .demo-card-preview {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .demo-modal-preview {
+            text-align: center;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .usage-instructions {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .instruction {
+            margin: 15px 0;
+        }
+
+        .instruction h3 {
+            color: #856404;
+            margin-bottom: 8px;
+        }
+
+        .instruction ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .instruction li {
+            margin: 5px 0;
+        }
+
+        .instruction pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        .instruction code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+
+        h1, h2 {
+            color: #2c3e50;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #4a90e2;
+        }
+    </style>
+</body>
+</html>

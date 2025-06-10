@@ -217,8 +217,7 @@ function appendToCard(cardId, columnId, text) {
 function createNewCardWithContent(columnId, text) {
     const column = currentBoard.columns.find(c => c.id === columnId);
     if (!column) return;
-    
-    // Neue Karte erstellen
+      // Neue Karte erstellen
     const newCard = {
         id: generateId(),
         heading: extractTitleFromContent(text),
@@ -227,6 +226,7 @@ function createNewCardWithContent(columnId, text) {
         thumbnail: '',
         comments: '',
         url: '',
+        labels: '',
         inactive: false
     };
     
