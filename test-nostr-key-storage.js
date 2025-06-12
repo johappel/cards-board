@@ -131,6 +131,180 @@ class NostrKeyStorageTester {
         }
     }
 
+    async testManualKeyEntry() {
+        this.log('📝 Testing Manual Key Entry with Auto-Generation...');
+
+        try {
+            // Ensure modal is open
+            openNostrModal();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            const privateKeyInput = document.getElementById('nostr-private-key');
+            const publicKeyInput = document.getElementById('nostr-public-key');
+            const rememberCheckbox = document.getElementById('nostr-remember-keys');
+
+            if (!privateKeyInput || !publicKeyInput) {
+                throw new Error('Key input elements not found');
+            }
+
+            // Test 1: HEX private key input
+            this.log('Test 1: HEX private key auto-generation...');
+            const testHexKey = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+            
+            // Clear fields first
+            privateKeyInput.value = '';
+            publicKeyInput.value = '';
+            
+            // Simulate user typing HEX key
+            privateKeyInput.value = testHexKey;
+            privateKeyInput.dispatchEvent(new Event('input', { bubbles: true }));
+            
+            // Wait for auto-generation
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            if (publicKeyInput.value && publicKeyInput.value.length === 64) {
+                this.log('✅ HEX key auto-generation successful');
+                
+                // Check if datasets are populated
+                if (privateKeyInput.dataset.hex && privateKeyInput.dataset.bech32) {
+                    this.log('✅ Key datasets populated correctly');
+                } else {
+                    this.log('⚠️ Key datasets not populated properly');
+                }
+            } else {
+                this.log('❌ HEX key auto-generation failed');
+            }
+
+            // Test 2: bech32 nsec input
+            this.log('Test 2: bech32 nsec auto-generation...');
+            
+            // Generate a valid nsec for testing
+            await new Promise(resolve => setTimeout(resolve, 100));
+            generateNostrKeys(); // Generate new keys first
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Get the generated nsec from the field (should be in bech32 if format is set)
+            const currentFormat = localStorage.getItem('nostr-show-bech32') === 'true';
+            let testNsec;
+            
+            if (privateKeyInput.dataset.bech32) {
+                testNsec = privateKeyInput.dataset.bech32;
+            } else {
+                // If no bech32 in dataset, convert current value
+                if (privateKeyInput.value.length === 64) {
+                    testNsec = window.nostrTools.nip19.nsecEncode(privateKeyInput.value);
+                }
+            }
+            
+            if (testNsec && testNsec.startsWith('nsec1')) {
+                // Clear fields
+                privateKeyInput.value = '';
+                publicKeyInput.value = '';
+                delete privateKeyInput.dataset.hex;
+                delete privateKeyInput.dataset.bech32;
+                delete publicKeyInput.dataset.hex;
+                delete publicKeyInput.dataset.bech32;
+                
+                // Input the nsec
+                privateKeyInput.value = testNsec;
+                privateKeyInput.dispatchEvent(new Event('input', { bubbles: true }));
+                
+                // Wait for auto-generation
+                await new Promise(resolve => setTimeout(resolve, 300));
+                
+                if (publicKeyInput.value && (publicKeyInput.value.length === 64 || publicKeyInput.value.startsWith('npub1'))) {
+                    this.log('✅ bech32 nsec auto-generation successful');
+                    
+                    // Verify both formats are stored
+                    if (privateKeyInput.dataset.hex && privateKeyInput.dataset.bech32 && 
+                        publicKeyInput.dataset.hex && publicKeyInput.dataset.bech32) {
+                        this.log('✅ Both HEX and bech32 formats stored correctly');
+                    } else {
+                        this.log('⚠️ Format storage incomplete');
+                    }
+                } else {
+                    this.log('❌ bech32 nsec auto-generation failed');
+                }
+            } else {
+                this.log('⚠️ Could not generate valid nsec for testing');
+            }
+
+            // Test 3: Format switching
+            this.log('Test 3: Format switching functionality...');
+            
+            const currentShowBech32 = localStorage.getItem('nostr-show-bech32') === 'true';
+            
+            // Toggle format
+            if (window.toggleKeyDisplayFormat) {
+                toggleKeyDisplayFormat();
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+                const newShowBech32 = localStorage.getItem('nostr-show-bech32') === 'true';
+                if (newShowBech32 !== currentShowBech32) {
+                    this.log('✅ Format toggle successful');
+                    
+                    // Check if display updated
+                    const expectedFormat = newShowBech32 ? 'bech32' : 'hex';
+                    const actualFormat = privateKeyInput.value.startsWith('nsec1') ? 'bech32' : 'hex';
+                    
+                    if (actualFormat === expectedFormat) {
+                        this.log('✅ Display format updated correctly');
+                    } else {
+                        this.log('⚠️ Display format may not have updated properly');
+                    }
+                } else {
+                    this.log('❌ Format toggle failed');
+                }
+            } else {
+                this.log('⚠️ toggleKeyDisplayFormat function not available');
+            }
+
+            // Test 4: Auto-save functionality
+            this.log('Test 4: Auto-save with remember checkbox...');
+            
+            if (rememberCheckbox) {
+                // Clear storage first
+                localStorage.removeItem('nostr-credentials');
+                
+                // Check remember checkbox
+                rememberCheckbox.checked = true;
+                
+                // Enter a key to trigger auto-save
+                const testKey2 = 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789';
+                privateKeyInput.value = testKey2;
+                privateKeyInput.dispatchEvent(new Event('input', { bubbles: true }));
+                
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Check if credentials were saved
+                const savedCreds = localStorage.getItem('nostr-credentials');
+                if (savedCreds) {
+                    this.log('✅ Auto-save functionality working');
+                    
+                    try {
+                        const parsed = JSON.parse(savedCreds);
+                        if (parsed.privateKey && parsed.publicKey) {
+                            this.log('✅ Saved credentials contain both keys');
+                        } else {
+                            this.log('⚠️ Saved credentials incomplete');
+                        }
+                    } catch (e) {
+                        this.log('⚠️ Saved credentials format invalid');
+                    }
+                } else {
+                    this.log('❌ Auto-save not triggered');
+                }
+            } else {
+                this.log('⚠️ Remember checkbox not found');
+            }
+
+            this.log('✅ Manual key entry tests completed');
+
+        } catch (error) {
+            this.log(`❌ Manual key entry test failed: ${error.message}`, 'error');
+        }
+    }
+
     async testPublishedBoardsHistory() {
         this.log('📚 Testing Published Boards History Functionality...');
 
@@ -227,18 +401,23 @@ class NostrKeyStorageTester {
         const keyStorageResult = await this.testKeyStorage();
         await new Promise(resolve => setTimeout(resolve, 1000));
         
+        const manualEntryResult = await this.testManualKeyEntry();
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
         const historyResult = await this.testPublishedBoardsHistory();
 
         this.log('='.repeat(60));
         this.log('📊 Test Results Summary:');
         this.log(`🔑 Key Storage: ${keyStorageResult ? '✅ PASSED' : '❌ FAILED'}`);
+        this.log(`⌨️ Manual Key Entry: ${manualEntryResult ? '✅ PASSED' : '❌ FAILED'}`);
         this.log(`📚 Published History: ${historyResult ? '✅ PASSED' : '❌ FAILED'}`);
         
-        const overallResult = keyStorageResult && historyResult;
+        const overallResult = keyStorageResult && manualEntryResult && historyResult;
         this.log(`🎯 Overall Result: ${overallResult ? '✅ ALL TESTS PASSED' : '❌ SOME TESTS FAILED'}`, overallResult ? 'success' : 'error');
 
         return {
             keyStorage: keyStorageResult,
+            manualEntry: manualEntryResult,
             publishedHistory: historyResult,
             overall: overallResult,
             details: this.results

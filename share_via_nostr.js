@@ -1166,6 +1166,21 @@ function toggleKeyDisplayFormat() {
     showNostrMessage(`🔄 Key format switched to ${format}`, 'info');
 }
 
+function clearKeyDatasets() {
+    const privateKeyInput = document.getElementById('nostr-private-key');
+    const publicKeyInput = document.getElementById('nostr-public-key');
+    
+    if (privateKeyInput) {
+        delete privateKeyInput.dataset.hex;
+        delete privateKeyInput.dataset.bech32;
+    }
+    
+    if (publicKeyInput) {
+        delete publicKeyInput.dataset.hex;
+        delete publicKeyInput.dataset.bech32;
+    }
+}
+
 // Published Boards History Management
 function loadPublishedBoardsHistory() {
     const publishedEvents = JSON.parse(localStorage.getItem('nostr-published-events') || '[]');
@@ -1611,21 +1626,87 @@ document.addEventListener('DOMContentLoaded', function() {
     const privateKeyInput = document.getElementById('nostr-private-key');
     const publicKeyInput = document.getElementById('nostr-public-key');
     
-    if (privateKeyInput && publicKeyInput) {
-        privateKeyInput.addEventListener('input', async function() {
-            const privateKey = this.value.trim();
-            if (privateKey.length === 64 && /^[0-9a-fA-F]+$/i.test(privateKey)) {
-                try {
-                    await waitForNostrTools();
-                    const publicKey = window.nostrTools.getPublicKey(privateKey);
-                    publicKeyInput.value = publicKey;
-                    console.log('🔑 Auto-generated public key using nostr-tools');
-                } catch (error) {
-                    console.error('Error generating public key:', error);
-                    publicKeyInput.value = '';
-                }
-            } else {
+    if (privateKeyInput && publicKeyInput) {        privateKeyInput.addEventListener('input', async function() {
+            const inputValue = this.value.trim();
+            
+            if (!inputValue) {
+                // Clear everything if input is empty
                 publicKeyInput.value = '';
+                clearKeyDatasets();
+                return;
+            }
+            
+            try {
+                await waitForNostrTools();
+                let privateKeyHex = null;
+                
+                // Handle different input formats
+                if (inputValue.startsWith('nsec1')) {
+                    // Bech32 format nsec
+                    try {
+                        const decoded = window.nostrTools.nip19.decode(inputValue);
+                        if (decoded.type === 'nsec') {
+                            privateKeyHex = decoded.data;
+                        }
+                    } catch (e) {
+                        console.warn('Invalid nsec format:', e);
+                        publicKeyInput.value = '';
+                        return;
+                    }
+                } else if (inputValue.length === 64 && /^[0-9a-fA-F]+$/i.test(inputValue)) {
+                    // HEX format
+                    privateKeyHex = inputValue;
+                } else {
+                    // Invalid format - clear public key but don't throw error yet (user might still be typing)
+                    if (inputValue.length > 10) { // Only clear if they've typed enough to indicate intent
+                        publicKeyInput.value = '';
+                    }
+                    return;
+                }
+                
+                if (privateKeyHex) {
+                    // Generate public key
+                    const publicKeyHex = window.nostrTools.getPublicKey(privateKeyHex);
+                    
+                    // Generate bech32 formats
+                    const nsecBech32 = window.nostrTools.nip19.nsecEncode(privateKeyHex);
+                    const npubBech32 = window.nostrTools.nip19.npubEncode(publicKeyHex);
+                    
+                    // Store both formats in datasets
+                    privateKeyInput.dataset.hex = privateKeyHex;
+                    privateKeyInput.dataset.bech32 = nsecBech32;
+                    publicKeyInput.dataset.hex = publicKeyHex;
+                    publicKeyInput.dataset.bech32 = npubBech32;
+                    
+                    // Update display based on current format preference
+                    const showBech32 = localStorage.getItem('nostr-show-bech32') === 'true';
+                    if (showBech32) {
+                        if (!inputValue.startsWith('nsec1')) {
+                            // User entered HEX, show bech32
+                            privateKeyInput.value = nsecBech32;
+                        }
+                        publicKeyInput.value = npubBech32;
+                    } else {
+                        if (inputValue.startsWith('nsec1')) {
+                            // User entered bech32, show HEX
+                            privateKeyInput.value = privateKeyHex;
+                        }
+                        publicKeyInput.value = publicKeyHex;
+                    }
+                    
+                    // Auto-save if remember is checked
+                    const rememberCheckbox = document.getElementById('nostr-remember-keys');
+                    if (rememberCheckbox && rememberCheckbox.checked) {
+                        saveNostrCredentials();
+                    }
+                    
+                    console.log('🔑 Auto-generated key pair from manual entry');
+                }
+                
+            } catch (error) {
+                console.error('Error processing private key input:', error);
+                publicKeyInput.value = '';
+                clearKeyDatasets();
             }
         });
     }
@@ -1668,6 +1749,5 @@ if (typeof module !== 'undefined' && module.exports) {
         initializeNostr,
         publishBoardToNostr,
         importBoardFromNostr,
-        openNostrModal
-    };
+        openNostrModal    };
 }
