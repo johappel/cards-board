@@ -927,7 +927,7 @@ function showSelectedColumnInModal() {
             const hint = document.createElement('small');
             hint.className = 'shortcut-hint';
             hint.style.cssText = 'display: block; font-weight: normal; color: #666; font-size: 0.8em; margin-top: 5px;';
-            hint.textContent = '💡 Tipp: Verwenden Sie Ctrl+Shift+V um dieses Modal schnell zu öffnen';
+            hint.textContent = '💡 Tipp: Verwende Ctrl+Shift+V um dieses Modalschnell zu öffnen';
             modalHeader.appendChild(hint);
         }
     }

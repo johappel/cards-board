@@ -14,10 +14,28 @@ function generateBoardSummary() {
     });
     
     // Simulate AI call (in real implementation, this would call the configured AI API)
-    const mockSummary = `This board contains ${currentBoard.columns.length} columns with a total of ${allContent.length} cards. The workflow progresses through ${currentBoard.columns.map(c => c.name).join(', ')}. Key focus areas include project planning, task management, and completion tracking.`;
+    const mockSummary = `# Board Zusammenfassung
+
+Dieses Board enthält **${currentBoard.columns.length} Spalten** mit insgesamt **${allContent.length} Karten**.
+
+## Workflow
+Der Arbeitsablauf verläuft durch folgende Bereiche: ${currentBoard.columns.map(c => c.name).join(', ')}.
+
+## Hauptfokus
+- Projektplanung
+- Aufgabenverwaltung  
+- Fortschrittsverfolgung
+
+*Diese Zusammenfassung wurde automatisch generiert.*`;
     
-    currentBoard.summary = mockSummary;
-    updateBoardView();
+    // Verwende die neue updateBoardSummary Funktion
+    if (typeof window.updateBoardSummary === 'function') {
+        window.updateBoardSummary(mockSummary);
+    } else {
+        // Fallback für direkte Aktualisierung
+        currentBoard.summary = mockSummary;
+        updateBoardView();
+    }
     
     alert('Summary generated! (This is a mock implementation)');
 }

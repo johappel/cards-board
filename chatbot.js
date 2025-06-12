@@ -396,8 +396,7 @@ function connectWebSocket() {
                     displayMessage(`${data.cards.length} Karten wurden zur Spalte "${targetColumn}" hinzugefügt.`, 'system');
                 }
                 resetChatInputUI(); // UI wieder freigeben nach Karten-Antwort
-                return;
-            } else if (data.type === 'column' && data.column && Array.isArray(data.cards)) {
+                return;            } else if (data.type === 'column' && data.column && Array.isArray(data.cards)) {
                 const newColumnWasCreated = addColumnWithCards(data.column, data.cards);
                 if (newColumnWasCreated) {
                     displayMessage(`Neue Spalte "${data.column}" mit ${data.cards.length} Karten angelegt.`, 'system');
@@ -405,6 +404,12 @@ function connectWebSocket() {
                     displayMessage(`${data.cards.length} Karten wurden zur Spalte "${data.column}" hinzugefügt.`, 'system');
                 }
                 resetChatInputUI(); // UI wieder freigeben nach Spalten-Antwort
+                return;
+            } else if (data.type === 'summary' && (data.text || data.summary)) {
+                const summaryText = data.text || data.summary;
+                updateBoardSummary(summaryText);
+                displayMessage('Board-Zusammenfassung wurde generiert und aktualisiert.', 'system');
+                resetChatInputUI(); // UI wieder freigeben nach Summary-Antwort
                 return;
             } else {
                 displayMessage(`Unbekannte Nachricht vom Server: ${event.data}`, 'system');
@@ -923,6 +928,33 @@ function clearChatMessages(boardId) {
     localStorage.removeItem(key);
 }
 
+// Board Summary Update Funktion
+function updateBoardSummary(newSummaryText) {
+    if (!window.currentBoard) return;
+    
+    // Bestehende Summary nur überschreiben, wenn sie leer ist
+    if (!window.currentBoard.summary || window.currentBoard.summary.trim() === '' || 
+        window.currentBoard.summary === 'No summary yet...' || 
+        window.currentBoard.summary === 'Board summary will appear here...') {
+        window.currentBoard.summary = newSummaryText;
+    } else {
+        // Neue Summary anhängen oder als Aktualisierung markieren
+        window.currentBoard.summary = newSummaryText;
+    }
+    
+    // Board-View aktualisieren
+    if (typeof updateBoardView === 'function') {
+        updateBoardView();
+    }
+    
+    // Boards speichern
+    if (typeof saveAllBoards === 'function') {
+        saveAllBoards();
+    }
+    
+    console.log('[Chatbot] Board Summary updated:', newSummaryText);
+}
+
 function getCurrentChatMessages() {
     const chatbox = document.getElementById('chatbox');
     if (!chatbox) return [];
@@ -988,3 +1020,5 @@ window.openAISettingsModal = openAISettingsModal;
 window.handleBoardChange = handleBoardChange;
 window.resetChatInputUI = resetChatInputUI;
 window.scheduleUIReset = scheduleUIReset;
+window.updateBoardSummary = updateBoardSummary;
+window.renderMarkdownToHtml = renderMarkdownToHtml;

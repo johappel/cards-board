@@ -640,23 +640,30 @@ const URLPreviewPlugin = {
                                 ${isYouTube ? '🎥' : '🌐'} ${preview.url}
                             </a>
                             ${isYouTube && preview.authorName ? `<br><small style="color: #666;">📺 Kanal: ${preview.authorName}</small>` : ''}
-                        </div>
-                    </div>
+                        </div>                    </div>
                     
                     <div class="form-group">
+                        ${isYouTube ? `
+                        <label>
+                            <input type="checkbox" id="use-as-thumbnail" disabled>
+                            <span>Video-Thumbnail als Karten-Thumbnail verwenden</span>
+                            <small style="color: #999;"> (Für YouTube-Videos deaktiviert - URL wird stattdessen verwendet)</small>
+                        </label>
+                        ` : `
                         <label>
                             <input type="checkbox" id="use-as-thumbnail" ${preview.image ? 'checked' : 'disabled'}>
-                            <span>${isYouTube ? 'Video-Thumbnail als Karten-Thumbnail verwenden' : 'Bild als Karten-Thumbnail verwenden'}</span>
+                            <span>Bild als Karten-Thumbnail verwenden</span>
                             ${!preview.image ? '<small style="color: #999;"> (Kein Bild verfügbar)</small>' : ''}
                         </label>
+                        `}
                     </div>
                     
                     <div class="form-group">
                         <label>
                             <input type="checkbox" id="use-as-url-field" checked>
-                            <span>URL im URL-Feld der Karte speichern</span>
+                            <span>${isYouTube ? 'YouTube-URL im URL-Feld der Karte speichern' : 'URL im URL-Feld der Karte speichern'}</span>
                         </label>
-                        <small>Wird im Card Settings Modal im URL-Feld angezeigt</small>
+                        <small>${isYouTube ? 'Die YouTube-URL wird automatisch im Card Settings Modal angezeigt' : 'Wird im Card Settings Modal im URL-Feld angezeigt'}</small>
                     </div>
                     
                     <div class="form-group">
@@ -776,9 +783,7 @@ ${preview.description}
         if (modal) {
             modal.remove();
         }
-    },
-
-    // URL Preview Paste bestätigen
+    },    // URL Preview Paste bestätigen
     confirmUrlPreviewPaste() {
         const modal = document.getElementById('url-preview-modal');
         if (!modal) return;
@@ -788,17 +793,23 @@ ${preview.description}
         let content = document.getElementById('preview-content').value;
         const useAsThumbnail = document.getElementById('use-as-thumbnail').checked;
         const useAsUrlField = document.getElementById('use-as-url-field').checked;
-        const thumbnailUrl = useAsThumbnail ? modal.dataset.previewImage : '';
         const originalUrl = modal.dataset.originalUrl;
         const isYouTube = modal.dataset.isYouTube === 'true';
         const videoId = modal.dataset.videoId;
         
-        // YouTube-spezifische Inhalte erweitern
-        if (isYouTube && videoId) {
-            const embedUrl = this.getYouTubeEmbedUrl(videoId);
-            content = `# ${title}
-
-## 🎥 Video Player
+        // Für YouTube: Kein Thumbnail verwenden, sondern nur URL
+        let thumbnailUrl = '';
+        let cardUrl = '';
+        
+        if (isYouTube) {
+            // YouTube: Immer die Original-URL als Card-URL verwenden, kein Thumbnail
+            cardUrl = originalUrl;
+            thumbnailUrl = ''; // Kein Thumbnail für YouTube
+            
+            // YouTube-spezifische Inhalte mit eingebettetem Video
+            if (videoId) {
+                const embedUrl = this.getYouTubeEmbedUrl(videoId);
+                content = `
 <div class="youtube-embed" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; background: #000; border-radius: 8px; margin: 1rem 0;">
 <iframe 
     src="${embedUrl}" 
@@ -808,27 +819,29 @@ ${preview.description}
     title="YouTube Video: ${title}">
 </iframe>
 </div>
-
----
-[🔗 Auf YouTube öffnen](${originalUrl})
-
 `;
+            }
+        } else {
+            // Für normale URLs: Standard-Verhalten
+            thumbnailUrl = useAsThumbnail ? modal.dataset.previewImage : '';
+            cardUrl = useAsUrlField ? originalUrl : '';
         }
         
         // Paste-Aktion basierend auf Ziel-Typ
         if (target.type === 'modal') {
             // In offenes Card Modal einfügen
-            this.insertIntoCardModal(title, content, thumbnailUrl, useAsUrlField ? originalUrl : '');
+            this.insertIntoCardModal(title, content, thumbnailUrl, cardUrl);
         } else if (target.type === 'card') {
             // An bestehende Karte anhängen
             this.appendToCard(target.cardId, target.columnId, content);
         } else if (target.type === 'column') {
             // Neue Karte erstellen
-            this.createEnhancedCardFromPaste(target.columnId, title, content, thumbnailUrl, useAsUrlField ? originalUrl : '');
+            this.createEnhancedCardFromPaste(target.columnId, title, content, thumbnailUrl, cardUrl);
         }
         
         this.closeUrlPreviewModal();
-        showPasteNotification('✅ URL-Vorschau eingefügt!');
+        const message = isYouTube ? '✅ YouTube-Video eingefügt!' : '✅ URL-Vorschau eingefügt!';
+        showPasteNotification(message);
     },
 
     // Als einfacher Link einfügen
@@ -842,9 +855,7 @@ ${preview.description}
         this.finalizePasteAction(`[${url}](${url})`, target);
         this.closeUrlPreviewModal();
         showPasteNotification('🔗 URL als einfacher Link eingefügt');
-    },
-
-    // YouTube als Link einfügen
+    },    // YouTube als Link einfügen
     pasteYouTubeAsLink() {
         const modal = document.getElementById('url-preview-modal');
         if (!modal) return;
@@ -852,10 +863,8 @@ ${preview.description}
         const target = JSON.parse(modal.dataset.targetData);
         const title = document.getElementById('preview-card-title').value;
         const originalUrl = modal.dataset.originalUrl;
-        const useAsThumbnail = document.getElementById('use-as-thumbnail').checked;
-        const useAsUrlField = document.getElementById('use-as-url-field').checked;
-        const thumbnailUrl = useAsThumbnail ? modal.dataset.previewImage : '';
         
+        // Für YouTube-Links: Kein Thumbnail, aber URL als Card-URL
         const content = `# ${title}
 
 [🎥 Video auf YouTube ansehen](${originalUrl})
@@ -864,11 +873,11 @@ ${preview.description}
 *YouTube-Link eingefügt*`;
         
         if (target.type === 'modal') {
-            this.insertIntoCardModal(title, content, thumbnailUrl, useAsUrlField ? originalUrl : '');
+            this.insertIntoCardModal(title, content, '', originalUrl); // Kein Thumbnail, aber URL
         } else if (target.type === 'card') {
             this.appendToCard(target.cardId, target.columnId, content);
         } else if (target.type === 'column') {
-            this.createEnhancedCardFromPaste(target.columnId, title, content, thumbnailUrl, useAsUrlField ? originalUrl : '');
+            this.createEnhancedCardFromPaste(target.columnId, title, content, '', originalUrl); // Kein Thumbnail, aber URL
         }
         
         this.closeUrlPreviewModal();

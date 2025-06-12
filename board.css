@@ -34,7 +34,7 @@
     margin-top: 0;
     padding: 0.5rem 1rem;
     border-radius: 0;
-    background: linear-gradient(90deg, rgba(30,34,40,0.82) 0%, rgba(30,34,40,0.68) 100%);
+    background: linear-gradient(90deg, rgba(30,34,40,0.9) 0%, rgba(30,34,40,1) 100%);
     color: #fff;
     box-shadow: 0 1px 4px rgba(0,0,0,0.10);
     -webkit-backdrop-filter: blur(2px);
@@ -47,7 +47,8 @@
 }
 
 .modal-header h2 {
-    color: #fff;
+    color: #dddedd!important;
+    font-size: 1.1rem;
     text-shadow: 0 1px 2px rgba(0,0,0,0.4);
 }
 
@@ -256,11 +257,21 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: baseline ;
 }
 
 .board-header-left {
     flex: 1;
+}
+
+/* Grid-Layout für Summary und Authors */
+.board-content-grid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2rem;
+    align-items: start;
+    margin-top: 0.5rem;
+    margin-right: 5rem;
 }
 
 .board-title {
@@ -272,13 +283,161 @@
 .board-authors {
     font-size: 0.9rem;
     color: #7f8c8d;
-    margin-bottom: 0.5rem;
+    white-space: nowrap;
+    text-align: left;
+    min-width: 200px;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    align-self: self-end; /* Positioniert die Autoren am unteren Rand */
+}
+
+.board-authors:hover {
+    background: rgba(255, 255, 255, 0.4);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .board-summary {
     font-size: 0.9rem;
     color: #5a6c7d;
-    max-width: 600px;
+    max-width: none; /* Grid übernimmt die Breite */
+}
+
+/* Expandierbare Board Summary */
+.summary-content {
+    transition: all 0.3s ease;
+}
+
+.summary-content.collapsed {
+    max-height: 5em;
+    overflow: hidden;
+}
+
+.summary-content.expanded {
+    max-height: none;
+    overflow: visible;
+}
+
+.summary-toggle {
+    background: none;
+    border: none;
+    color: #4a90e2;
+    cursor: pointer;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    padding: 0.25rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: color 0.2s ease;
+}
+
+.summary-toggle:hover {
+    color: #357abd;
+}
+
+.toggle-icon {
+    font-size: 0.7rem;
+    transition: transform 0.2s ease;
+}
+
+/* Markdown-Inhalt im Board Summary */
+.board-summary .markdown-content {
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.board-summary .markdown-content h1,
+.board-summary .markdown-content h2,
+.board-summary .markdown-content h3 {
+    font-size: 1rem;
+    margin: 0.5rem 0 0.25rem 0;
+    color: #2d3748;
+}
+
+.board-summary .markdown-content p {
+    margin: 0.25rem 0;
+}
+
+.board-summary .markdown-content ul,
+.board-summary .markdown-content ol {
+    margin: 0.25rem 0 0.25rem 1rem;
+    padding-left: 0;
+}
+
+.board-summary .markdown-content li {
+    margin: 0.1rem 0;
+}
+
+.board-summary .markdown-content code {
+    background: rgba(0,0,0,0.1);
+    padding: 0.1rem 0.3rem;
+    border-radius: 2px;
+    font-size: 0.85rem;
+}
+
+.board-summary .markdown-content .think-accordion {
+    margin: 0.5rem 0;
+    font-size: 0.85rem;
+}
+
+.board-summary .markdown-content .think-accordion summary {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.8rem;
+}
+
+/* Responsives Design für Board Summary */
+@media (max-width: 768px) {
+    .board-summary {
+        max-width: none;
+    }
+    
+    .summary-content.collapsed {
+        max-height: 4em;
+    }
+    
+    .summary-toggle {
+        font-size: 0.8rem;
+    }
+    
+    /* Responsive Grid Layout */
+    .board-content-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .board-authors {
+        text-align: left;
+        min-width: auto;
+        white-space: normal;
+    }
+}
+
+/* Animation für Summary Toggle */
+.summary-content {
+    transition: max-height 0.3s ease-in-out, opacity 0.2s ease;
+}
+
+.summary-content.expanding {
+    animation: expandSummary 0.3s ease-in-out;
+}
+
+@keyframes expandSummary {
+    from {
+        max-height: 3em;
+        opacity: 0.8;
+    }
+    to {
+        max-height: none;
+        opacity: 1;
+    }
 }
 
 .board-header-actions {
