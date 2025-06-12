@@ -7,17 +7,24 @@ function openSettingsSidebar() {
     const overlay = document.getElementById('sidebar-overlay');
     const boardActionsSection = document.getElementById('board-actions-section');
     
-    // Show/hide board-specific actions based on current view
+    // Show/hide board-specific actions based on current view and active board
     const boardView = document.getElementById('board-view');
     const dashboard = document.getElementById('dashboard');
     
-    if (boardView && boardView.style.display !== 'none') {
-        // We're in board view - show board actions
+    // Check if we're actually in board view AND have an active board
+    const isInBoardView = boardView && (boardView.style.display === 'flex' || 
+                          (boardView.style.display !== 'none' && dashboard && dashboard.style.display === 'none'));
+    const hasActiveBoard = window.currentBoard !== null && window.currentBoard !== undefined;
+    
+    if (isInBoardView && hasActiveBoard) {
+        // We're in board view with an active board - show board actions
         boardActionsSection.style.display = 'block';
         initializeSidebarColumnWidth();
+        console.log('✅ Showing board actions for:', window.currentBoard.name);
     } else {
-        // We're in dashboard view - hide board actions
+        // We're in dashboard view or no active board - hide board actions
         boardActionsSection.style.display = 'none';
+        console.log('ℹ️ Hiding board actions - in dashboard or no active board');
     }
     
     sidebar.classList.add('open');

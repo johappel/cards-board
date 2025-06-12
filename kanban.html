@@ -697,6 +697,17 @@
                     </div>
                 </div>
                 
+                <!-- Published Boards History Section -->
+                <div class="nostr-section history">
+                    <h3>📚 Veröffentlichte Boards</h3>
+                    <div class="nostr-published-boards" id="nostr-published-boards">
+                        <div class="nostr-no-history" id="nostr-no-history">
+                            <p>Noch keine Boards veröffentlicht.</p>
+                            <p>Veröffentlichte Board-Links werden hier für einfachen Zugriff gespeichert.</p>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="modal-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('nostr-modal')">Schließen</button>
                 </div>
@@ -820,15 +831,17 @@
         loadNostrTools();
     </script>
     <script src="share_via_nostr.js"></script>
-    <script src="nostr-test.js"></script>
+    <!--
+    <script src="nostr-test.js"></!--<script>
     <script src="test-publishing.js"></script>
     <script src="test-board-rendering.js"></script>
     <script src="import-debug.js"></script>
     <script src="nevent-debug.js"></script>
     <script src="nevent-fix.js"></script>
     <script src="improved-import-workflow.js"></script>
-    <script src="master-nostr-test.js"></script>
+    <script src="master-nostr-test.js"></<script>
     <script src="nostr-test-cleanup.js"></script>
+    -->
     <script src="init.js"></script>
     <script src="api.js"></script>
     <script src="colors.js"></script>
@@ -942,5 +955,5 @@
     <!-- Nostr Publishing Test Script -->
     <script src="test-publishing.js"></script>
    
-</body>
+</script>
 </html>

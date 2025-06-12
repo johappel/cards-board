@@ -73,16 +73,6 @@ async function testWithRealBoardData() {
         console.warn('⚠️ No current board selected. Please select a board first or manually create a test board.');
         console.log('💡 Use createTestBoardForNostr() manually if you need a test board');
         return;
-    async function testWithRealBoardData() {
-    console.log('\n🔧 === TESTING WITH REAL BOARD DATA ===');
-    
-    // 1. Use existing board instead of creating new test board
-    console.log('📋 Using existing board data...');
-    
-    if (!window.currentBoard) {
-        console.warn('⚠️ No current board selected. Please select a board first or manually create a test board.');
-        console.log('💡 Use createTestBoardForNostr() manually if you need a test board');
-        return;
     }
     
     const testBoard = window.currentBoard; // Use existing board instead of creating new one
@@ -140,64 +130,10 @@ async function testWithRealBoardData() {
         } catch (error) {
             console.error('❌ Mock publishing test failed:', error);
         }
-    } else {
-        console.warn('⚠️ publishBoardToNostr function not available');
     }
-}
-                    const event = {
-                        kind: 30023,
-                        created_at: Math.floor(Date.now() / 1000),
-                        tags: [
-                            ['d', testBoard.title],
-                            ['title', testBoard.title],
-                            ['description', 'Test Board für nevent-Debugging']
-                        ],
-                        content: JSON.stringify(testBoard),
-                        pubkey: 'mock_pubkey'
-                    };
-                    
-                    console.log('✅ Mock event prepared:', {
-                        kind: event.kind,
-                        contentLength: event.content.length,
-                        tagsCount: event.tags.length
-                    });
-                    
-                    // Simuliere Event-ID (würde normalerweise durch nostr-tools generiert)
-                    const mockEventId = '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
-                    
-                    // 3. Teste nevent-Erstellung mit Mock-Event-ID
-                    console.log('\n🔧 Testing nevent creation with mock event ID...');
-                    const nevent = createNeventString(mockEventId, mockRelays);
-                    console.log('✅ nevent created for mock event:', nevent);
-                    
-                    // 4. Teste nevent-Parsing
-                    console.log('\n🔧 Testing nevent parsing...');
-                    const parsed = parseNeventString(nevent);
-                    console.log('✅ nevent parsed:', parsed);
-                    
-                    return { nevent, parsed, mockEventId };
-                    
-                } catch (error) {
-                    console.error('❌ Mock publishing test failed:', error);
-                }
-            }
-        } catch (error) {
-            console.error('❌ Test board creation failed:', error);
-        }
-    }
-}
 
-// Haupt-Fix-Funktion
-async function runNeventFix() {
-    console.log('🚀 === RUNNING NEVENT FIX ===');
-    
-    // Warte bis nostr-tools geladen sind
-    let attempts = 0;
-    while (!window.nostrTools && attempts < 10) {
-        console.log(`⏳ Waiting for nostr-tools... (${attempts + 1}/10)`);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        attempts++;
-    }
+
+    // Haupt-Fix-Funktion
     
     if (window.nostrTools) {
         console.log('✅ nostr-tools loaded');
@@ -207,6 +143,7 @@ async function runNeventFix() {
     
     // Schritt 1: Analysiere das aktuelle Problem
     await fixCurrentNeventIssue();
+
     
     // Schritt 2: Teste mit echten Board-Daten
     const testResult = await testWithRealBoardData();

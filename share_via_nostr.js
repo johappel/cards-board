@@ -63,18 +63,21 @@ async function generateNostrKeys() {
                 console.warn('⚠️ Failed to encode keys in bech32 format, using HEX:', error);
             }
         }
-        
-        // Store raw hex keys for actual use
-        document.getElementById('nostr-private-key').value = privateKey;
+          // Store raw hex keys for actual use
         document.getElementById('nostr-private-key').dataset.hex = privateKey;
         document.getElementById('nostr-private-key').dataset.bech32 = displayPrivateKey;
         
-        document.getElementById('nostr-public-key').value = publicKey;
         document.getElementById('nostr-public-key').dataset.hex = publicKey;
         document.getElementById('nostr-public-key').dataset.bech32 = displayPublicKey;
         
         // Update display format
         updateKeyDisplayFormat();
+        
+        // Auto-save if remember checkbox is checked
+        const rememberCheckbox = document.getElementById('remember-nostr-credentials');
+        if (rememberCheckbox && rememberCheckbox.checked) {
+            saveNostrCredentials();
+        }
         
         console.log('🔑 New Nostr keys generated with nostr-tools:', {
             private: privateKey.substring(0, 8) + '...',
@@ -141,6 +144,40 @@ function initializeNostrUI() {
             console.warn('⚠️ Missing Nostr UI elements:', missingElements);
         } else {
             console.log('✅ All Nostr UI elements found');
+            
+            // Add event listeners for automatic saving
+            const rememberCheckbox = document.getElementById('remember-nostr-credentials');
+            const privateKeyInput = document.getElementById('nostr-private-key');
+            const publicKeyInput = document.getElementById('nostr-public-key');
+            
+            if (rememberCheckbox) {
+                rememberCheckbox.addEventListener('change', function() {
+                    saveNostrCredentials();
+                });
+            }
+            
+            // Auto-save when keys change (with debounce)
+            let saveTimeout;
+            function debouncedSave() {
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(() => {
+                    if (rememberCheckbox && rememberCheckbox.checked) {
+                        saveNostrCredentials();
+                    }
+                }, 1000); // Save 1 second after user stops typing
+            }
+            
+            if (privateKeyInput) {
+                privateKeyInput.addEventListener('input', debouncedSave);
+                privateKeyInput.addEventListener('paste', debouncedSave);
+            }
+            
+            if (publicKeyInput) {
+                publicKeyInput.addEventListener('input', debouncedSave);
+                publicKeyInput.addEventListener('paste', debouncedSave);
+            }
+            
+            console.log('✅ Nostr auto-save event listeners added');
         }
     }, 100);
 }
@@ -154,13 +191,30 @@ function loadNostrCredentials() {
     const rememberCheckbox = document.getElementById('remember-nostr-credentials');
     
     if (privateKeyInput && credentials.nsec) {
-        privateKeyInput.value = credentials.nsec;
+        // Store both formats in dataset
+        privateKeyInput.dataset.hex = credentials.nsec;
+        privateKeyInput.dataset.bech32 = credentials.nsecBech32 || credentials.nsec;
+        
+        // Load the preferred display format
+        updateKeyDisplayFormat();
     }
     if (publicKeyInput && credentials.npub) {
-        publicKeyInput.value = credentials.npub;
+        // Store both formats in dataset
+        publicKeyInput.dataset.hex = credentials.npub;
+        publicKeyInput.dataset.bech32 = credentials.npubBech32 || credentials.npub;
+        
+        // Load the preferred display format
+        updateKeyDisplayFormat();
     }
     if (rememberCheckbox) {
         rememberCheckbox.checked = !!credentials.nsec;
+    }
+    
+    if (credentials.nsec) {
+        console.log('✅ Nostr credentials loaded from localStorage', {
+            saved: credentials.saved,
+            hasKeys: true
+        });
     }
 }
 
@@ -175,13 +229,32 @@ function saveNostrCredentials() {
     }
     
     const remember = rememberCheckbox.checked;
-    const nsec = privateKeyInput.value.trim();
-    const npub = publicKeyInput.value.trim();
     
-    if (remember && nsec) {
-        localStorage.setItem('nostr-credentials', JSON.stringify({ nsec, npub }));
+    // Use hex values for storage (internal format)
+    const nsecHex = privateKeyInput.dataset.hex || privateKeyInput.value.trim();
+    const npubHex = publicKeyInput.dataset.hex || publicKeyInput.value.trim();
+    
+    // Also store bech32 format for display
+    const nsecBech32 = privateKeyInput.dataset.bech32 || '';
+    const npubBech32 = publicKeyInput.dataset.bech32 || '';
+    
+    if (remember && nsecHex) {
+        const credentials = {
+            nsec: nsecHex,
+            npub: npubHex,
+            nsecBech32: nsecBech32,
+            npubBech32: npubBech32,
+            saved: new Date().toISOString()
+        };
+        localStorage.setItem('nostr-credentials', JSON.stringify(credentials));
+        console.log('✅ Nostr credentials saved to localStorage');
+        showNostrMessage('✅ Schlüssel im Browser gespeichert!', 'success');
     } else {
         localStorage.removeItem('nostr-credentials');
+        console.log('🗑️ Nostr credentials removed from localStorage');
+        if (!remember) {
+            showNostrMessage('🗑️ Schlüssel aus Browser entfernt', 'info');
+        }
     }
 }
 
@@ -256,12 +329,47 @@ async function publishBoardToNostr() {
             const eventId = event.id;
             const nevent = createNeventString(eventId, relays.slice(0, 3));
             const importUrl = `${window.location.origin}${window.location.pathname}?import=${nevent}`;
-            
-            // Success UI Update
+              // Success UI Update
             document.getElementById('nostr-event-link').value = importUrl;
             document.getElementById('nostr-publish-success').style.display = 'block';
             
             showNostrMessage(`Board erfolgreich veröffentlicht! (${results.success}/${results.total} Relays)`, 'success');
+            
+            // Store published board link persistently
+            const publishedEvent = {
+                boardId: currentBoard.id,
+                boardName: currentBoard.name,
+                eventId: eventId,
+                nevent: nevent,
+                importUrl: importUrl,
+                timestamp: new Date().toISOString(),
+                isDraft: isDraft,
+                relays: relays.slice(0, 3)
+            };
+            
+            // Save to localStorage for persistent access
+            let publishedEvents = JSON.parse(localStorage.getItem('nostr-published-events') || '[]');
+            
+            // Remove any existing entry for this board to avoid duplicates
+            publishedEvents = publishedEvents.filter(event => event.boardId !== currentBoard.id);
+            
+            // Add new entry
+            publishedEvents.unshift(publishedEvent); // Add to beginning for newest first
+            
+            // Keep only last 10 published events to prevent localStorage bloat
+            publishedEvents = publishedEvents.slice(0, 10);
+              localStorage.setItem('nostr-published-events', JSON.stringify(publishedEvents));
+            
+            console.log('💾 Published board link saved persistently:', {
+                boardName: publishedEvent.boardName,
+                eventId: eventId.substring(0, 16) + '...',
+                timestamp: publishedEvent.timestamp
+            });
+            
+            // Update the published boards history display if modal is open
+            if (document.getElementById('nostr-modal').classList.contains('show')) {
+                loadPublishedBoardsHistory();
+            }
             
             console.log('🎉 Successfully published to Nostr:', {
                 eventId: eventId.substring(0, 16) + '...',
@@ -932,6 +1040,7 @@ function openNostrModal() {
     saveNostrCredentials(); // Save current state
     loadNostrCredentials(); // Reload to show saved state
     loadNostrRelays();
+    loadPublishedBoardsHistory(); // Load published boards history
     
     document.getElementById('nostr-publish-success').style.display = 'none';
     document.getElementById('nostr-event-link').value = '';
@@ -1055,6 +1164,142 @@ function toggleKeyDisplayFormat() {
     
     const format = !currentFormat ? 'bech32 (nsec/npub)' : 'hex';
     showNostrMessage(`🔄 Key format switched to ${format}`, 'info');
+}
+
+// Published Boards History Management
+function loadPublishedBoardsHistory() {
+    const publishedEvents = JSON.parse(localStorage.getItem('nostr-published-events') || '[]');
+    const container = document.getElementById('nostr-published-boards');
+    const noHistoryDiv = document.getElementById('nostr-no-history');
+    
+    if (!container) return;
+    
+    // Clear existing content except no-history div
+    const boardElements = container.querySelectorAll('.nostr-published-board');
+    boardElements.forEach(el => el.remove());
+    
+    if (publishedEvents.length === 0) {
+        noHistoryDiv.style.display = 'block';
+        return;
+    }
+    
+    noHistoryDiv.style.display = 'none';
+    
+    // Create board entries
+    publishedEvents.forEach((event, index) => {
+        const boardElement = createPublishedBoardElement(event, index);
+        container.appendChild(boardElement);
+    });
+    
+    console.log(`📚 Loaded ${publishedEvents.length} published board(s) from history`);
+}
+
+function createPublishedBoardElement(event, index) {
+    const div = document.createElement('div');
+    div.className = 'nostr-published-board';
+    
+    const publishDate = new Date(event.timestamp).toLocaleDateString('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    const shortEventId = event.eventId ? event.eventId.substring(0, 8) + '...' : 'N/A';
+    const relayCount = event.relays ? event.relays.length : 0;
+    
+    div.innerHTML = `
+        <div class="nostr-published-board-header">
+            <div class="nostr-published-board-name" title="${event.boardName}">
+                ${event.boardName || 'Unbenanntes Board'}
+            </div>
+            <div class="nostr-published-board-type ${event.isDraft ? 'draft' : ''}">
+                ${event.isDraft ? 'Entwurf' : 'Live'}
+            </div>
+        </div>
+        <div class="nostr-published-board-meta">
+            📅 ${publishDate} • 🆔 ${shortEventId} • 🌐 ${relayCount} Relays
+        </div>
+        <div class="nostr-published-board-actions">
+            <button class="nostr-mini-btn copy" onclick="copyPublishedBoardLink('${index}')" title="Link kopieren">
+                📋 Kopieren
+            </button>
+            <button class="nostr-mini-btn" onclick="openPublishedBoardLink('${index}')" title="Board öffnen">
+                🔗 Öffnen
+            </button>
+            <button class="nostr-mini-btn delete" onclick="deletePublishedBoard('${index}')" title="Aus Historie entfernen">
+                🗑️ Entfernen
+            </button>
+        </div>
+    `;
+    
+    return div;
+}
+
+function copyPublishedBoardLink(index) {
+    const publishedEvents = JSON.parse(localStorage.getItem('nostr-published-events') || '[]');
+    const event = publishedEvents[index];
+    
+    if (!event || !event.importUrl) {
+        showNostrMessage('❌ Link nicht verfügbar', 'error');
+        return;
+    }
+    
+    try {
+        navigator.clipboard.writeText(event.importUrl).then(() => {
+            showNostrMessage('✅ Link kopiert!', 'success');
+        }).catch(() => {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = event.importUrl;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showNostrMessage('✅ Link kopiert!', 'success');
+        });
+    } catch (err) {
+        showNostrMessage('❌ Kopieren fehlgeschlagen', 'error');
+        console.error('Copy failed:', err);
+    }
+}
+
+function openPublishedBoardLink(index) {
+    const publishedEvents = JSON.parse(localStorage.getItem('nostr-published-events') || '[]');
+    const event = publishedEvents[index];
+    
+    if (!event || !event.importUrl) {
+        showNostrMessage('❌ Link nicht verfügbar', 'error');
+        return;
+    }
+    
+    // Close modal first
+    closeModal('nostr-modal');
+    
+    // Open link in new tab
+    window.open(event.importUrl, '_blank');
+    showNostrMessage('🔗 Board-Link geöffnet', 'info');
+}
+
+function deletePublishedBoard(index) {
+    const publishedEvents = JSON.parse(localStorage.getItem('nostr-published-events') || '[]');
+    
+    if (index < 0 || index >= publishedEvents.length) return;
+    
+    const event = publishedEvents[index];
+    const boardName = event.boardName || 'Unbenanntes Board';
+    
+    if (confirm(`Board "${boardName}" aus der Historie entfernen?\n\nDas Board bleibt auf Nostr verfügbar, wird aber nicht mehr in dieser Liste angezeigt.`)) {
+        publishedEvents.splice(index, 1);
+        localStorage.setItem('nostr-published-events', JSON.stringify(publishedEvents));
+        
+        // Reload the history display
+        loadPublishedBoardsHistory();
+        
+        showNostrMessage(`🗑️ "${boardName}" aus Historie entfernt`, 'info');
+        console.log(`🗑️ Removed published board from history: ${boardName}`);
+    }
 }
 
 // Check for import parameter on page load
