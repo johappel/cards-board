@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nostr Import Duplicate Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+                    function showNameComparison() {
+            log('📊 Zeige Vorher/Nachher Vergleich...');
+            const output = document.getElementById('friendly-names-output');ding: 20px;
+            background: #f5f7fa;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .test-button.danger {
+            background: #dc3545;
+        }
+        .test-button.danger:hover {
+            background: #c82333;
+        }
+        .test-button.success {
+            background: #28a745;
+        }
+        .test-button.success:hover {
+            background: #1e7e34;
+        }
+        .status-display {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .board-list {
+            background: #e9ecef;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .board-item {
+            background: white;
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 3px;
+            border-left: 4px solid #007bff;
+        }
+        .board-item.imported {
+            border-left-color: #28a745;
+        }
+        .board-item.duplicate {
+            border-left-color: #ffc107;
+        }
+        .header {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔧 Nostr Import Duplicate Fix Test</h1>
+        <p>Teste die verbesserte Nostr-Integration mit Duplikat-Prävention</p>
+    </div>
+
+    <div class="test-container">
+        <div class="test-section">
+            <h3>📊 Aktueller Status</h3>
+            <div id="statusDisplay" class="status-display">Lade Status...</div>
+            <button class="test-button" onclick="updateStatus()">Status aktualisieren</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📋 Boards Übersicht</h3>
+            <div id="boardsList" class="board-list">Lade Boards...</div>
+            <button class="test-button" onclick="refreshBoardsList()">Boards neu laden</button>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 Tests ausführen</h3>
+            <button class="test-button success" onclick="runDuplicateTest()">Duplikat-Test starten</button>
+            <button class="test-button" onclick="testManualImport()">Manuellen Import testen</button>
+            <button class="test-button" onclick="testUrlParameterImport()">URL-Parameter Import testen</button>
+            <button class="test-button danger" onclick="cleanupTestData()">Test-Daten löschen</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📝 Test-Log</h3>
+            <div id="testLog" class="status-display">Bereit für Tests...</div>
+            <button class="test-button" onclick="clearLog()">Log löschen</button>
+        </div>
+
+        <div class="test-section">
+            <h3>🎨 Benutzerfreundliche Namen Test</h3>
+            <button onclick="testFriendlyNames()" class="button">Teste neue Namensgebung</button>
+            <button onclick="showNameComparison()" class="button">Vorher/Nachher Vergleich</button>
+            <div id="friendly-names-output" class="output"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>💾 LocalStorage Synchronisation Test</h3>
+            <button onclick="testStorageSync()" class="button">Teste Storage Sync</button>
+            <button onclick="fixStorageSync()" class="button">Repariere Storage</button>
+            <button onclick="checkStorageKeys()" class="button">Prüfe Storage Keys</button>
+            <div id="storage-sync-output" class="output"></div>
+        </div>
+    </div>
+
+    <!-- Include the main kanban files -->
+    <script src="storage.js"></script>
+    <script src="share_via_nostr.js"></script>
+    <script src="test-duplicate-fix.js"></script>
+
+    <script>
+        // Test page specific JavaScript
+        let testResults = [];
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('testLog');
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLog() {
+            document.getElementById('testLog').textContent = 'Log gelöscht...\n';
+        }
+
+        function updateStatus() {
+            const statusDisplay = document.getElementById('statusDisplay');
+            const status = `
+Boards im Speicher: ${window.boards ? window.boards.length : 'undefined'}
+LocalStorage Boards: ${JSON.parse(localStorage.getItem('kanban-boards') || '[]').length}
+Aktuelles Board: ${window.currentBoard ? window.currentBoard.name : 'Keines'}
+Nostr Keys vorhanden: ${localStorage.getItem('nostr-private-key') ? 'Ja' : 'Nein'}
+Import läuft: ${window.nostrImportInProgress ? 'Ja' : 'Nein'}
+Nostr initialisiert: ${window.nostrInitialized ? 'Ja' : 'Nein'}
+            `;
+            statusDisplay.textContent = status;
+        }
+
+        function refreshBoardsList() {
+            const boardsList = document.getElementById('boardsList');
+            const boards = window.boards || [];
+            
+            if (boards.length === 0) {
+                boardsList.innerHTML = '<div class="board-item">Keine Boards gefunden</div>';
+                return;
+            }
+
+            let html = '';
+            boards.forEach((board, index) => {
+                let cssClass = 'board-item';
+                if (board.name.includes('Imported')) {
+                    cssClass += ' imported';
+                }
+                if (board.name.includes('Test')) {
+                    cssClass += ' duplicate';
+                }
+                
+                html += `
+                    <div class="${cssClass}">
+                        <strong>${index + 1}. ${board.name}</strong><br>
+                        <small>ID: ${board.id} | Spalten: ${board.columns ? board.columns.length : 0}</small>
+                    </div>
+                `;
+            });
+            
+            boardsList.innerHTML = html;
+        }
+
+        async function runDuplicateTest() {
+            log('🧪 Starte Duplikat-Test...');
+            try {
+                const result = await testDuplicateFix();
+                if (result.success) {
+                    log('✅ Duplikat-Test erfolgreich abgeschlossen!');
+                    log(`📊 Ergebnis: ${result.importedBoards} Boards importiert`);
+                    log(`🔄 Eindeutige Namen: ${result.uniqueNames ? 'Ja' : 'Nein'}`);
+                    log(`💾 LocalStorage sync: ${result.localStorageSync ? 'Ja' : 'Nein'}`);
+                } else {
+                    log('❌ Duplikat-Test fehlgeschlagen: ' + result.error);
+                }
+                updateStatus();
+                refreshBoardsList();
+            } catch (error) {
+                log('❌ Fehler beim Duplikat-Test: ' + error.message);
+            }
+        }
+
+        async function testManualImport() {
+            log('📥 Teste manuellen Import...');
+            const nevent = prompt('Gib einen nevent String ein (oder leer lassen für automatischen Test):');
+            
+            if (nevent === null) {
+                log('ℹ️ Manueller Import abgebrochen');
+                return;
+            }
+            
+            if (!nevent) {
+                log('🎯 Erstelle Test-Board für manuellen Import...');
+                // Erstelle und publiziere Test-Board
+                try {
+                    if (!window.currentBoard) {
+                        createTestBoardForNostr();
+                    }
+                    
+                    const publishResult = await publishBoardToNostr();
+                    if (publishResult && publishResult.success) {
+                        log('✅ Test-Board publiziert: ' + publishResult.nevent.substring(0, 50) + '...');
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        await importBoardFromNostr(publishResult.nevent);
+                        log('✅ Manueller Import erfolgreich');
+                    } else {
+                        log('❌ Publishing fehlgeschlagen');
+                    }
+                } catch (error) {
+                    log('❌ Fehler beim manuellen Test: ' + error.message);
+                }
+            } else {
+                try {
+                    await importBoardFromNostr(nevent);
+                    log('✅ Manueller Import mit benutzerdefiniertem nevent erfolgreich');
+                } catch (error) {
+                    log('❌ Manueller Import fehlgeschlagen: ' + error.message);
+                }
+            }
+            
+            updateStatus();
+            refreshBoardsList();
+        }
+
+        function testUrlParameterImport() {
+            log('🔗 Teste URL-Parameter Import...');
+            const testNevent = 'nevent1qqsexampletest123456789'; // Dummy für Test
+            const newUrl = window.location.origin + window.location.pathname + '?import=' + testNevent;
+            log('ℹ️ Würde zu URL navigieren: ' + newUrl);
+            log('⚠️ Für echten Test müsste die Seite neu geladen werden');
+            
+            // Simuliere URL-Parameter Erkennung
+            if (typeof checkImportParameter === 'function') {
+                log('🔄 Teste URL-Parameter Erkennung...');
+                // Temporär URL Parameter setzen
+                window.history.pushState({}, '', '?import=' + testNevent);
+                checkImportParameter();
+                window.history.pushState({}, '', window.location.pathname);
+                log('✅ URL-Parameter Test abgeschlossen');
+            }
+        }
+
+        function cleanupTestData() {
+            log('🧹 Lösche Test-Daten...');
+            try {
+                if (typeof cleanupTestData !== 'undefined') {
+                    window.cleanupTestData();
+                    log('✅ Test-Daten gelöscht');
+                } else {
+                    log('⚠️ Cleanup-Funktion nicht verfügbar, manuell löschen...');
+                    if (window.boards) {
+                        const originalLength = window.boards.length;
+                        window.boards = window.boards.filter(b => 
+                            !b.name.includes('Test') && 
+                            !b.name.includes('Imported')
+                        );
+                        localStorage.setItem('kanban-boards', JSON.stringify(window.boards));
+                        log(`✅ ${originalLength - window.boards.length} Test-Boards gelöscht`);
+                    }
+                }
+                updateStatus();
+                refreshBoardsList();
+            } catch (error) {
+                log('❌ Fehler beim Löschen: ' + error.message);
+            }
+        }
+
+        // Test für benutzerfreundliche Namen
+        function testFriendlyNames() {
+            log('🎨 Teste benutzerfreundliche Board-Namen...');
+            const output = document.getElementById('friendly-names-output');
+            
+            // Simuliere verschiedene Namensszenarien
+            const scenarios = [
+                { original: 'My Project', existing: [] },
+                { original: 'My Project', existing: ['My Project'] },
+                { original: 'My Project', existing: ['My Project', 'My Project (Imported)'] },
+                { original: 'My Project', existing: ['My Project', 'My Project (Imported)', 'My Project (Imported 2)'] }
+            ];
+            
+            let results = '<h4>🧪 Namenstest Ergebnisse:</h4>';
+            
+            scenarios.forEach((scenario, index) => {
+                const result = generateFriendlyName(scenario.original, scenario.existing);
+                results += `<div class="board-item">
+                    <strong>Szenario ${index + 1}:</strong><br>
+                    Original: "${scenario.original}"<br>
+                    Existierend: [${scenario.existing.map(n => '"' + n + '"').join(', ')}]<br>
+                    <span style="color: #28a745; font-weight: bold;">Ergebnis: "${result}"</span>
+                </div>`;
+            });
+            
+            output.innerHTML = results;
+            log('✅ Namenstest abgeschlossen');
+        }
+        
+        function generateFriendlyName(originalName, existingNames) {
+            let finalName = originalName;
+            
+            if (existingNames.includes(originalName)) {
+                finalName = `${originalName} (Imported)`;
+            }
+            
+            let counter = 2;
+            while (existingNames.includes(finalName)) {
+                finalName = `${originalName} (Imported ${counter})`;
+                counter++;
+            }
+            
+            return finalName;
+        }
+        
+        function showNameComparison() {
+            log('📊 Zeige Vorher/Nachher Vergleich...");
+            const output = document.getElementById('friendly-names-output');
+            
+            output.innerHTML = `
+                <h4>📊 Vorher vs. Nachher Vergleich:</h4>
+                <div class="board-item duplicate">
+                    <strong>❌ VORHER (unleserlich):</strong><br>
+                    "My Awesome Project (Imported 1749721901779)"<br>
+                    "Daily Tasks (Imported 1749721902856-2)"
+                </div>
+                <div class="board-item imported">
+                    <strong>✅ NACHHER (benutzerfreundlich):</strong><br>
+                    "My Awesome Project (Imported)"<br>
+                    "Daily Tasks (Imported 2)"
+                </div>
+                <div style="margin-top: 15px;">
+                    <h5>🎯 Vorteile der neuen Namensgebung:</h5>
+                    <ul>
+                        <li>✅ Kurz und prägnant</li>
+                        <li>✅ Menschlich lesbar</li>
+                        <li>✅ Einfache Nummerierung</li>
+                        <li>✅ Professionelles Erscheinungsbild</li>
+                        <li>✅ Leicht zu verwalten</li>
+                    </ul>
+                </div>
+            `;
+            log('✅ Vergleich angezeigt');
+        }
+
+        // Initialisierung der Seite
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🚀 Test-Seite geladen');
+            
+            // Initialisiere Kanban falls nicht geschehen
+            if (!window.boards) {
+                window.boards = JSON.parse(localStorage.getItem('kanban-boards') || '[]');
+                log('📋 Boards aus localStorage geladen: ' + window.boards.length);
+            }
+            
+            // Initialisiere Nostr falls verfügbar
+            if (typeof initializeNostr === 'function') {
+                initializeNostr();
+                log('🔧 Nostr initialisiert');
+            }
+            
+            updateStatus();
+            refreshBoardsList();
+            
+            log('✅ Test-Umgebung bereit');
+        });
+
+        // Auto-refresh alle 5 Sekunden
+        setInterval(() => {
+            updateStatus();
+            refreshBoardsList();
+        }, 5000);
+    </script>
+</body>
+</html>

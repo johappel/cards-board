@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Nostr Import Fix - Test Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f7fa;
+        }
+        .test-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status-pass { color: #4CAF50; font-weight: bold; }
+        .status-fail { color: #f44336; font-weight: bold; }
+        .status-warn { color: #ff9800; font-weight: bold; }
+        .test-button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #1976D2;
+        }
+        .console-output {
+            background: #1e1e1e;
+            color: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .highlight {
+            background: #ffeb3b;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Nostr Import Fix - Test Dashboard</h1>
+    
+    <div class="test-section">
+        <h2>📋 Problem Status</h2>
+        <p><span class="status-pass">✅ GELÖST:</span> Nostr-Import erstellt jetzt korrekt Boards im Dashboard</p>
+        <p><strong>Original Problem:</strong> Events wurden gefunden, aber Boards nicht erstellt/angezeigt</p>
+        <p><strong>Lösung:</strong> Automatischer Dashboard-Wechsel nach erfolgreichem Import</p>
+    </div>
+
+    <div class="test-section">
+        <h2>🚀 Quick Tests</h2>
+        <button class="test-button" onclick="runBasicTests()">🔍 Basis-Tests</button>
+        <button class="test-button" onclick="runImportSimulation()">📥 Import-Simulation</button>
+        <button class="test-button" onclick="checkNostrState()">⚙️ Nostr-Status prüfen</button>
+        <button class="test-button" onclick="clearOutput()">🧹 Output löschen</button>
+        
+        <div id="test-output" class="console-output" style="margin-top: 15px;">
+            Warten auf Tests...
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>📝 Manuelle Test-Schritte</h2>
+        <ol>
+            <li><strong>Öffne die Hauptanwendung:</strong> <a href="kanban.html" target="_blank">kanban.html</a></li>
+            <li><strong>Öffne Browser-Konsole</strong> (F12)</li>
+            <li><strong>Erstelle Test-Board:</strong> <code class="highlight">createTestBoardForNostr()</code></li>
+            <li><strong>Teste Vollständigen Workflow:</strong> <code class="highlight">testPublishImportWorkflow()</code></li>
+            <li><strong>Prüfe Dashboard:</strong> Neues Board sollte mit 🌐 IMPORTED Badge sichtbar sein</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>🔗 URL-Import Test</h2>
+        <p>Teste automatischen Import über URL-Parameter:</p>
+        <div style="background: #f0f0f0; padding: 10px; border-radius: 5px; font-family: monospace;">
+            kanban.html?import=nevent1abc123...
+        </div>
+        <p><em>Das Board sollte automatisch importiert und im Dashboard angezeigt werden.</em></p>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 Erfolgskriterien</h2>
+        <ul>
+            <li>✅ Import-URL führt zu sichtbarem Board im Dashboard</li>
+            <li>✅ Automatischer Wechsel von Board-View zu Dashboard</li>
+            <li>✅ URL-Parameter werden nach Import entfernt</li>
+            <li>✅ Importiertes Board wird visuell hervorgehoben</li>
+            <li>✅ Erfolgs-Meldung wird angezeigt</li>
+        </ul>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const output = document.getElementById('test-output');
+            const timestamp = new Date().toLocaleTimeString();
+            const colors = {
+                info: '#fff',
+                success: '#4CAF50',
+                error: '#f44336',
+                warn: '#ff9800'
+            };
+            
+            output.innerHTML += `<div style="color: ${colors[type]}">[${timestamp}] ${message}</div>`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function clearOutput() {
+            document.getElementById('test-output').innerHTML = 'Output gelöscht...';
+        }
+
+        async function runBasicTests() {
+            log('🚀 Starte Basis-Tests...', 'info');
+            
+            // Test 1: Funktions-Verfügbarkeit
+            log('📋 Test 1: Prüfe verfügbare Funktionen...', 'info');
+            
+            const functions = [
+                'importBoardFromNostr',
+                'checkImportParameter', 
+                'renderDashboard',
+                'saveAllBoards'
+            ];
+            
+            functions.forEach(func => {
+                const available = typeof window[func] === 'function';
+                log(`  ${func}: ${available ? '✅ Verfügbar' : '❌ Nicht verfügbar'}`, 
+                    available ? 'success' : 'error');
+            });
+            
+            // Test 2: DOM-Elemente
+            log('📋 Test 2: Prüfe DOM-Elemente...', 'info');
+            
+            const elements = ['board-view', 'dashboard', 'boards-grid'];
+            elements.forEach(id => {
+                const element = document.getElementById(id);
+                log(`  #${id}: ${element ? '✅ Gefunden' : '❌ Nicht gefunden'}`, 
+                    element ? 'success' : 'error');
+            });
+            
+            log('✅ Basis-Tests abgeschlossen', 'success');
+        }
+
+        async function runImportSimulation() {
+            log('📥 Starte Import-Simulation...', 'info');
+            
+            if (typeof window.testImportFix === 'function') {
+                try {
+                    log('🧪 Führe Import-Simulation aus...', 'info');
+                    const result = await window.testImportFix();
+                    
+                    if (result.success) {
+                        log('✅ Import-Simulation erfolgreich!', 'success');
+                        log(`📊 Boards hinzugefügt: ${result.boardsAdded}`, 'info');
+                        log(`📊 Gesamt Boards: ${result.finalBoardsCount}`, 'info');
+                    } else {
+                        log('❌ Import-Simulation fehlgeschlagen!', 'error');
+                        log(`Error: ${result.error}`, 'error');
+                    }
+                } catch (error) {
+                    log(`❌ Import-Simulation Fehler: ${error.message}`, 'error');
+                }
+            } else {
+                log('❌ testImportFix Funktion nicht verfügbar', 'error');
+                log('💡 Öffne zuerst kanban.html um alle Funktionen zu laden', 'warn');
+            }
+        }
+
+        async function checkNostrState() {
+            log('⚙️ Prüfe Nostr-Status...', 'info');
+            
+            if (typeof window.debugNostrState === 'function') {
+                log('🔍 Führe Nostr-Debug aus...', 'info');
+                window.debugNostrState();
+                log('✅ Nostr-Debug in Browser-Konsole ausgegeben', 'success');
+            } else {
+                log('❌ debugNostrState Funktion nicht verfügbar', 'error');
+            }
+            
+            // Check for key indicators
+            log('📋 Prüfe wichtige Indikatoren:', 'info');
+            log(`  window.boards: ${window.boards ? `Array[${window.boards.length}]` : 'Nicht verfügbar'}`, 'info');
+            log(`  window.currentBoard: ${window.currentBoard ? window.currentBoard.name : 'Null'}`, 'info');
+            log(`  localStorage Nostr keys: ${localStorage.getItem('nostr-credentials') ? 'Vorhanden' : 'Nicht vorhanden'}`, 'info');
+        }
+
+        // Auto-Test beim Laden
+        window.addEventListener('load', function() {
+            log('🌐 Nostr Import Fix Test Dashboard geladen', 'success');
+            log('💡 Nutze die Buttons oben für Tests', 'info');
+            log('📋 Für vollständige Tests öffne kanban.html parallel', 'warn');
+        });
+    </script>
+</body>
+</html>

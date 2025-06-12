@@ -240,7 +240,9 @@ function toggleCardExpand(event, cardId, columnId) {
 
 function createCardElement(card, columnId) {
     const colorClass = card.color || 'color-gradient-1';
-    let previewText = ''; if (card.content) {
+    let previewText = '';
+    
+    if (card.content) {
         // Für die Vorschau: YouTube-Embed-Blöcke entfernen (mehrzeilig)
         let markdownPreview = card.content.replace(/<div class="youtube-embed"[\s\S]*?<\/div>/g, '');
 
@@ -249,26 +251,16 @@ function createCardElement(card, columnId) {
 
         // Erste 6 Zeilen und max. 240 Zeichen für Vorschau
         markdownPreview = markdownPreview.split('\n').slice(0, 6).join('\n'); // max. 6 Zeilen
-        console.log('### DEBUG - Rendering card content:', card.content);
 
         if (markdownPreview.length > 240) markdownPreview = markdownPreview.substring(0, 240) + '...';
 
-        // Nur einfache Markdown-Elemente rendern (keine Überschriften, keine Links, kein Codeblock)
-        if (window.marked) {
-            // marked.parseInline rendert nur Inline-Elemente, aber wir wollen auch Listen und Zeilenumbrüche
-            // Daher: parse, aber nur für erlaubte Elemente
-            let html = window.marked.parse(markdownPreview);
-            // Optional: Überschriften entfernen
-            html = html.replace(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/gi, '$1');
-            // Optional: Links entfernen
-            html = html.replace(/<a [^>]+>(.*?)<\/a>/gi, '$1');
-            previewText = html;
+        // Use renderMarkdownToHtml function if available, otherwise simple line breaks
+        if (typeof renderMarkdownToHtml === 'function') {
+            previewText = renderMarkdownToHtml(markdownPreview);
         } else {
             previewText = markdownPreview.replace(/\n/g, '<br>');
         }
-    }
-    // doch alles rendern, damit es in der Vorschau angezeigt wird
-    previewText = window.marked.parse(card.content)    // Kommentar und URL-Bereiche generieren
+    }// Kommentar und URL-Bereiche generieren
     let commentHtml = '';
     let urlHtml = '';
     let labelsHtml = '';

@@ -633,7 +633,6 @@
     font-size: 0.8rem;
     color: #666;
     flex-wrap: wrap;
-    align-items: baseline;
 }
 
 .card-comments-count {

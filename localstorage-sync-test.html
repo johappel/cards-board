@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💾 localStorage Synchronisation Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+        }
+        .button {
+            background: #4299e1;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #3182ce;
+        }
+        .button.success {
+            background: #48bb78;
+        }
+        .button.warning {
+            background: #ed8936;
+        }
+        .button.danger {
+            background: #f56565;
+        }
+        .output {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .storage-key {
+            background: #edf2f7;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #cbd5e0;
+        }
+        .storage-key.exists {
+            border-left-color: #48bb78;
+        }
+        .storage-key.missing {
+            border-left-color: #f56565;
+        }
+        .board-info {
+            background: #f0fff4;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 3px solid #48bb78;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💾 localStorage Synchronisation Test</h1>
+            <p>Diagnose und Behebung von Speicherproblemen nach Nostr Import</p>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Storage Analyse</h3>
+            <p>Überprüfe den aktuellen Zustand der verschiedenen Storage-Mechanismen:</p>
+            <button onclick="analyzeStorage()" class="button">Storage analysieren</button>
+            <button onclick="clearOutput()" class="button">Ausgabe löschen</button>
+            <div id="analysis-output" class="output"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 Sync Test</h3>
+            <p>Teste die Synchronisation zwischen Memory und localStorage:</p>
+            <button onclick="testSync()" class="button">Sync testen</button>
+            <button onclick="forceSave()" class="button success">Speicherung erzwingen</button>
+            <div id="sync-output" class="output"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔧 Reparatur Tools</h3>
+            <p>Behebe bekannte Synchronisationsprobleme:</p>
+            <button onclick="fixStorageKeys()" class="button warning">Storage Keys reparieren</button>
+            <button onclick="migrateToV1()" class="button">Zu V1 Format migrieren</button>
+            <button onclick="cleanupDuplicates()" class="button">Duplikate bereinigen</button>
+            <div id="repair-output" class="output"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Live Monitor</h3>
+            <p>Überwache Storage-Änderungen in Echtzeit:</p>
+            <button onclick="startMonitoring()" class="button">Monitoring starten</button>
+            <button onclick="stopMonitoring()" class="button danger">Monitoring stoppen</button>
+            <div id="monitor-output" class="output"></div>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+            <p><strong>Hinweis:</strong> Dieses Tool hilft bei der Diagnose und Behebung von localStorage Problemen nach Nostr Imports.</p>
+        </div>
+    </div>
+
+    <script>
+        let monitoringInterval = null;
+
+        function logToOutput(outputId, message, type = 'info') {
+            const output = document.getElementById(outputId);
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : 'ℹ️';
+            output.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function clearOutput() {
+            document.querySelectorAll('.output').forEach(output => {
+                output.textContent = '';
+            });
+        }
+
+        function analyzeStorage() {
+            logToOutput('analysis-output', 'Analyzing storage state...', 'info');
+            
+            const storageKeys = [
+                'kanban_boards_v1',
+                'kanban-boards', 
+                'boards'
+            ];
+            
+            storageKeys.forEach(key => {
+                const data = localStorage.getItem(key);
+                if (data) {
+                    try {
+                        const parsed = JSON.parse(data);
+                        const boardCount = Array.isArray(parsed) ? parsed.length : 
+                                          (parsed.boards ? parsed.boards.length : 0);
+                        logToOutput('analysis-output', `Found "${key}": ${boardCount} boards`, 'success');
+                        
+                        if (parsed.boards && Array.isArray(parsed.boards)) {
+                            parsed.boards.forEach((board, index) => {
+                                logToOutput('analysis-output', `  └─ Board ${index + 1}: "${board.name}"`, 'info');
+                            });
+                        }
+                    } catch (e) {
+                        logToOutput('analysis-output', `Invalid JSON in "${key}": ${e.message}`, 'error');
+                    }
+                } else {
+                    logToOutput('analysis-output', `Key "${key}" not found`, 'warning');
+                }
+            });
+            
+            // Check memory state
+            if (typeof window.boards !== 'undefined') {
+                logToOutput('analysis-output', `Memory boards: ${window.boards?.length || 0}`, 'info');
+                if (window.boards && Array.isArray(window.boards)) {
+                    window.boards.forEach((board, index) => {
+                        logToOutput('analysis-output', `  └─ Memory Board ${index + 1}: "${board.name}"`, 'info');
+                    });
+                }
+            } else {
+                logToOutput('analysis-output', 'window.boards not found', 'warning');
+            }
+        }
+
+        function testSync() {
+            logToOutput('sync-output', 'Testing synchronization...', 'info');
+            
+            // Check if saveAllBoards is available
+            if (typeof saveAllBoards === 'function') {
+                logToOutput('sync-output', 'saveAllBoards function available', 'success');
+                try {
+                    saveAllBoards();
+                    logToOutput('sync-output', 'saveAllBoards() executed', 'success');
+                } catch (e) {
+                    logToOutput('sync-output', `saveAllBoards() failed: ${e.message}`, 'error');
+                }
+            } else {
+                logToOutput('sync-output', 'saveAllBoards function not available', 'warning');
+            }
+            
+            // Check KanbanStorage
+            if (typeof window.KanbanStorage !== 'undefined') {
+                logToOutput('sync-output', 'KanbanStorage available', 'success');
+                if (typeof window.KanbanStorage.saveBoards === 'function') {
+                    logToOutput('sync-output', 'Attempting KanbanStorage.saveBoards...', 'info');
+                    window.KanbanStorage.saveBoards(window.boards || [])
+                        .then(() => {
+                            logToOutput('sync-output', 'KanbanStorage.saveBoards() successful', 'success');
+                        })
+                        .catch(e => {
+                            logToOutput('sync-output', `KanbanStorage.saveBoards() failed: ${e.message}`, 'error');
+                        });
+                }
+            } else {
+                logToOutput('sync-output', 'KanbanStorage not available', 'warning');
+            }
+        }
+
+        function forceSave() {
+            logToOutput('sync-output', 'Force saving boards...', 'info');
+            
+            if (!window.boards || !Array.isArray(window.boards)) {
+                logToOutput('sync-output', 'No valid boards array in memory', 'error');
+                return;
+            }
+            
+            try {
+                // Save in the correct format
+                const storageData = { boards: window.boards };
+                localStorage.setItem('kanban_boards_v1', JSON.stringify(storageData));
+                logToOutput('sync-output', `Force saved ${window.boards.length} boards to kanban_boards_v1`, 'success');
+                
+                // Verify
+                const verification = JSON.parse(localStorage.getItem('kanban_boards_v1'));
+                if (verification.boards && verification.boards.length === window.boards.length) {
+                    logToOutput('sync-output', 'Verification successful', 'success');
+                } else {
+                    logToOutput('sync-output', 'Verification failed', 'error');
+                }
+            } catch (error) {
+                logToOutput('sync-output', `Force save failed: ${error.message}`, 'error');
+            }
+        }
+
+        function fixStorageKeys() {
+            logToOutput('repair-output', 'Fixing storage keys...', 'info');
+            
+            const v1Data = localStorage.getItem('kanban_boards_v1');
+            const oldData = localStorage.getItem('kanban-boards');
+            
+            if (v1Data && oldData) {
+                logToOutput('repair-output', 'Found both storage formats', 'warning');
+                try {
+                    const v1Parsed = JSON.parse(v1Data);
+                    const oldParsed = JSON.parse(oldData);
+                    
+                    const v1Count = v1Parsed.boards ? v1Parsed.boards.length : 0;
+                    const oldCount = Array.isArray(oldParsed) ? oldParsed.length : 0;
+                    
+                    logToOutput('repair-output', `V1 format: ${v1Count} boards`, 'info');
+                    logToOutput('repair-output', `Old format: ${oldCount} boards`, 'info');
+                    
+                    if (v1Count >= oldCount) {
+                        logToOutput('repair-output', 'V1 format has more/equal boards, keeping V1', 'success');
+                    } else {
+                        logToOutput('repair-output', 'Migrating old format to V1', 'info');
+                        const newV1Data = { boards: oldParsed };
+                        localStorage.setItem('kanban_boards_v1', JSON.stringify(newV1Data));
+                        logToOutput('repair-output', 'Migration completed', 'success');
+                    }
+                } catch (e) {
+                    logToOutput('repair-output', `Fix failed: ${e.message}`, 'error');
+                }
+            } else if (oldData && !v1Data) {
+                logToOutput('repair-output', 'Migrating old format to V1', 'info');
+                try {
+                    const oldParsed = JSON.parse(oldData);
+                    const newV1Data = { boards: Array.isArray(oldParsed) ? oldParsed : [oldParsed] };
+                    localStorage.setItem('kanban_boards_v1', JSON.stringify(newV1Data));
+                    logToOutput('repair-output', 'Migration completed', 'success');
+                } catch (e) {
+                    logToOutput('repair-output', `Migration failed: ${e.message}`, 'error');
+                }
+            } else {
+                logToOutput('repair-output', 'No issues found with storage keys', 'success');
+            }
+        }
+
+        function migrateToV1() {
+            logToOutput('repair-output', 'Migrating to V1 format...', 'info');
+            
+            if (window.boards && Array.isArray(window.boards)) {
+                try {
+                    const v1Data = { boards: window.boards };
+                    localStorage.setItem('kanban_boards_v1', JSON.stringify(v1Data));
+                    logToOutput('repair-output', `Migrated ${window.boards.length} boards to V1 format`, 'success');
+                } catch (e) {
+                    logToOutput('repair-output', `Migration failed: ${e.message}`, 'error');
+                }
+            } else {
+                logToOutput('repair-output', 'No valid boards in memory to migrate', 'error');
+            }
+        }
+
+        function cleanupDuplicates() {
+            logToOutput('repair-output', 'Cleaning up duplicate boards...', 'info');
+            
+            if (window.boards && Array.isArray(window.boards)) {
+                const originalCount = window.boards.length;
+                const seen = new Set();
+                const uniqueBoards = [];
+                
+                window.boards.forEach(board => {
+                    const key = `${board.name}|${board.id}`;
+                    if (!seen.has(key)) {
+                        seen.add(key);
+                        uniqueBoards.push(board);
+                    }
+                });
+                
+                if (uniqueBoards.length < originalCount) {
+                    window.boards = uniqueBoards;
+                    const removedCount = originalCount - uniqueBoards.length;
+                    logToOutput('repair-output', `Removed ${removedCount} duplicate boards`, 'success');
+                    
+                    // Save the cleaned data
+                    forceSave();
+                } else {
+                    logToOutput('repair-output', 'No duplicates found', 'success');
+                }
+            } else {
+                logToOutput('repair-output', 'No boards in memory to clean', 'error');
+            }
+        }
+
+        function startMonitoring() {
+            if (monitoringInterval) {
+                logToOutput('monitor-output', 'Monitoring already running', 'warning');
+                return;
+            }
+            
+            logToOutput('monitor-output', 'Starting localStorage monitoring...', 'info');
+            
+            let lastState = {};
+            const storageKeys = ['kanban_boards_v1', 'kanban-boards', 'boards'];
+            
+            // Capture initial state
+            storageKeys.forEach(key => {
+                const data = localStorage.getItem(key);
+                lastState[key] = data ? data.length : 0;
+            });
+            
+            monitoringInterval = setInterval(() => {
+                storageKeys.forEach(key => {
+                    const data = localStorage.getItem(key);
+                    const currentLength = data ? data.length : 0;
+                    
+                    if (currentLength !== lastState[key]) {
+                        logToOutput('monitor-output', `Change detected in "${key}": ${lastState[key]} → ${currentLength} chars`, 'warning');
+                        lastState[key] = currentLength;
+                    }
+                });
+            }, 1000);
+            
+            logToOutput('monitor-output', 'Monitoring started (checking every 1 second)', 'success');
+        }
+
+        function stopMonitoring() {
+            if (monitoringInterval) {
+                clearInterval(monitoringInterval);
+                monitoringInterval = null;
+                logToOutput('monitor-output', 'Monitoring stopped', 'success');
+            } else {
+                logToOutput('monitor-output', 'No monitoring running', 'warning');
+            }
+        }
+
+        // Auto-load boards reference if available
+        document.addEventListener('DOMContentLoaded', function() {
+            // Try to load boards from parent window or localStorage
+            if (!window.boards) {
+                try {
+                    const v1Data = localStorage.getItem('kanban_boards_v1');
+                    if (v1Data) {
+                        const parsed = JSON.parse(v1Data);
+                        if (parsed.boards) {
+                            window.boards = parsed.boards;
+                            console.log('📋 Loaded boards from localStorage for testing');
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Could not load boards for testing:', e);
+                }
+            }
+            
+            logToOutput('analysis-output', 'localStorage Sync Test Tool ready', 'success');
+            logToOutput('analysis-output', 'Click "Storage analysieren" to start', 'info');
+        });
+    </script>
+</body>
+</html>
