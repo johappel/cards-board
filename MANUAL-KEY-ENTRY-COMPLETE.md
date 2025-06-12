@@ -119,11 +119,11 @@ privateKeyInput.addEventListener('input', async function() {
 ### 📋 Implementierte Dateien
 
 #### Hauptdatei:
-- **`f:\code\cards-board\share_via_nostr.js`:** Erweiterte Input-Handler und Schlüsselverwaltung
+- **`share_via_nostr.js`:** Erweiterte Input-Handler und Schlüsselverwaltung
 
 #### Test-Dateien:
-- **`f:\code\cards-board\test-manual-key-entry.html`:** Umfassendes Test-Interface
-- **`f:\code\cards-board\test-nostr-key-storage.js`:** Automatisierte Tests
+- **`test-manual-key-entry.html`:** Umfassendes Test-Interface
+- **`test-nostr-key-storage.js`:** Automatisierte Tests
 
 ### 🔄 Status: VOLLSTÄNDIG IMPLEMENTIERT
 

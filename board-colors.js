@@ -159,6 +159,9 @@ function loadBoardColorSettings(board) {
         
         if (transparencySlider) transparencySlider.value = boardTransparency;
         if (transparencyValue) transparencyValue.textContent = boardTransparency + '%';
+        // background: linear-gradient(to right #ffffff, transparent);
+        const bgcolor = getCurrentBoardBackgroundHex();
+        transparencySlider.style.background = `linear-gradient(to right, ${bgcolor}, transparent)`;
     }
     
     updateColorPreview();

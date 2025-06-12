@@ -290,7 +290,7 @@
     appearance: none;
     height: 4px;
     border-radius: 2px;
-    background: linear-gradient(to right, transparent, #374151);
+    background: linear-gradient(to right #ffffff, transparent);
     outline: none;
     transition: background 0.3s;
 }
