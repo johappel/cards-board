@@ -14,16 +14,31 @@ async function storageHealth() {
 }
 
 async function saveBoards(boards) {
-    if (await storageHealth()) {
-        // Server-API speichern
-        await fetch(`${API_BASE}/${STORAGE_KEY}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ boards })
-        });
-    } else {
-        // LocalStorage speichern
+    console.log('💾 KanbanStorage.saveBoards() called with', boards?.length, 'boards');
+    
+    try {
+        // Try server-API first but with shorter timeout
+        const isServerAvailable = await Promise.race([
+            storageHealth(),
+            new Promise(resolve => setTimeout(() => resolve(false), 500)) // 500ms timeout
+        ]);
+        
+        if (isServerAvailable) {
+            // Server-API speichern
+            await fetch(`${API_BASE}/${STORAGE_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ boards })
+            });
+            console.log('✅ Boards saved to server');
+        } else {
+            throw new Error('Server not available, using localStorage');
+        }
+    } catch (error) {
+        // LocalStorage speichern (primary fallback)
+        console.log('💾 Falling back to localStorage:', error.message);
         localStorage.setItem(STORAGE_KEY, JSON.stringify({ boards }));
+        console.log('✅ Boards saved to localStorage');
     }
 }
 

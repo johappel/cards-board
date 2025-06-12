@@ -220,13 +220,26 @@ function initSortableKanban() {
 }
 
 // Nach jeder Änderung speichern
-function saveAllBoards() {
+async function saveAllBoards() {
     console.log('saveAllBoards() aufgerufen', JSON.stringify(boards, null, 2));
     if (window.currentBoard && window.currentBoard.columns) {
         window.currentBoard.columns.forEach(col => {
         });
     }
-    window.KanbanStorage?.saveBoards?.(boards);
+    
+    try {
+        if (window.KanbanStorage?.saveBoards) {
+            await window.KanbanStorage.saveBoards(boards);
+            console.log('✅ saveAllBoards completed successfully');
+        } else {
+            console.warn('⚠️ KanbanStorage not available, falling back to direct localStorage');
+            localStorage.setItem('kanban_boards_v1', JSON.stringify({ boards }));
+        }
+    } catch (error) {
+        console.error('❌ saveAllBoards failed:', error);
+        // Final fallback to localStorage
+        localStorage.setItem('kanban_boards_v1', JSON.stringify({ boards }));
+    }
 }
 
 // Nach jedem renderColumns() aufrufen!

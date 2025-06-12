@@ -31,7 +31,7 @@ function toggleAIFields() {
     }
 }
 
-function saveBoardSettings(e) {
+async function saveBoardSettings(e) {
     e.preventDefault();
     currentBoard.name = document.getElementById('board-name').value;
     currentBoard.authors = document.getElementById('board-authors-input').value.split(',').map(a => a.trim());
@@ -56,13 +56,20 @@ function saveBoardSettings(e) {
         baseUrl: document.getElementById('ai-base-url').value
     };
     updateBoardView();
-    
-    // Apply board background style
+      // Apply board background style
     if (typeof applyBoardBackgroundStyle === 'function') {
         applyBoardBackgroundStyle();
     }
     
-    saveAllBoards();
+    // Save changes asynchronously
+    try {
+        if (typeof saveAllBoards === 'function') {
+            await saveAllBoards();
+        }
+    } catch (error) {
+        console.error('Failed to save board settings:', error);
+    }
+    
     closeModal('board-settings-modal');
 }
 

@@ -614,10 +614,10 @@
                             <button type="button" class="nostr-copy-btn" onclick="copyPrivateKey()" title="Kopieren">📋</button>
                         </div>
                         <div class="nostr-help-text">
-                            Ihr privater Schlüssel zum Signieren von Events. Wird nur lokal verwendet.
+                            Privater Schlüssel zum Signieren von Events. Wird nur lokal verwendet.
                         </div>
                         <div class="nostr-warning">
-                            Speichern Sie Ihren privaten Schlüssel sicher. Er kann nicht wiederhergestellt werden.
+                            Privaten Schlüssel sichern! Er kann nicht wiederhergestellt werden.
                         </div>
                     </div>
                     
@@ -629,7 +629,7 @@
                             <button type="button" class="nostr-copy-btn" onclick="copyPublicKey()" title="Kopieren">📋</button>
                         </div>
                         <div class="nostr-help-text">
-                            Ihr öffentlicher Schlüssel. Wird automatisch aus dem privaten Schlüssel generiert.
+                            Öffentlicher Schlüssel
                         </div>
                     </div>
                     
@@ -662,7 +662,7 @@
                 
                 <!-- Publish Section -->
                 <div class="nostr-section publish">
-                    <h3>Board Veröffentlichen</h3>
+                    <h3>Auf Nostr Relays teilen</h3>
                     
                     <div class="nostr-publish-options">
                         <div class="nostr-publish-option">
@@ -675,14 +675,16 @@
                         </div>
                     </div>
                     
-                    <button type="button" class="nostr-btn primary" onclick="publishBoardToNostr()">
-                        📤 Jetzt Veröffentlichen
+                    <button type="button" class="nostr-btn primary" 
+                            id="nostr-publish-btn" 
+                            aria-label="Board über Nostr veröffentlichen">
+                        📤 Jetzt veröffentlichen
                     </button>
                     
                     <!-- Success Section -->
                     <div id="nostr-publish-success" class="nostr-publish-success" style="display: none;">
-                        <div class="nostr-success-title">Board erfolgreich veröffentlicht!</div>
-                        <p>Ihr Board wurde als Nostr-Event veröffentlicht. Verwenden Sie den Link unten zum Teilen:</p>
+                        <div class="nostr-success-title">Board erfolgreich geteilt!</div>
+                        <p>Dieses Board wurde als Nostr-Event veröffentlicht. Verwende den Link unten zum Teilen:</p>
                         
                         <div class="nostr-link-group">
                             <input type="text" id="nostr-event-link" class="nostr-input nostr-link-input" readonly>
@@ -692,14 +694,14 @@
                         </div>
                         
                         <div class="nostr-help-text">
-                            Andere können Ihr Board importieren, indem sie diesen Link in der Browser-Adresszeile öffnen.
+                            Andere können dieses Board importieren, indem sie diesen Link in der Browser-Adresszeile öffnen.
                         </div>
                     </div>
                 </div>
                 
                 <!-- Published Boards History Section -->
                 <div class="nostr-section history">
-                    <h3>📚 Veröffentlichte Boards</h3>
+                    <h3>📚 Öffentliche Boards</h3>
                     <div class="nostr-published-boards" id="nostr-published-boards">
                         <div class="nostr-no-history" id="nostr-no-history">
                             <p>Noch keine Boards veröffentlicht.</p>
@@ -831,17 +833,17 @@
         loadNostrTools();
     </script>
     <script src="share_via_nostr.js"></script>
-    <!--
-    <script src="nostr-test.js"></!--<script>
+    
+    <script src="nostr-test.js"></script>
     <script src="test-publishing.js"></script>
     <script src="test-board-rendering.js"></script>
     <script src="import-debug.js"></script>
     <script src="nevent-debug.js"></script>
     <script src="nevent-fix.js"></script>
     <script src="improved-import-workflow.js"></script>
-    <script src="master-nostr-test.js"></<script>
+    <script src="master-nostr-test.js"></script>
     <script src="nostr-test-cleanup.js"></script>
-    -->
+   
     <script src="init.js"></script>
     <script src="api.js"></script>
     <script src="colors.js"></script>

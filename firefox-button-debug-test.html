@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firefox Button Fix Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .test-container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .test-button {
+            background: #FF6B35;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .test-button:hover {
+            background: #E85A2B;
+            transform: translateY(-2px);
+        }
+        
+        .test-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .result {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        
+        .status {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .status-ok { background: #28a745; }
+        .status-error { background: #dc3545; }
+        .status-waiting { background: #ffc107; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🦊 Firefox Button Fix - Debug Test</h1>
+        <p>Testen der behobenan Firefox-Button-Kompatibilität</p>
+        
+        <div id="debug-info" class="result info">
+            <strong>Debug Information:</strong>
+            Loading...
+        </div>
+        
+        <button id="test-publish-btn" class="test-button">🔥 Test Button Aktivierung</button>
+        <button id="create-test-board-btn" class="test-button">📋 Test Board Erstellen</button>
+        <button id="debug-state-btn" class="test-button">🔍 Debug State</button>
+        
+        <div id="test-results" class="result info">
+            <strong>Test Results:</strong>
+            Klicken Sie auf die Buttons oben, um zu testen...
+        </div>
+    </div>
+
+    <!-- Import required scripts -->
+    <script src="https://unpkg.com/nostr-tools/lib/nostr.bundle.js"></script>
+    <script src="utils.js"></script>
+    <script src="storage.js"></script>
+    <script src="init.js"></script>
+    <script src="share_via_nostr.js"></script>
+
+    <script>
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const results = document.getElementById('test-results');
+            const statusIcon = type === 'success' ? '✅' : type === 'error' ? '❌' : '🔍';
+            results.innerHTML += `\n[${timestamp}] ${statusIcon} ${message}`;
+            results.scrollTop = results.scrollHeight;
+        }
+
+        function updateDebugInfo() {
+            const debugDiv = document.getElementById('debug-info');
+            const currentBoardInfo = window.currentBoard ? 
+                `"${window.currentBoard.name}" (ID: ${window.currentBoard.id})` : 
+                'null';
+            
+            const globalCurrentBoard = (typeof currentBoard !== 'undefined' && currentBoard) ? 
+                `"${currentBoard.name}" (ID: ${currentBoard.id})` : 
+                'undefined/null';
+            
+            const nostrToolsStatus = window.nostrTools ? '✅ Loaded' : '❌ Not loaded';
+            const boardsCount = window.boards ? window.boards.length : 'undefined';
+            
+            debugDiv.innerHTML = `
+<strong>🔍 Current State:</strong>
+• window.currentBoard: ${currentBoardInfo}
+• global currentBoard: ${globalCurrentBoard}
+• window.boards count: ${boardsCount}
+• nostr-tools: ${nostrToolsStatus}
+• publishBoardToNostr: ${typeof publishBoardToNostr === 'function' ? '✅ Available' : '❌ Not available'}
+• createTestBoardForNostr: ${typeof createTestBoardForNostr === 'function' ? '✅ Available' : '❌ Not available'}
+            `;
+        }
+
+        // Test functions
+        async function testButtonActivation() {
+            log('🔥 Testing button activation...', 'info');
+            
+            try {
+                // Check for current board
+                const currentBoardToPublish = window.currentBoard || (typeof currentBoard !== 'undefined' ? currentBoard : null);
+                
+                if (!currentBoardToPublish) {
+                    log('❌ No current board available - creating test board first', 'error');
+                    await createTestBoard();
+                    return;
+                }
+                
+                log(`📤 Attempting to publish board: "${currentBoardToPublish.name}"`, 'info');
+                
+                // Mock the publish function to avoid actual publishing during test
+                const originalPublish = window.publishBoardToNostr;
+                let publishCalled = false;
+                
+                window.publishBoardToNostr = async function(board) {
+                    publishCalled = true;
+                    log(`📡 Mock publishBoardToNostr called with board: "${board.name}"`, 'success');
+                    return { success: true, mockTest: true };
+                };
+                
+                // Test the function call
+                const result = await window.publishBoardToNostr(currentBoardToPublish);
+                
+                // Restore original function
+                window.publishBoardToNostr = originalPublish;
+                
+                if (publishCalled && result.success) {
+                    log('✅ Button activation test successful!', 'success');
+                } else {
+                    throw new Error('Publish function was not called correctly');
+                }
+                
+            } catch (error) {
+                log(`❌ Button activation test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function createTestBoard() {
+            log('📋 Creating test board...', 'info');
+            
+            try {
+                if (typeof createTestBoardForNostr === 'function') {
+                    const testBoard = await createTestBoardForNostr();
+                    log(`✅ Test board created: "${testBoard.name}"`, 'success');
+                    log(`📊 Board has ${testBoard.columns.length} columns`, 'info');
+                    updateDebugInfo();
+                } else {
+                    throw new Error('createTestBoardForNostr function not available');
+                }
+            } catch (error) {
+                log(`❌ Failed to create test board: ${error.message}`, 'error');
+            }
+        }
+
+        function debugCurrentState() {
+            log('🔍 Debugging current state...', 'info');
+            updateDebugInfo();
+            
+            // Try to access all relevant variables
+            const checks = [
+                { name: 'window.currentBoard', value: window.currentBoard },
+                { name: 'global currentBoard', value: typeof currentBoard !== 'undefined' ? currentBoard : 'undefined' },
+                { name: 'window.boards', value: window.boards },
+                { name: 'localStorage boards', value: localStorage.getItem('kanban_boards_v1') ? 'present' : 'missing' },
+                { name: 'nostr-tools', value: window.nostrTools ? 'loaded' : 'not loaded' }
+            ];
+            
+            checks.forEach(check => {
+                log(`  ${check.name}: ${JSON.stringify(check.value)}`, 'info');
+            });
+        }
+
+        // Event listeners
+        document.getElementById('test-publish-btn').addEventListener('click', testButtonActivation);
+        document.getElementById('create-test-board-btn').addEventListener('click', createTestBoard);
+        document.getElementById('debug-state-btn').addEventListener('click', debugCurrentState);
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🚀 Firefox Button Fix Test loaded', 'info');
+            
+            // Wait a moment for scripts to initialize
+            setTimeout(() => {
+                updateDebugInfo();
+                debugCurrentState();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

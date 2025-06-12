@@ -279,43 +279,51 @@ function saveNostrRelays() {
 }
 
 // Board Publishing using nostr-tools
-async function publishBoardToNostr() {
-    if (!currentBoard) {
+async function publishBoardToNostr(board = null) {
+    // Use provided board or fall back to current board
+    const targetBoard = board || window.currentBoard || currentBoard;
+    
+    if (!targetBoard) {
         showNostrMessage('Kein Board ausgewählt zum Veröffentlichen.', 'error');
-        return;
+        console.error('❌ No board available for publishing');
+        return { success: false, error: 'No board selected' };
     }
+    
+    console.log('📤 Publishing board:', targetBoard.name);
     
     const nsec = document.getElementById('nostr-private-key').value.trim();
     const isDraft = document.getElementById('nostr-publish-as-draft').checked;
     
     if (!nsec) {
         showNostrMessage('Privater Schlüssel erforderlich zum Veröffentlichen.', 'error');
-        return;
+        return { success: false, error: 'Private key required' };
     }
     
     // Validate private key format (64 hex characters)
     if (nsec.length !== 64 || !/^[0-9a-fA-F]+$/i.test(nsec)) {
         showNostrMessage('Ungültiger privater Schlüssel. Muss 64 HEX-Zeichen lang sein.', 'error');
-        return;
+        return { success: false, error: 'Invalid private key format' };
     }
+      // UI feedback
+    const publishBtn = document.querySelector('.nostr-btn.primary') || 
+                      document.querySelector('button[onclick="publishBoardToNostr()"]') ||
+                      document.getElementById('nostr-publish-btn');
     
-    // UI feedback
-    const publishBtn = document.querySelector('.nostr-btn.primary');
-    if (!publishBtn) {
-        showNostrMessage('UI-Fehler: Publish-Button nicht gefunden', 'error');
-        return;
+    let originalText = 'Jetzt Veröffentlichen';
+    if (publishBtn) {
+        originalText = publishBtn.textContent;
+        publishBtn.classList.add('loading');
+        publishBtn.disabled = true;
+        publishBtn.textContent = 'Veröffentliche...';
+    } else {
+        console.warn('⚠️ Publish button not found, continuing without UI feedback');
     }
-    
-    const originalText = publishBtn.textContent;
-    publishBtn.classList.add('loading');
-    publishBtn.disabled = true;
-    publishBtn.textContent = 'Veröffentliche...';
     
     try {
         await waitForNostrTools();
         
         // Create Nostr event using nostr-tools
-        const event = await createNostrEventWithTools(currentBoard, nsec, isDraft);
+        const event = await createNostrEventWithTools(targetBoard, nsec, isDraft);
         
         // Send to relays
         const relays = saveNostrRelays();
@@ -334,11 +342,10 @@ async function publishBoardToNostr() {
             document.getElementById('nostr-publish-success').style.display = 'block';
             
             showNostrMessage(`Board erfolgreich veröffentlicht! (${results.success}/${results.total} Relays)`, 'success');
-            
-            // Store published board link persistently
+              // Store published board link persistently
             const publishedEvent = {
-                boardId: currentBoard.id,
-                boardName: currentBoard.name,
+                boardId: targetBoard.id,
+                boardName: targetBoard.name,
                 eventId: eventId,
                 nevent: nevent,
                 importUrl: importUrl,
@@ -351,7 +358,7 @@ async function publishBoardToNostr() {
             let publishedEvents = JSON.parse(localStorage.getItem('nostr-published-events') || '[]');
             
             // Remove any existing entry for this board to avoid duplicates
-            publishedEvents = publishedEvents.filter(event => event.boardId !== currentBoard.id);
+            publishedEvents = publishedEvents.filter(event => event.boardId !== targetBoard.id);
             
             // Add new entry
             publishedEvents.unshift(publishedEvent); // Add to beginning for newest first
@@ -1563,7 +1570,7 @@ async function testImportWorkflow(nevent) {
 }
 
 // Test function for creating a sample board
-function createTestBoardForNostr() {
+async function createTestBoardForNostr() {
     const testBoard = {
         id: 'test-' + Date.now(),
         name: 'Test Board for Nostr',
@@ -1600,13 +1607,44 @@ function createTestBoardForNostr() {
             }
         ]
     };
-    
-    // Set as current board
+      // Set as current board
     window.currentBoard = testBoard;
     
-    // Add to boards array
+    // Add to boards array and save to localStorage
     if (!window.boards) window.boards = [];
+    
+    // Check if board already exists and remove it to prevent duplicates
+    window.boards = window.boards.filter(b => b.id !== testBoard.id);
     window.boards.push(testBoard);
+      // Save to localStorage using the proper storage mechanism
+    try {
+        if (typeof saveAllBoards === 'function') {
+            await saveAllBoards();
+            console.log('💾 Test board saved via saveAllBoards()');
+        } else if (typeof window.KanbanStorage !== 'undefined' && typeof window.KanbanStorage.saveBoards === 'function') {
+            await window.KanbanStorage.saveBoards(window.boards);
+            console.log('💾 Test board saved via KanbanStorage');
+        } else {
+            // Fallback: Save directly to localStorage
+            const storageData = { boards: window.boards };
+            localStorage.setItem('kanban_boards_v1', JSON.stringify(storageData));
+            console.log('💾 Test board saved to localStorage directly');
+        }
+        
+        // Verify the save worked
+        const verification = localStorage.getItem('kanban_boards_v1');
+        if (verification) {
+            const parsed = JSON.parse(verification);
+            const savedCount = parsed.boards ? parsed.boards.length : 0;
+            console.log(`✅ Verification: ${savedCount} boards now in localStorage`);
+        }
+    } catch (saveError) {
+        console.warn('⚠️ Failed to save test board:', saveError);
+        // Final fallback
+        const storageData = { boards: window.boards };
+        localStorage.setItem('kanban_boards_v1', JSON.stringify(storageData));
+        console.log('💾 Emergency fallback save completed');
+    }
     
     console.log('🎯 Test board created for Nostr testing:', testBoard.name);
     console.log('💡 You can now use publishBoardToNostr() to test publishing');
@@ -1725,8 +1763,74 @@ document.addEventListener('DOMContentLoaded', function() {
     window.createTestBoardForNostr = createTestBoardForNostr;
     window.testPublishImportWorkflow = testPublishImportWorkflow;
     window.debugImportIssue = debugImportIssue;
-    window.testImportWorkflow = testImportWorkflow;
-      console.log('🌐 Nostr integration v3.0 loaded successfully with nostr-tools');
+    window.testImportWorkflow = testImportWorkflow;    console.log('🌐 Nostr integration v3.0 loaded successfully with nostr-tools');
+      // Firefox-compatible publish button setup
+    setTimeout(() => {
+        const publishBtn = document.getElementById('nostr-publish-btn');
+        if (publishBtn) {
+            // Remove any existing listeners first
+            publishBtn.onclick = null;
+              // Single unified event handler for Firefox compatibility
+            const handlePublish = async function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Prevent double-firing
+                if (publishBtn.disabled || publishBtn.classList.contains('loading')) {
+                    console.log('⚠️ Publish already in progress, ignoring');
+                    return;
+                }
+                  console.log('🔥 Firefox-compatible button activation detected');
+                
+                // Check if we have a current board
+                const currentBoardToPublish = window.currentBoard || (typeof currentBoard !== 'undefined' ? currentBoard : null);
+                if (!currentBoardToPublish) {
+                    console.error('❌ No current board available for publishing');
+                    console.log('🔍 Debug: window.currentBoard =', window.currentBoard);
+                    console.log('🔍 Debug: global currentBoard =', typeof currentBoard !== 'undefined' ? currentBoard : 'undefined');
+                    showNostrMessage('Fehler: Kein Board zum Veröffentlichen ausgewählt. Bitte öffnen Sie zuerst ein Board.', 'error');
+                    return;
+                }
+                
+                try {
+                    // Set button loading state
+                    publishBtn.disabled = true;
+                    publishBtn.classList.add('loading');
+                    publishBtn.textContent = 'Veröffentlichen...';
+                    
+                    console.log('📤 Starting board publication:', currentBoardToPublish.name);
+                    const result = await publishBoardToNostr(currentBoardToPublish);
+                    
+                    if (result && result.success) {
+                        console.log('✅ Board published successfully');
+                        showNostrMessage('Board erfolgreich veröffentlicht!', 'success');
+                    } else {
+                        throw new Error('Publication failed - ' + (result?.error || 'no success result'));
+                    }
+                } catch (error) {
+                    console.error('❌ Publish error:', error);
+                    showNostrMessage('Fehler beim Veröffentlichen: ' + error.message, 'error');
+                } finally {
+                    // Reset button state
+                    publishBtn.disabled = false;
+                    publishBtn.classList.remove('loading');
+                    publishBtn.textContent = 'Jetzt Veröffentlichen';
+                }
+            };
+            
+            // Add event listeners with proper cleanup
+            publishBtn.addEventListener('click', handlePublish, { capture: true, passive: false });
+            publishBtn.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    handlePublish(e);
+                }
+            }, { capture: true, passive: false });
+            
+            console.log('🦊 Firefox-compatible event handlers installed successfully');
+        } else {
+            console.warn('⚠️ Publish button not found for Firefox compatibility');
+        }
+    }, 1000);
     
     // Help messages for developers
     setTimeout(() => {

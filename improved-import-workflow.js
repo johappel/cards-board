@@ -9,18 +9,66 @@ async function improvedImportWorkflow() {
     try {        // DEAKTIVIERT: Automatische Board-Erstellung vermeiden
         // const testBoard = createTestBoardForNostr();
         // console.log('✅ Test board created');
-        
-        // Verwende Mock-Board statt echte Board-Erstellung
+          // Verwende Mock-Board statt echte Board-Erstellung
         const testBoard = {
-            title: 'Mock Test Board', // Verwende 'title' für Kompatibilität
-            name: 'Mock Test Board',
+            id: 'mock-test-board-' + Date.now(),
+            title: 'Mock Test Board for Import Workflow', // Verwende 'title' für Kompatibilität
+            name: 'Mock Test Board for Import Workflow',
+            description: 'Mock board for testing import workflow',
+            summary: 'A mock board to test the improved import workflow',
+            authors: ['Test User'],
+            backgroundColor: '#f5f7fa',
+            backgroundHex: '#f5f7fa',
+            nostrEvent: { // Required for import validation
+                eventId: 'mock-event-id',
+                timestamp: new Date().toISOString()
+            },
             columns: [
-                { id: 'col1', name: 'Column 1', cards: [] },
-                { id: 'col2', name: 'Column 2', cards: [] },
-                { id: 'col3', name: 'Column 3', cards: [] }
+                { 
+                    id: 'col1', 
+                    name: 'To Do', 
+                    color: 'color-gradient-1',
+                    cards: [
+                        {
+                            id: 'card1',
+                            heading: 'Test Task 1',
+                            content: 'This is a test card for import validation',
+                            color: 'color-gradient-1',
+                            thumbnail: '',
+                            labels: 'test, import',
+                            comments: 'Test comment',
+                            url: '',
+                            inactive: false
+                        }
+                    ]
+                },
+                { 
+                    id: 'col2', 
+                    name: 'In Progress', 
+                    color: 'color-gradient-2',
+                    cards: [
+                        {
+                            id: 'card2',
+                            heading: 'Test Task 2',
+                            content: 'Another test card for validation',
+                            color: 'color-gradient-2',
+                            thumbnail: '',
+                            labels: 'progress, test',
+                            comments: '',
+                            url: '',
+                            inactive: false
+                        }
+                    ]
+                },
+                { 
+                    id: 'col3', 
+                    name: 'Done', 
+                    color: 'color-gradient-3',
+                    cards: []
+                }
             ]
         };
-        console.log('✅ Mock test board created (no storage)');
+        console.log('✅ Mock test board created with sample cards (no storage)');
         
         // Simuliere Event-Publishing (ohne echte Relay-Verbindung)
         const mockEventId = '2468ace02468ace02468ace02468ace02468ace02468ace02468ace02468ace0';
@@ -113,11 +161,15 @@ async function improvedImportWorkflow() {
                     }
                 });
             }
+              console.log(`✅ Card validation: ${validCards}/${totalCards} cards valid`);
             
-            console.log(`✅ Card validation: ${validCards}/${totalCards} cards valid`);
-            
-            if (validCards === totalCards && totalCards > 0) {
-                console.log('🎉 All cards have valid structure!');
+            // Accept boards with 0 cards (empty board) or boards where all cards are valid
+            if (validCards === totalCards) {
+                if (totalCards === 0) {
+                    console.log('🎉 Empty board structure is valid!');
+                } else {
+                    console.log('🎉 All cards have valid structure!');
+                }
                 
                 // 6. Test: Simuliere Rendering
                 console.log('\n📋 Step 6: Simulating board rendering...');

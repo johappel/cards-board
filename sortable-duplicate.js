@@ -25,7 +25,7 @@ function initSortableKanban() {
                     window.addDuplicateClass(evt.item, evt);
                 }
             },
-            onEnd: function (evt) {
+            onEnd: async function (evt) {
                 if (window.removeDuplicateClass) {
                     window.removeDuplicateClass(evt.item);
                 }
@@ -45,7 +45,9 @@ function initSortableKanban() {
                                     ...card,
                                     id: generateId()
                                 }))
-                            };                            // Spalte an der gewünschten Position einfügen
+                            };
+                            
+                            // Spalte an der gewünschten Position einfügen
                             const newOrder = [];
                             board.querySelectorAll('.kanban-column').forEach(colEl => {
                                 const cId = colEl.dataset.columnId;
@@ -61,7 +63,7 @@ function initSortableKanban() {
                             window.currentBoard.columns = newOrder;
                             // Element aus DOM entfernen (SortableJS hat es nur temporär bewegt)
                             evt.item.remove();
-                            if (typeof saveAllBoards === 'function') saveAllBoards();
+                            if (typeof saveAllBoards === 'function') await saveAllBoards();
                             if (typeof renderColumns === 'function') renderColumns();
                             console.log('Spalte dupliziert:', duplicatedColumn.name);
                             return;
@@ -81,8 +83,10 @@ function initSortableKanban() {
                     // Nachher loggen
                     console.log('Spalten nach Drag:', newOrder.map(c => c.name));
                     window.currentBoard.columns = newOrder;
-                    if (typeof saveAllBoards === 'function') saveAllBoards();
-                    console.log('saveAllBoards() nach Spalten-Drag ausgeführt');
+                    if (typeof saveAllBoards === 'function') {
+                        await saveAllBoards();
+                        console.log('saveAllBoards() nach Spalten-Drag ausgeführt');
+                    }
                 } catch(e) {
                     console.error('Fehler im onEnd Spalten-Drag:', e);
                 }
@@ -111,7 +115,7 @@ function initSortableKanban() {
                         window.addDuplicateClass(evt.item, evt);
                     }
                 },
-                onEnd: function (evt) {
+                onEnd: async function (evt) {
                     if (window.removeDuplicateClass) {
                         window.removeDuplicateClass(evt.item);
                     }
@@ -132,7 +136,9 @@ function initSortableKanban() {
                                     ...originalCard,
                                     id: generateId(),
                                     heading: originalCard.heading + ' (Kopie)'
-                                };                                // Karte zur Zielspalte hinzufügen (am Ende der gewünschten Position)
+                                };
+                                
+                                // Karte zur Zielspalte hinzufügen (am Ende der gewünschten Position)
                                 const newToCards = [];
                                 evt.to.querySelectorAll('.kanban-card').forEach((cardEl, index) => {
                                     const cId = cardEl.dataset.cardId;
@@ -144,7 +150,9 @@ function initSortableKanban() {
                                             newToCards.push(duplicatedCard);
                                         }
                                     }
-                                });                                toCol.cards = newToCards;
+                                });
+                                
+                                toCol.cards = newToCards;
                                 
                                 // Falls es sich um verschiedene Spalten handelt, ursprüngliche Karte aus Quellspalte entfernen
                                 if (fromCol !== toCol) {
@@ -153,7 +161,7 @@ function initSortableKanban() {
                                 
                                 // Element aus DOM entfernen (SortableJS hat es nur temporär bewegt)
                                 evt.item.remove();
-                                if (typeof saveAllBoards === 'function') saveAllBoards();
+                                if (typeof saveAllBoards === 'function') await saveAllBoards();
                                 if (typeof renderColumns === 'function') renderColumns();
                                 console.log('Karte dupliziert:', duplicatedCard.heading);
                                 return;
@@ -188,7 +196,7 @@ function initSortableKanban() {
                         // Nachher loggen
                         console.log('Karten nach (from):', fromCol.cards.map(c => c.heading));
                         console.log('Karten nach (to):', toCol.cards.map(c => c.heading));
-                        if (typeof saveAllBoards === 'function') saveAllBoards();
+                        if (typeof saveAllBoards === 'function') await saveAllBoards();
                         console.log('saveAllBoards() nach Karten-Drag ausgeführt');
                     } catch(e) {
                         console.error('Fehler im onEnd Karten-Drag:', e);
@@ -200,10 +208,23 @@ function initSortableKanban() {
 }
 
 // Nach jeder Änderung speichern
-function saveAllBoards() {
+async function saveAllBoards() {
     console.log('saveAllBoards() aufgerufen', JSON.stringify(boards, null, 2));
-    if (typeof window.KanbanStorage?.saveBoards === 'function') {
-        window.KanbanStorage.saveBoards(boards);
+    
+    try {
+        if (typeof window.KanbanStorage?.saveBoards === 'function') {
+            await window.KanbanStorage.saveBoards(boards);
+            console.log('✅ Boards saved via KanbanStorage');
+        } else {
+            // Fallback to direct localStorage
+            localStorage.setItem('kanban_boards_v1', JSON.stringify({ boards }));
+            console.log('✅ Boards saved to localStorage directly');
+        }
+    } catch (error) {
+        console.error('❌ Save failed:', error);
+        // Emergency fallback
+        localStorage.setItem('kanban_boards_v1', JSON.stringify({ boards }));
+        console.log('💾 Emergency save completed');
     }
 }
 

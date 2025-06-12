@@ -19,7 +19,7 @@
             } catch (error) {
                 console.log(`Result: ❌ FAIL (${error.message})`);
             }
-        }w
+        }
 
 async function runCompleteNostrTest() {
     console.log('🎯 === COMPLETE NOSTR WORKFLOW TEST ===');

@@ -351,13 +351,13 @@
 /* Dark Theme Support */
 @media (prefers-color-scheme: dark) {
     .nostr-section {
-        background: var(--bg-secondary-dark, #2d3748);
+        background: var(--bg-secondary-dark, #d4e0f5);
         border-color: var(--border-color-dark, #4a5568);
     }
     
     .nostr-input,
     .nostr-btn {
-        background: var(--bg-primary-dark, #1a202c);
+        background: #4a5568;
         color: var(--text-primary-dark, #e2e8f0);
         border-color: var(--border-color-dark, #4a5568);
     }
