@@ -27,6 +27,11 @@ function openSettingsSidebar() {
         console.log('ℹ️ Hiding board actions - in dashboard or no active board');
     }
     
+    // Initialize Quill Plugin Settings UI
+    if (typeof window.QuillEditorPlugin !== 'undefined' && window.QuillEditorPlugin.updateSettingsUI) {
+        window.QuillEditorPlugin.updateSettingsUI();
+    }
+    
     sidebar.classList.add('open');
     overlay.classList.add('show');
     sidebarOpen = true;

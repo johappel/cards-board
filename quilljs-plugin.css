@@ -1,0 +1,372 @@
+/* ===== QUILL EDITOR CLEANUP & TOOLBAR MANAGEMENT ===== */
+
+/* Sicherstellen, dass Quill-Toolbars ordnungsgemäß positioniert und entfernt werden */
+.card-content-full .ql-toolbar {
+    position: relative !important;
+    border: 1px solid #ccc;
+    border-bottom: none;
+    background: #f8f9fa;
+    z-index: 10;
+}
+
+/* Container für Quill Editor */
+.card-content-full .ql-container {
+    border: 1px solid #ccc;
+    background: white;
+    min-height: 200px;
+}
+
+/* Verstecke potentiell übrig gebliebene Quill-Elemente */
+.card-content-full:not(.quill-editing) .ql-toolbar,
+.card-content-full:not(.quill-editing) .ql-container.ql-snow {
+    display: none !important;
+}
+
+/* Aktiver Quill-Editor Zustand */
+.card-content-full.quill-editing .ql-editor {
+    padding: 15px;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Quill-Toolbar sollte nicht außerhalb des Containers erscheinen */
+.modal-body .ql-toolbar {
+    margin-bottom: 0;
+}
+
+/* Verhindere das Übrigbleiben von Quill-Klassen */
+.markdown-content.ql-container:not(.quill-active) {
+    border: none !important;
+    background: transparent !important;
+}
+
+.markdown-content.ql-container:not(.quill-active) .ql-editor {
+    padding: 0 !important;
+    background: transparent !important;
+}
+
+/* ===== TOGGLE SWITCHES UND SETTINGS UI ===== */
+
+/* Toggle Switch Styling */
+.toggle-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #374151;
+}
+
+.toggle-label input[type="checkbox"] {
+    display: none;
+}
+
+.toggle-slider {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    background-color: #d1d5db;
+    border-radius: 12px;
+    margin-right: 0.75rem;
+    transition: background-color 0.3s ease;
+    flex-shrink: 0;
+}
+
+.toggle-slider::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-label input[type="checkbox"]:checked + .toggle-slider {
+    background-color: #3b82f6;
+}
+
+.toggle-label input[type="checkbox"]:checked + .toggle-slider::after {
+    transform: translateX(20px);
+}
+
+.toggle-label:hover .toggle-slider {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Settings Section Styling */
+.sidebar-setting {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: #f8fafc;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+}
+
+.setting-status {
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+}
+
+.setting-status span {
+    font-weight: 600;
+}
+
+.setting-info {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: #eff6ff;
+    border-radius: 4px;
+    border-left: 3px solid #3b82f6;
+}
+
+.setting-info small {
+    color: #1e40af;
+    line-height: 1.4;
+}
+
+/* Quill Editor Anpassungen für Card Content */
+#full-card-modal .ql-editor {
+    min-height: 400px;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #f7fafc;
+}
+
+#full-card-modal .ql-toolbar {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+}
+
+#full-card-modal .ql-container {
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    border: 1px solid #e2e8f0;
+    border-top: none;
+}
+
+/* Quill Toolbar Button Styling */
+#full-card-modal .ql-toolbar .ql-formats {
+    margin-right: 1rem;
+}
+
+#full-card-modal .ql-toolbar button {
+    padding: 0.25rem;
+    border-radius: 3px;
+    transition: background-color 0.2s;
+}
+
+#full-card-modal .ql-toolbar button:hover {
+    background-color: #f3f4f6;
+}
+
+#full-card-modal .ql-toolbar button.ql-active {
+    background-color: #3b82f6;
+    color: white;
+}
+
+/* Responsive Design für Settings */
+@media (max-width: 768px) {
+    .toggle-slider {
+        width: 40px;
+        height: 22px;
+        margin-right: 0.5rem;
+    }
+    
+    .toggle-slider::after {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .toggle-label input[type="checkbox"]:checked + .toggle-slider::after {
+        transform: translateX(18px);
+    }
+    
+    .sidebar-setting {
+        padding: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .setting-info {
+        padding: 0.5rem;
+    }
+}
+
+/* Loading State für Quill */
+.quill-loading {
+    position: relative;
+    min-height: 400px;
+    background: #f7fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quill-loading::before {
+    content: '📝 Editor wird geladen...';
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+/* Error State für Quill */
+.quill-error {
+    position: relative;
+    min-height: 200px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #dc2626;
+}
+
+.quill-error::before {
+    content: '❌ Editor konnte nicht geladen werden';
+    font-size: 0.9rem;
+}
+
+/* Smooth Transitions */
+.card-content-full {
+    transition: all 0.3s ease;
+}
+
+/* Quill Editor Focus Styling */
+#full-card-modal .ql-editor:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: #3b82f6;
+}
+
+/* Custom Quill Theme Anpassungen */
+#full-card-modal .ql-snow .ql-stroke {
+    stroke: #374151;
+}
+
+#full-card-modal .ql-snow .ql-fill {
+    fill: #374151;
+}
+
+#full-card-modal .ql-snow .ql-picker-label {
+    color: #374151;
+}
+
+/* Markdown Preview Styling (falls Markdown Plugin aktiv) */
+.quill-markdown-preview {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: #374151;
+}
+
+.quill-markdown-preview h1,
+.quill-markdown-preview h2,
+.quill-markdown-preview h3 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+}
+
+.quill-markdown-preview p {
+    margin-bottom: 0.75rem;
+}
+
+.quill-markdown-preview code {
+    background: #e5e7eb;
+    padding: 0.125rem 0.25rem;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 0.875rem;
+}
+
+/* Manual Activation Edit Button */
+.quill-edit-button {
+    background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+    transition: all 0.2s ease;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.quill-edit-button:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+    transform: translateY(-1px);
+}
+
+.quill-edit-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+/* Card Content Container Styling for Edit Mode */
+.card-content-full {
+    position: relative;
+}
+
+.card-content-full:hover .quill-edit-button {
+    opacity: 1;
+    visibility: visible;
+}
+
+.quill-edit-button {
+    opacity: 0.8;
+    visibility: visible;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+/* Responsive Edit Button */
+@media (max-width: 768px) {
+    .quill-edit-button {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+        top: 5px;
+        right: 5px;
+    }
+}
+
+/* Quill Editor Enhancements for Manual Mode */
+.ql-editor {
+    min-height: 300px;
+    font-size: 1.05rem;
+    line-height: 1.6;
+}
+
+.ql-toolbar {
+    border-top: 1px solid #e2e8f0;
+    border-left: 1px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
+    border-bottom: none;
+    background: #f8fafc;
+}
+
+.ql-container {
+    border-bottom: 1px solid #e2e8f0;
+    border-left: 1px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
+    border-top: none;
+}

@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="duplicate.css">
     <link rel="stylesheet" href="sidebar.css">
     <link rel="stylesheet" href="share_via_nostr.css">
+    <link rel="stylesheet" href="quilljs-plugin.css">
     <!-- SortableJS für Drag&Drop -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 </head>
@@ -144,6 +145,28 @@
                 
                 <!-- Hidden file input -->
                 <input type="file" id="import-file" class="file-input" accept=".json" onchange="importBoards(event)" style="display: none;">
+            </div>
+            
+            <!-- Plugin Settings Section -->
+            <div class="sidebar-section">
+                <h4>📝 WYSIWYG Editor (Quill.js)</h4>
+                <div class="sidebar-setting">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="quill-enabled-toggle" onchange="toggleQuillPlugin()">
+                        <span class="toggle-slider"></span>
+                        Plugin aktivieren
+                    </label>
+                </div>
+                <div class="sidebar-setting">
+                    <div class="setting-info">
+                        <strong>Status:</strong> <span id="quill-status">Deaktiviert</span>
+                    </div>
+                </div>
+                <div class="sidebar-setting">
+                    <div class="setting-description">
+                        Ermöglicht direktes WYSIWYG-Bearbeiten von Card-Content im Full-Card-Modal mit Rich-Text-Formatierung.
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -956,6 +979,9 @@
     
     <!-- Nostr Publishing Test Script -->
     <script src="test-publishing.js"></script>
+    
+    <!-- Quill.js WYSIWYG Editor Plugin -->
+    <script src="quilljs-plugin-manual.js"></script>
    
 </script>
 </html>
