@@ -1236,7 +1236,8 @@ function createPublishedBoardElement(event, index) {
             <div class="nostr-published-board-name" title="${event.boardName}">
                 ${event.boardName || 'Unbenanntes Board'}
             </div>
-            <div class="nostr-published-board-type ${event.isDraft ? 'draft' : ''}">
+            <div class="nostr-published-board-type ${event.isDraft ? 'draft' : ''}"
+                 title="${event.isDraft ? 'Entwurfsmodus' : 'Veröffentlicht'}">
                 ${event.isDraft ? 'Entwurf' : 'Live'}
             </div>
         </div>

@@ -265,6 +265,9 @@ function createCardElement(card, columnId) {
     let urlHtml = '';
     let labelsHtml = '';
 
+    // sieht besser aus, wenn immer der ganze content gerendert wird. Preview nur als Fallback
+    previewText = renderMarkdownToHtml(card.content) || previewText; // Sicherstellen, dass previewText immer gesetzt ist
+
     if (card.comments && card.comments.trim()) {
         //commentHtml = `<div class="card-comment">💬 ${card.comments}</div>`;
     }
