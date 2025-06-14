@@ -209,7 +209,7 @@ function initSortableKanban() {
 
 // Nach jeder Änderung speichern
 async function saveAllBoards() {
-    console.log('saveAllBoards() aufgerufen', JSON.stringify(boards, null, 2));
+    console.log('saveAllBoards called');
     
     try {
         if (typeof window.KanbanStorage?.saveBoards === 'function') {

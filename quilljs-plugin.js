@@ -18,6 +18,7 @@ const QUILL_SETTINGS = {
     manualActivation: true // Neue Einstellung für manuelle Aktivierung
 };
 
+
 // Quill Editor Konfiguration
 const QUILL_CONFIG = {
     theme: 'snow',
@@ -27,7 +28,7 @@ const QUILL_CONFIG = {
             ['bold', 'italic', 'underline', 'strike'],
             [{ 'list': 'ordered'}, { 'list': 'bullet' }],
             ['blockquote', 'code-block'],
-            ['link', 'image'],
+            ['link', 'image', 'video', 'iframe'], // Iframe-Unterstützung
             ['clean']
         ]
     },
@@ -37,7 +38,8 @@ const QUILL_CONFIG = {
     formats: [
         'header', 'bold', 'italic', 'underline', 'strike', 'indent',
         'align', 'script', 'size', 'font', 'color', 'background',
-        'list', 'blockquote', 'code-block', 'link', 'image', 'video'
+        'list', 'blockquote', 'code-block', 'link', 'image', 'video',
+        'iframe' // Iframe-Unterstützung -> IframeBlot
         
     ]
 };
@@ -72,6 +74,7 @@ async function loadQuillLibraries() {
         
         quillLibrariesLoaded = true;
         console.log('✅ Quill.js libraries loaded successfully');
+
         return true;
     } catch (error) {
         console.error('❌ Error loading Quill.js libraries:', error);
@@ -257,8 +260,30 @@ async function enableQuillEditor(cardContentElement, cardId, columnId) {
         console.log('🔧 Prepared HTML for editor:', htmlContent.substring(0, 200) + '...');
           // Quill Editor erstellen
         console.log('-> content for Quill editor:', editorContainer.innerHTML);
+        
+        const BlockEmbed = Quill.import('blots/block/embed');
+
+        class IframeBlot extends BlockEmbed {
+            static create(value) {
+            const node = super.create();
+            node.setAttribute('src', value);
+            node.setAttribute('frameborder', '0');
+            node.setAttribute('allowfullscreen', true);
+            node.setAttribute('class', 'ql-iframe');
+            return node;
+            }
+
+            static value(node) {
+            return node.getAttribute('src');
+            }
+        }
+        IframeBlot.blotName = 'iframe';
+        IframeBlot.tagName = 'IFRAME';
+
+        
         const quill = new Quill(`#${editorId}`, QUILL_CONFIG);
-        // const quill = new Quill(`#${editorId}`);
+        const quillMarkdown = new QuillMarkdown(quill, {});
+
         console.log('-> content after Quill editor loaded:', editorContainer.innerHTML);
 
         // HTML-Content in den Editor laden
@@ -297,8 +322,14 @@ async function enableQuillEditor(cardContentElement, cardId, columnId) {
             emDelimiter: '*',
             strongDelimiter: '**',
             br: ''
-        });        
-        
+        });
+        turndownService.addRule('keep-iframes', {
+            filter: ['iframe'],
+            replacement: function (content, node) {
+                // Füge Zeilenumbrüche für besseren Abstand im Markdown hinzu
+                return '\n\n' + node.outerHTML + '\n\n';
+            }
+        });    
         // Auto-Save Setup - DEAKTIVIERT für manuelle Speicherung
         // let saveTimeout = null;
         // quill.on('text-change', function(delta, oldDelta, source) {
@@ -388,14 +419,18 @@ function saveQuillContent(quill, cardId, columnId, turndownService) {
         
         // HTML bereinigen bevor es zu Markdown konvertiert wird
         const cleanedHtml = cleanHtmlForMarkdown(rawHtml);
+        console.log('🔍 Cleaned HTML content:', cleanedHtml.substring(0, 400) + '...');
         
         // HTML zu Markdown konvertieren
         const markdownContent = turndownService.turndown(cleanedHtml);
+        console.log('🔄 Converted HTML to markdown:', markdownContent.substring(0, 400) + '...');
         
         // Markdown nachbereinigen
-        const finalMarkdown = cleanupMarkdown(markdownContent);
+        //const finalMarkdown = cleanupMarkdown(markdownContent);
+        const finalMarkdown = turndownService.turndown(rawHtml);
         
-        console.log('📝 Converted to markdown:', finalMarkdown.substring(0, 100) + '...');
+        console.log('📝 Converted to markdown:', finalMarkdown.substring(0, 400) + '...');
+
         
         // In der Datenstruktur speichern
         const cardData = getCardData(cardId, columnId);

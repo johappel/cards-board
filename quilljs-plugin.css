@@ -520,3 +520,11 @@
     -webkit-user-select: none !important;
     user-select: none !important;
 }
+
+.ql-tooltip.ql-editing[data-mode="video"] {
+    left: 10px !important;
+}
+.card-content-full .markdown-content iframe.ql-video {
+    width: 100% !important;
+    min-height: 50vh!important;
+}
