@@ -12,7 +12,7 @@ let originalUpdateFullCardModal = null;
 // Plugin Einstellungen
 const QUILL_SETTINGS = {
     enabled: false, // Standard deaktiviert
-    autoSave: true,
+    autoSave: false, // Deaktiviert - Speichern nur bei Save-Button-Klick
     autoSaveDelay: 800,
     markdownSupport: true,
     manualActivation: true // Neue Einstellung für manuelle Aktivierung
@@ -261,15 +261,13 @@ async function enableQuillEditor(cardContentElement, cardId, columnId) {
             quill.root.innerHTML = htmlContent;
             console.log('✅ Content loaded into editor');
         }
-        
-        // Edit-Button verstecken während Editor aktiv ist
+          // Button zu "Speichern" umschalten (statt verstecken)
         const cardContentFull = cardContentElement.closest('.card-content-full');
         if (cardContentFull) {
             cardContentFull.classList.add('quill-editing');
-            const editButton = cardContentFull.querySelector('.quill-edit-button');
-            if (editButton) {
-                editButton.style.display = 'none';
-            }
+            
+            // Button zu "Speichern" ändern
+            updateEditButton(finalCardId, true);
         }
         
         // Styling-Optimierungen für besseren Zeilenumbruch
@@ -292,20 +290,20 @@ async function enableQuillEditor(cardContentElement, cardId, columnId) {
             emDelimiter: '*',
             strongDelimiter: '**',
             br: ''
-        });
+        });        
         
+        // Auto-Save Setup - DEAKTIVIERT für manuelle Speicherung
+        // let saveTimeout = null;
+        // quill.on('text-change', function(delta, oldDelta, source) {
+        //     if (source === 'user' && QUILL_SETTINGS.autoSave) {
+        //         if (saveTimeout) clearTimeout(saveTimeout);
+        //         saveTimeout = setTimeout(() => {
+        //             saveQuillContent(quill, finalCardId, finalColumnId, turndownService);
+        //         }, QUILL_SETTINGS.autoSaveDelay);
+        //     }
+        // });
         
-        
-        // Auto-Save Setup
-        let saveTimeout = null;
-        quill.on('text-change', function(delta, oldDelta, source) {
-            if (source === 'user' && QUILL_SETTINGS.autoSave) {
-                if (saveTimeout) clearTimeout(saveTimeout);
-                saveTimeout = setTimeout(() => {
-                    saveQuillContent(quill, finalCardId, finalColumnId, turndownService);
-                }, QUILL_SETTINGS.autoSaveDelay);
-            }
-        });
+        console.log('ℹ️ Auto-save deaktiviert - Speichern nur bei Save-Button-Klick');
         
         // Editor in Map speichern
         quillEditors.set(finalCardId, {
@@ -562,18 +560,18 @@ function updateFullCardModalAfterEdit(cardId, columnId) {
 }
 
 // Quill Editor deaktivieren
-function disableQuillEditor(cardId) {
+function disableQuillEditor(cardId, shouldSave = true) {
     const editorData = quillEditors.get(cardId);
     if (!editorData) {
         console.log('⚠️ No active Quill editor found for card:', cardId);
         return false;
     }
     
-    console.log('🔄 Disabling Quill editor for card:', cardId);
+    console.log('🔄 Disabling Quill editor for card:', cardId, shouldSave ? '(mit Speichern)' : '(ohne Speichern)');
     
     try {
-        // Finales Speichern
-        if (editorData.quill && editorData.turndownService) {
+        // Nur speichern wenn explizit gewünscht (Save-Button, nicht ESC)
+        if (shouldSave && editorData.quill && editorData.turndownService) {
             saveQuillContent(editorData.quill, cardId, editorData.columnId, editorData.turndownService);
         }
         
@@ -638,20 +636,15 @@ function disableQuillEditor(cardId) {
             editorData.element.removeAttribute('id');
             
             // 7. Quill-Instanz nullen
-            delete editorData.quill;
-        }
+            delete editorData.quill;        }
           // CSS-Klassen entfernen und UI zurücksetzen
         const cardContentFull = editorData.element.closest('.card-content-full');
         if (cardContentFull) {
             cardContentFull.classList.remove('quill-editing');
-            
-            // Edit-Button wieder hinzufügen wenn Plugin aktiviert
-            if (isQuillEnabled) {
-                setTimeout(() => {
-                    addEditButtonToCard(cardContentFull);
-                }, 100);
-            }
         }
+        
+        // Button zurück zu "Bearbeiten" ändern
+        updateEditButton(cardId, false);
         
         // Aus Map entfernen
         quillEditors.delete(cardId);
@@ -770,17 +763,29 @@ function initQuillPlugin() {
 // Setup für Editor-Aktivierung auf card-content-full Elementen
 function setupQuillEditorActivation() {
     console.log('🔧 Setting up Quill editor activation...');
-    
-    // Event-Listener für Edit-Buttons
+      // Event-Listener für Edit-Buttons (Toggle-Verhalten)
     document.addEventListener('click', function(e) {
         if (e.target.matches('.quill-edit-button') || e.target.closest('.quill-edit-button')) {
             e.preventDefault();
             e.stopPropagation();
             
-            const cardContent = e.target.closest('.card-content-full');
+            const button = e.target.matches('.quill-edit-button') ? e.target : e.target.closest('.quill-edit-button');
+            const cardContent = button.closest('.card-content-full');
+            const cardId = cardContent.getAttribute('data-card-id');
+            
             if (cardContent) {
-                console.log('🎯 Edit-Button clicked, activating editor...');
-                activateQuillForCard(cardContent);
+                // Prüfen ob Editor bereits aktiv ist
+                const isEditing = quillEditors.has(cardId);
+                
+                if (isEditing) {
+                    // Speichern und Editor schließen
+                    console.log('💾 Save-Button clicked, saving and closing editor...');
+                    disableQuillEditor(cardId);
+                } else {
+                    // Editor aktivieren
+                    console.log('✏️ Edit-Button clicked, activating editor...');
+                    activateQuillForCard(cardContent);
+                }
             }
         }
     });
@@ -794,12 +799,15 @@ function setupQuillEditorActivation() {
             activateQuillForCard(cardContent);
         }
     });
-    
-    // ESC-Taste zum Deaktivieren
+      // ESC-Taste zum Abbrechen (ohne Speichern)
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && quillEditors.size > 0) {
-            console.log('🔚 ESC pressed, deactivating all editors...');
-            disableAllQuillEditors();
+            console.log('🔚 ESC pressed, cancelling all editors without saving...');
+            // Alle aktiven Editoren ohne Speichern schließen
+            const activeEditorIds = Array.from(quillEditors.keys());
+            activeEditorIds.forEach(cardId => {
+                disableQuillEditor(cardId, false); // false = nicht speichern
+            });
         }
     });
     
@@ -854,21 +862,65 @@ function addEditButtonToCard(cardContentElement) {
         console.warn('⚠️ Missing data attributes for edit button:', cardContentElement);
         return;
     }
+      // Button-Container oberhalb des Contents erstellen
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'quill-button-container';
+    buttonContainer.style.cssText = `
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 8px;
+        position: relative;
+        z-index: 10;
+    `;
     
     // Edit-Button erstellen
     const editButton = document.createElement('button');
     editButton.className = 'quill-edit-button';
     editButton.innerHTML = '✏️ Bearbeiten';
     editButton.title = 'Text mit WYSIWYG-Editor bearbeiten (oder Doppelklick)';
+    editButton.style.cssText = `
+        background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 500;
+        box-shadow: 0 1px 3px rgba(59, 130, 246, 0.3);
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    `;
     
-    // Button positionieren
-    cardContentElement.style.position = 'relative';
-    editButton.style.position = 'absolute';
-    editButton.style.top = '10px';
-    editButton.style.right = '10px';
-    editButton.style.zIndex = '5';
+    buttonContainer.appendChild(editButton);
     
-    cardContentElement.appendChild(editButton);
+    // Button-Container vor dem ersten Kind einfügen
+    cardContentElement.insertBefore(buttonContainer, cardContentElement.firstChild);
+}
+
+// Edit-Button zwischen "Bearbeiten" und "Speichern" umschalten
+function updateEditButton(cardId, isEditing) {
+    const cardContent = document.querySelector(`[data-card-id="${cardId}"]`);
+    if (!cardContent) return;
+    
+    const button = cardContent.querySelector('.quill-edit-button');
+    if (!button) return;
+    
+    if (isEditing) {
+        // Button zu "Speichern" ändern (grün)
+        button.innerHTML = '💾 Speichern';
+        button.title = 'Änderungen speichern und Editor schließen';
+        button.style.background = 'linear-gradient(135deg, #059669 0%, #047857 100%)';
+        button.style.boxShadow = '0 1px 3px rgba(5, 150, 105, 0.3)';
+    } else {
+        // Button zu "Bearbeiten" ändern (blau)
+        button.innerHTML = '✏️ Bearbeiten';
+        button.title = 'Text mit WYSIWYG-Editor bearbeiten (oder Doppelklick)';
+        button.style.background = 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)';
+        button.style.boxShadow = '0 1px 3px rgba(59, 130, 246, 0.3)';
+    }
 }
 
 // Plugin-Funktionen global verfügbar machen

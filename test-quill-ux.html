@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quill Toggle-Button UX Test</title>
+    
+    <!-- CSS für die Hauptanwendung -->
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="board.css">
+    <link rel="stylesheet" href="card.css">
+    <link rel="stylesheet" href="modal.css">
+    <link rel="stylesheet" href="sidebar.css">
+    <link rel="stylesheet" href="markdown.css">
+    <link rel="stylesheet" href="quilljs-plugin.css">
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        .test-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            background: #f9fafb;
+        }
+        
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px 10px 5px 0;
+            font-size: 14px;
+        }
+        
+        .test-button:hover {
+            background: #2563eb;
+        }
+        
+        .test-button.success {
+            background: #059669;
+        }
+        
+        .test-button.success:hover {
+            background: #047857;
+        }
+        
+        .test-button.danger {
+            background: #dc2626;
+        }
+        
+        .test-button.danger:hover {
+            background: #b91c1c;
+        }
+        
+        .test-output {
+            background: #1f2937;
+            color: #f3f4f6;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px;
+            white-space: pre-wrap;
+        }
+        
+        .log-entry.success { color: #10b981; }
+        .log-entry.error { color: #ef4444; }
+        .log-entry.warning { color: #f59e0b; }
+        .log-entry.info { color: #60a5fa; }
+        
+        /* Test Card Mock */
+        .test-card-mock {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .card-content-full {
+            border: 2px solid #3b82f6;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            background: #f9fafb;
+            position: relative;
+            min-height: 200px;
+        }
+        
+        .markdown-content {
+            line-height: 1.6;
+        }
+        
+        .ux-step {
+            background: #eff6ff;
+            border: 1px solid #3b82f6;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        
+        .ux-step h4 {
+            margin: 0 0 8px 0;
+            color: #1e40af;
+        }
+        
+        .expected-behavior {
+            background: #f0fdf4;
+            border: 1px solid #22c55e;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 13px;
+        }
+        
+        .button-state {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: bold;
+            margin: 0 4px;
+        }
+        
+        .button-edit {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .button-save {
+            background: #dcfce7;
+            color: #166534;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>🔧 Quill Toggle-Button UX Test</h1>
+            <p>Test für das verbesserte UX-Design: Edit/Save Toggle-Button + ESC zum Abbrechen</p>
+        </div>
+        
+        <!-- UX Explanation -->
+        <div class="test-section">
+            <h3>📝 Neues UX-Konzept</h3>
+            
+            <div class="ux-step">
+                <h4>1. Bearbeiten starten</h4>
+                <p>Klick auf <span class="button-state button-edit">✏️ Bearbeiten</span> oder Doppelklick auf Text → Editor wird aktiviert</p>
+            </div>
+            
+            <div class="ux-step">
+                <h4>2. Während der Bearbeitung</h4>
+                <p>Button wechselt zu <span class="button-state button-save">💾 Speichern</span> und bleibt sichtbar</p>
+                <p>ESC-Hinweis wird angezeigt: "ESC = Abbrechen ohne Speichern"</p>
+            </div>
+            
+            <div class="ux-step">
+                <h4>3a. Speichern</h4>
+                <p>Klick auf <span class="button-state button-save">💾 Speichern</span> → Änderungen werden gespeichert, Editor schließt</p>
+            </div>
+            
+            <div class="ux-step">
+                <h4>3b. Abbrechen</h4>
+                <p>ESC-Taste → Editor schließt, ursprünglicher Content wird wiederhergestellt</p>
+            </div>
+            
+            <div class="expected-behavior">
+                <strong>✅ Erwartetes Verhalten:</strong>
+                <ul>
+                    <li>Button ist immer sichtbar und erreichbar</li>
+                    <li>Klarer visueller Unterschied zwischen Edit/Save Modi</li>
+                    <li>ESC als intuitive Abbruch-Funktion</li>
+                    <li>Auto-Save läuft weiterhin im Hintergrund</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Plugin Settings -->
+        <div class="test-section">
+            <h3>⚙️ Plugin Setup</h3>
+            <div class="sidebar-setting">
+                <label class="toggle-label">
+                    <input type="checkbox" id="quill-enabled-toggle" onchange="toggleQuillPluginFromUI()">
+                    <span class="toggle-slider"></span>
+                    Plugin aktivieren
+                </label>
+            </div>
+            <div class="sidebar-setting">
+                <div class="setting-info">
+                    <strong>Status:</strong> <span id="quill-status">Deaktiviert</span>
+                </div>
+            </div>
+            
+            <button class="test-button" onclick="forceEnable()">Plugin aktivieren</button>
+        </div>
+        
+        <!-- Test Card -->
+        <div class="test-section">
+            <h3>📇 UX Test Card</h3>
+            <div class="test-card-mock">
+                <h4>Test Karte - Toggle Button UX</h4>
+                
+                <!-- Mock Full-Card-Modal Struktur -->
+                <div class="card-content-full" data-card-id="test-card-ux" data-column-id="test-column-ux">
+                    <div class="markdown-content">
+                        <h1>Original Content für UX-Test</h1>
+                        <p>Dies ist der <strong>ursprüngliche Inhalt</strong> für den UX-Test.</p>
+                        <h2>Test-Schritte:</h2>
+                        <ol>
+                            <li>Klick auf "✏️ Bearbeiten" Button</li>
+                            <li>Button sollte zu "💾 Speichern" wechseln</li>
+                            <li>Content im Editor ändern</li>
+                            <li>Testen: Speichern vs. ESC Abbrechen</li>
+                        </ol>
+                        <p><em>Dieser Content sollte sich je nach Aktion ändern oder gleich bleiben.</em></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="test-buttons">
+                <h4>Test-Aktionen:</h4>
+                <button class="test-button" onclick="testEditMode()">1. Edit-Modus testen</button>
+                <button class="test-button" onclick="testSaveMode()">2. Speichern testen</button>
+                <button class="test-button" onclick="testCancelMode()">3. ESC Abbrechen testen</button>
+                <button class="test-button" onclick="testDoubleClick()">4. Doppelklick testen</button>
+                <button class="test-button danger" onclick="resetContent()">Reset Content</button>
+            </div>
+            
+            <div class="test-output" id="test-output"></div>
+        </div>
+        
+        <!-- Button State Monitor -->
+        <div class="test-section">
+            <h3>🔍 Button-Zustand Monitor</h3>
+            <div id="button-state-display" style="padding: 15px; background: #f8fafc; border-radius: 4px; font-family: monospace;">
+                Warte auf Initialisierung...
+            </div>
+            
+            <button class="test-button" onclick="updateButtonState()">Button-Zustand aktualisieren</button>
+            <button class="test-button" onclick="clearOutput('test-output')">Log leeren</button>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+    <script src="utils.js"></script>
+    <script src="storage.js"></script>
+    <script src="colors.js"></script>
+    <script src="init.js"></script>
+    <script src="board.js"></script>
+    <script src="column.js"></script>
+    <script src="card.js"></script>
+    <script src="chatbot.js"></script>
+    <script src="quilljs-plugin.js"></script>
+    
+    <script>
+        // Test-Daten
+        const testCardId = 'test-card-ux';
+        const testColumnId = 'test-column-ux';
+        
+        // Mock currentBoard
+        window.currentBoard = {
+            id: 'test-board-ux',
+            name: 'UX Test Board',
+            columns: [
+                {
+                    id: testColumnId,
+                    name: 'Test Column',
+                    cards: [
+                        {
+                            id: testCardId,
+                            heading: 'UX Test Card',
+                            content: `# Original Content für UX-Test
+
+Dies ist der **ursprüngliche Inhalt** für den UX-Test.
+
+## Test-Schritte:
+1. Klick auf "✏️ Bearbeiten" Button
+2. Button sollte zu "💾 Speichern" wechseln  
+3. Content im Editor ändern
+4. Testen: Speichern vs. ESC Abbrechen
+
+*Dieser Content sollte sich je nach Aktion ändern oder gleich bleiben.*`,
+                            color: 'color-gradient-1',
+                            labels: 'UX, Test, Toggle',
+                            comments: '',
+                            url: '',
+                            inactive: false
+                        }
+                    ]
+                }
+            ]
+        };
+        
+        // Mock saveAllBoards
+        window.saveAllBoards = function() {
+            console.log('💾 saveAllBoards() called (mock)');
+            logToOutput('test-output', '💾 Content gespeichert in Mock-Datenbank', 'success');
+        };
+        
+        // Logging-Funktion
+        function logToOutput(outputId, message, type = 'info') {
+            const output = document.getElementById(outputId);
+            const timestamp = new Date().toLocaleTimeString();
+            const logClass = `log-entry ${type}`;
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = logClass;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            
+            output.appendChild(logEntry);
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        function clearOutput(outputId) {
+            document.getElementById(outputId).innerHTML = '';
+        }
+        
+        // Plugin aktivieren
+        function forceEnable() {
+            if (window.QuillPlugin) {
+                window.QuillPlugin.enable();
+                logToOutput('test-output', '✅ Plugin aktiviert', 'success');
+                updateButtonState();
+            }
+        }
+        
+        // Button-Zustand anzeigen
+        function updateButtonState() {
+            const cardContent = document.querySelector('.card-content-full');
+            const button = cardContent ? cardContent.querySelector('.quill-edit-button') : null;
+            const isEditing = window.QuillPlugin && cardContent ? 
+                window.QuillPlugin.editors && window.QuillPlugin.editors.has && window.QuillPlugin.editors.has(testCardId) : false;
+            
+            const display = document.getElementById('button-state-display');
+            
+            if (button) {
+                const buttonText = button.textContent;
+                const buttonColor = getComputedStyle(button).backgroundColor;
+                const isEditMode = buttonText.includes('Bearbeiten');
+                const isSaveMode = buttonText.includes('Speichern');
+                
+                display.innerHTML = `
+                    <strong>Button gefunden:</strong> ✅<br>
+                    <strong>Text:</strong> "${buttonText}"<br>
+                    <strong>Modus:</strong> ${isEditMode ? '✏️ Edit-Modus' : isSaveMode ? '💾 Save-Modus' : '❓ Unbekannt'}<br>
+                    <strong>Editor aktiv:</strong> ${isEditing ? '✅ Ja' : '❌ Nein'}<br>
+                    <strong>CSS-Klassen:</strong> ${button.className}<br>
+                    <strong>Position:</strong> ${button.style.position || 'static'}
+                `;
+            } else {
+                display.innerHTML = `
+                    <strong>Button gefunden:</strong> ❌<br>
+                    <strong>Plugin aktiviert:</strong> ${window.QuillPlugin ? window.QuillPlugin.isEnabled() : false}<br>
+                    <strong>Card-Element:</strong> ${!!cardContent}
+                `;
+            }
+        }
+        
+        // Test 1: Edit-Modus
+        function testEditMode() {
+            logToOutput('test-output', '🔄 Teste Edit-Modus...', 'info');
+            
+            const cardContent = document.querySelector('.card-content-full');
+            const button = cardContent.querySelector('.quill-edit-button');
+            
+            if (button && button.textContent.includes('Bearbeiten')) {
+                logToOutput('test-output', '✅ Button im Edit-Modus gefunden', 'success');
+                logToOutput('test-output', '🖱️ Klicke Edit-Button...', 'info');
+                
+                button.click();
+                
+                setTimeout(() => {
+                    updateButtonState();
+                    
+                    const buttonAfter = cardContent.querySelector('.quill-edit-button');
+                    if (buttonAfter && buttonAfter.textContent.includes('Speichern')) {
+                        logToOutput('test-output', '✅ Button erfolgreich zu "Speichern" gewechselt', 'success');
+                    } else {
+                        logToOutput('test-output', '❌ Button-Text nicht gewechselt', 'error');
+                    }
+                    
+                    const editor = document.querySelector('.ql-editor');
+                    if (editor) {
+                        logToOutput('test-output', '✅ Editor erfolgreich aktiviert', 'success');
+                    } else {
+                        logToOutput('test-output', '❌ Editor nicht aktiviert', 'error');
+                    }
+                }, 500);
+                
+            } else {
+                logToOutput('test-output', '❌ Edit-Button nicht gefunden oder bereits im Save-Modus', 'error');
+            }
+        }
+        
+        // Test 2: Save-Modus
+        function testSaveMode() {
+            logToOutput('test-output', '💾 Teste Save-Modus...', 'info');
+            
+            const cardContent = document.querySelector('.card-content-full');
+            const button = cardContent.querySelector('.quill-edit-button');
+            const editor = document.querySelector('.ql-editor');
+            
+            if (editor) {
+                // Content im Editor ändern
+                editor.innerHTML = `<h1>GESPEICHERTER CONTENT</h1>
+<p>Dieser Content wurde <strong>gespeichert</strong> durch Klick auf den Save-Button.</p>
+<p><em>Zeitstempel: ${new Date().toLocaleTimeString()}</em></p>`;
+                
+                logToOutput('test-output', '✏️ Content im Editor geändert', 'info');
+                
+                if (button && button.textContent.includes('Speichern')) {
+                    logToOutput('test-output', '🖱️ Klicke Save-Button...', 'info');
+                    
+                    button.click();
+                    
+                    setTimeout(() => {
+                        updateButtonState();
+                        
+                        const buttonAfter = cardContent.querySelector('.quill-edit-button');
+                        const editorAfter = document.querySelector('.ql-editor');
+                        
+                        if (buttonAfter && buttonAfter.textContent.includes('Bearbeiten')) {
+                            logToOutput('test-output', '✅ Button zurück zu "Bearbeiten" gewechselt', 'success');
+                        } else {
+                            logToOutput('test-output', '❌ Button-Text nicht zurückgewechselt', 'error');
+                        }
+                        
+                        if (!editorAfter) {
+                            logToOutput('test-output', '✅ Editor erfolgreich deaktiviert', 'success');
+                        } else {
+                            logToOutput('test-output', '❌ Editor noch aktiv', 'error');
+                        }
+                        
+                        const markdownContent = cardContent.querySelector('.markdown-content');
+                        if (markdownContent && markdownContent.innerHTML.includes('GESPEICHERTER')) {
+                            logToOutput('test-output', '✅ Content erfolgreich gespeichert und angezeigt', 'success');
+                        } else {
+                            logToOutput('test-output', '❌ Content nicht korrekt gespeichert', 'error');
+                        }
+                    }, 500);
+                    
+                } else {
+                    logToOutput('test-output', '❌ Save-Button nicht gefunden', 'error');
+                }
+            } else {
+                logToOutput('test-output', '❌ Kein aktiver Editor. Starte zuerst Edit-Modus', 'error');
+            }
+        }
+        
+        // Test 3: ESC Abbrechen
+        function testCancelMode() {
+            logToOutput('test-output', '🚫 Teste ESC Abbrechen...', 'info');
+            
+            // Zuerst Editor aktivieren
+            const cardContent = document.querySelector('.card-content-full');
+            const button = cardContent.querySelector('.quill-edit-button');
+            
+            if (button && button.textContent.includes('Bearbeiten')) {
+                button.click();
+                
+                setTimeout(() => {
+                    const editor = document.querySelector('.ql-editor');
+                    if (editor) {
+                        // Content ändern
+                        editor.innerHTML = `<h1>ABGEBROCHENER CONTENT</h1>
+<p>Dieser Content sollte <strong>NICHT gespeichert</strong> werden bei ESC.</p>
+<p><em>Test-Zeitstempel: ${new Date().toLocaleTimeString()}</em></p>`;
+                        
+                        logToOutput('test-output', '✏️ Content im Editor geändert (soll abgebrochen werden)', 'info');
+                        
+                        // ESC-Taste simulieren
+                        const escEvent = new KeyboardEvent('keydown', {
+                            key: 'Escape',
+                            bubbles: true,
+                            cancelable: true
+                        });
+                        
+                        logToOutput('test-output', '⌨️ ESC-Taste gedrückt...', 'info');
+                        document.dispatchEvent(escEvent);
+                        
+                        setTimeout(() => {
+                            updateButtonState();
+                            
+                            const buttonAfter = cardContent.querySelector('.quill-edit-button');
+                            const editorAfter = document.querySelector('.ql-editor');
+                            const markdownContent = cardContent.querySelector('.markdown-content');
+                            
+                            if (buttonAfter && buttonAfter.textContent.includes('Bearbeiten')) {
+                                logToOutput('test-output', '✅ Button zurück zu "Bearbeiten"', 'success');
+                            } else {
+                                logToOutput('test-output', '❌ Button-Text nicht zurückgesetzt', 'error');
+                            }
+                            
+                            if (!editorAfter) {
+                                logToOutput('test-output', '✅ Editor erfolgreich abgebrochen', 'success');
+                            } else {
+                                logToOutput('test-output', '❌ Editor noch aktiv', 'error');
+                            }
+                            
+                            if (markdownContent && !markdownContent.innerHTML.includes('ABGEBROCHENER')) {
+                                logToOutput('test-output', '✅ Ursprünglicher Content wiederhergestellt', 'success');
+                            } else {
+                                logToOutput('test-output', '❌ Geänderter Content wurde fälschlicherweise gespeichert', 'error');
+                            }
+                        }, 500);
+                        
+                    } else {
+                        logToOutput('test-output', '❌ Editor nicht aktiviert', 'error');
+                    }
+                }, 500);
+                
+            } else {
+                logToOutput('test-output', '❌ Edit-Button nicht verfügbar', 'error');
+            }
+        }
+        
+        // Test 4: Doppelklick
+        function testDoubleClick() {
+            logToOutput('test-output', '🖱️ Teste Doppelklick Aktivierung...', 'info');
+            
+            const markdownContent = document.querySelector('.markdown-content');
+            if (markdownContent) {
+                const dblClickEvent = new MouseEvent('dblclick', {
+                    bubbles: true,
+                    cancelable: true
+                });
+                
+                markdownContent.dispatchEvent(dblClickEvent);
+                logToOutput('test-output', '🖱️ Doppelklick auf markdown-content ausgeführt', 'info');
+                
+                setTimeout(() => {
+                    updateButtonState();
+                    
+                    const editor = document.querySelector('.ql-editor');
+                    const button = document.querySelector('.quill-edit-button');
+                    
+                    if (editor) {
+                        logToOutput('test-output', '✅ Editor durch Doppelklick aktiviert', 'success');
+                    } else {
+                        logToOutput('test-output', '❌ Editor nicht durch Doppelklick aktiviert', 'error');
+                    }
+                    
+                    if (button && button.textContent.includes('Speichern')) {
+                        logToOutput('test-output', '✅ Button zu "Speichern" gewechselt', 'success');
+                    } else {
+                        logToOutput('test-output', '❌ Button-Text nicht gewechselt', 'error');
+                    }
+                }, 500);
+                
+            } else {
+                logToOutput('test-output', '❌ markdown-content Element nicht gefunden', 'error');
+            }
+        }
+        
+        // Content zurücksetzen
+        function resetContent() {
+            logToOutput('test-output', '🔄 Setze Content zurück...', 'info');
+            
+            // Alle Editoren schließen
+            if (window.QuillPlugin && window.QuillPlugin.deactivateAll) {
+                window.QuillPlugin.deactivateAll();
+            }
+            
+            // Original-Content wiederherstellen
+            const cardContent = document.querySelector('.card-content-full');
+            if (cardContent) {
+                cardContent.innerHTML = `<div class="markdown-content">
+                    <h1>Original Content für UX-Test</h1>
+                    <p>Dies ist der <strong>ursprüngliche Inhalt</strong> für den UX-Test.</p>
+                    <h2>Test-Schritte:</h2>
+                    <ol>
+                        <li>Klick auf "✏️ Bearbeiten" Button</li>
+                        <li>Button sollte zu "💾 Speichern" wechseln</li>
+                        <li>Content im Editor ändern</li>
+                        <li>Testen: Speichern vs. ESC Abbrechen</li>
+                    </ol>
+                    <p><em>Dieser Content sollte sich je nach Aktion ändern oder gleich bleiben.</em></p>
+                </div>`;
+                
+                // Data-Attribute setzen
+                cardContent.setAttribute('data-card-id', testCardId);
+                cardContent.setAttribute('data-column-id', testColumnId);
+                
+                // Edit-Button wieder hinzufügen
+                if (window.QuillPlugin && window.QuillPlugin.isEnabled()) {
+                    setTimeout(() => {
+                        const addEditButtonToCard = window.addEditButtonToCard;
+                        if (addEditButtonToCard) {
+                            addEditButtonToCard(cardContent);
+                        }
+                        updateButtonState();
+                    }, 100);
+                }
+                
+                // Datenstruktur auch zurücksetzen
+                if (window.currentBoard && window.currentBoard.columns[0].cards[0]) {
+                    window.currentBoard.columns[0].cards[0].content = `# Original Content für UX-Test
+
+Dies ist der **ursprüngliche Inhalt** für den UX-Test.
+
+## Test-Schritte:
+1. Klick auf "✏️ Bearbeiten" Button
+2. Button sollte zu "💾 Speichern" wechseln  
+3. Content im Editor ändern
+4. Testen: Speichern vs. ESC Abbrechen
+
+*Dieser Content sollte sich je nach Aktion ändern oder gleich bleiben.*`;
+                }
+                
+                logToOutput('test-output', '✅ Content zurückgesetzt', 'success');
+            }
+        }
+        
+        // Auto-Init
+        setTimeout(() => {
+            if (window.QuillPlugin) {
+                window.QuillPlugin.enable();
+                logToOutput('test-output', '🚀 Plugin automatisch aktiviert', 'success');
+            }
+            updateButtonState();
+        }, 1000);
+        
+        // Periodischer Update für Button-Zustand
+        setInterval(updateButtonState, 3000);
+        
+    </script>
+</body>
+</html>
