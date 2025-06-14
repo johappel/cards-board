@@ -36,7 +36,7 @@ const QUILL_CONFIG = {
     scrollingContainer: null,
     formats: [
         'header', 'bold', 'italic', 'underline', 'strike',
-        'list', 'bullet', 'blockquote', 'code-block', 'link'
+        'list', 'blockquote', 'code-block', 'link'
     ]
 };
 
@@ -677,7 +677,7 @@ function disableAllQuillEditors() {
     
     const activeEditors = Array.from(quillEditors.keys());
     activeEditors.forEach(cardId => {
-        disableQuillEditor(cardId);
+        disableQuillEditor(cardId, false);
     });
     
     console.log('✅ All Quill editors deactivated');
@@ -902,10 +902,10 @@ function addEditButtonToCard(cardContentElement) {
 
 // Edit-Button zwischen "Bearbeiten" und "Speichern" umschalten
 function updateEditButton(cardId, isEditing) {
-    const cardContent = document.querySelector(`[data-card-id="${cardId}"]`);
+    const cardContent = document.querySelector(`.card-content-full[data-card-id="${cardId}"]`);
     if (!cardContent) return;
     
-    const button = cardContent.querySelector('.quill-edit-button');
+    const button = cardContent.querySelector('.card-content-full .quill-edit-button');
     if (!button) return;
     
     if (isEditing) {
