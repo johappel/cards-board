@@ -36,15 +36,15 @@
 }
 
 /* Verhindere das Übrigbleiben von Quill-Klassen */
-.markdown-content.ql-container:not(.quill-active) {
+/* .markdown-content.ql-container:not(.quill-active) {
     border: none !important;
     background: transparent !important;
-}
+} */
 
-.markdown-content.ql-container:not(.quill-active) .ql-editor {
+/* .markdown-content.ql-container:not(.quill-active) .ql-editor {
     padding: 0 !important;
     background: transparent !important;
-}
+} */
 
 /* ===== TOGGLE SWITCHES UND SETTINGS UI ===== */
 
@@ -132,14 +132,21 @@
 }
 
 /* Quill Editor Anpassungen für Card Content */
+.markdown-content.ql-container 
+{
+    border: 1px solid #e2e8f0;
+    background: #f7fafc;
+    border-radius: 8px;
+}
 #full-card-modal .ql-editor {
     min-height: 400px;
     font-size: 1.05rem;
     line-height: 1.6;
     padding: 1rem;
     border-radius: 8px;
-    border: 1px solid #e2e8f0;
+    border: 0px solid #e2e8f0;
     background: #f7fafc;
+    height: fit-content;
 }
 
 #full-card-modal .ql-toolbar {
@@ -150,9 +157,11 @@
 }
 
 #full-card-modal .ql-container {
+    border: 1px solid #e2e8f0;
     border-bottom-left-radius: 8px;
     border-bottom-right-radius: 8px;
-    border: 1px solid #e2e8f0;
+    border-top-left-radius: 0px;
+    border-top-right-radius: 0px;
     border-top: none;
 }
 
@@ -296,25 +305,16 @@
 
 /* Manual Activation Edit Button */
 .quill-edit-button {
-    background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
+    padding: 7px 7px;
     cursor: pointer;
-    font-size: 12px;
-    font-weight: 500;
-    box-shadow: 0 1px 3px rgba(59, 130, 246, 0.3);
-    transition: all 0.2s ease;
-    z-index: 10;
+    z-index: 11;
     display: inline-flex;
     align-items: center;
     gap: 4px;
 }
 
 .quill-edit-button:hover {
-    background: linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%);
-    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
+    background: #ffffff;
     transform: translateY(-1px);
 }
 
@@ -325,10 +325,12 @@
 
 /* Button Container für bessere Positionierung */
 .quill-button-container {
-    position: relative;
-    z-index: 10;
-    margin-bottom: 8px;
-    text-align: right;
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0px;
+    position: sticky;
+    z-index: 11;
+    margin-top: 0px;
 }
 
 /* ESC-Hinweis für aktive Editoren */

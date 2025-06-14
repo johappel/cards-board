@@ -27,16 +27,18 @@ const QUILL_CONFIG = {
             ['bold', 'italic', 'underline', 'strike'],
             [{ 'list': 'ordered'}, { 'list': 'bullet' }],
             ['blockquote', 'code-block'],
-            ['link', 'image', 'video'],
+            ['link', 'image'],
             ['clean']
         ]
     },
-    placeholder: 'Card-Inhalt bearbeiten...',
-    bounds: document.body,
-    scrollingContainer: null,
+    // placeholder: 'Card-Inhalt bearbeiten...',
+    // bounds: document.body,
+    // scrollingContainer: null,
     formats: [
-        'header', 'bold', 'italic', 'underline', 'strike',
-        'list', 'blockquote', 'code-block', 'link'
+        'header', 'bold', 'italic', 'underline', 'strike', 'indent',
+        'align', 'script', 'size', 'font', 'color', 'background',
+        'list', 'blockquote', 'code-block', 'link', 'image', 'video'
+        
     ]
 };
 
@@ -250,15 +252,20 @@ async function enableQuillEditor(cardContentElement, cardId, columnId) {
             htmlContent = editorContainer.innerHTML;
             console.log('🔄 Using current container HTML as fallback:', htmlContent);
         }
-        
+        editorContainer.innerHTML = htmlContent;
+
         console.log('🔧 Prepared HTML for editor:', htmlContent.substring(0, 200) + '...');
           // Quill Editor erstellen
+        console.log('-> content for Quill editor:', editorContainer.innerHTML);
         const quill = new Quill(`#${editorId}`, QUILL_CONFIG);
-        
+        // const quill = new Quill(`#${editorId}`);
+        console.log('-> content after Quill editor loaded:', editorContainer.innerHTML);
+
         // HTML-Content in den Editor laden
         if (htmlContent) {
             console.log('📥 Loading HTML content into Quill editor...');
-            quill.root.innerHTML = htmlContent;
+            // HTML-Inhalt wird hier beim Laden in den Quill Editor zerstört
+            // quill.root.innerHTML = htmlContent;
             console.log('✅ Content loaded into editor');
         }
           // Button zu "Speichern" umschalten (statt verstecken)
@@ -865,34 +872,13 @@ function addEditButtonToCard(cardContentElement) {
       // Button-Container oberhalb des Contents erstellen
     const buttonContainer = document.createElement('div');
     buttonContainer.className = 'quill-button-container';
-    buttonContainer.style.cssText = `
-        display: flex;
-        justify-content: flex-end;
-        margin-bottom: 8px;
-        position: relative;
-        z-index: 10;
-    `;
     
     // Edit-Button erstellen
     const editButton = document.createElement('button');
     editButton.className = 'quill-edit-button';
-    editButton.innerHTML = '✏️ Bearbeiten';
+    editButton.innerHTML = '✏️';
     editButton.title = 'Text mit WYSIWYG-Editor bearbeiten (oder Doppelklick)';
-    editButton.style.cssText = `
-        background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-        color: white;
-        border: none;
-        padding: 6px 12px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 12px;
-        font-weight: 500;
-        box-shadow: 0 1px 3px rgba(59, 130, 246, 0.3);
-        transition: all 0.2s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-    `;
+    
     
     buttonContainer.appendChild(editButton);
     
@@ -910,16 +896,18 @@ function updateEditButton(cardId, isEditing) {
     
     if (isEditing) {
         // Button zu "Speichern" ändern (grün)
-        button.innerHTML = '💾 Speichern';
+        button.innerHTML = '💾';
         button.title = 'Änderungen speichern und Editor schließen';
-        button.style.background = 'linear-gradient(135deg, #059669 0%, #047857 100%)';
-        button.style.boxShadow = '0 1px 3px rgba(5, 150, 105, 0.3)';
+        button.style.top = '40px';
+        button.style.position = 'relative';
+        button.style.right = '10px';
+
     } else {
         // Button zu "Bearbeiten" ändern (blau)
-        button.innerHTML = '✏️ Bearbeiten';
+        button.innerHTML = '✏️';
         button.title = 'Text mit WYSIWYG-Editor bearbeiten (oder Doppelklick)';
-        button.style.background = 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)';
-        button.style.boxShadow = '0 1px 3px rgba(59, 130, 246, 0.3)';
+        button.style.position = 'initial';
+
     }
 }
 
