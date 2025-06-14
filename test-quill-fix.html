@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quill.js Plugin - Bug Fix Test</title>
+    
+    <!-- CSS für die Hauptanwendung -->
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="board.css">
+    <link rel="stylesheet" href="card.css">
+    <link rel="stylesheet" href="modal.css">
+    <link rel="stylesheet" href="sidebar.css">
+    <link rel="stylesheet" href="markdown.css">
+    <link rel="stylesheet" href="quilljs-plugin.css">
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .test-header {
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            background: #f9fafb;
+        }
+        
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px 10px 5px 0;
+            font-size: 14px;
+        }
+        
+        .test-button:hover {
+            background: #2563eb;
+        }
+        
+        .test-button.secondary {
+            background: #6b7280;
+        }
+        
+        .test-button.secondary:hover {
+            background: #4b5563;
+        }
+        
+        .test-button.danger {
+            background: #dc2626;
+        }
+        
+        .test-button.danger:hover {
+            background: #b91c1c;
+        }
+        
+        .test-output {
+            background: #1f2937;
+            color: #f3f4f6;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+            white-space: pre-wrap;
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .status-success { background: #10b981; }
+        .status-error { background: #ef4444; }
+        .status-warning { background: #f59e0b; }
+        .status-info { background: #3b82f6; }
+        
+        .log-entry.success { color: #10b981; }
+        .log-entry.error { color: #ef4444; }
+        .log-entry.warning { color: #f59e0b; }
+        .log-entry.info { color: #60a5fa; }
+        
+        /* Test Card Mock */
+        .test-card-mock {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .card-content-full {
+            border: 1px dashed #9ca3af;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            background: #f9fafb;
+            position: relative;
+            min-height: 150px;
+        }
+        
+        .markdown-content {
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>🔧 Quill.js Plugin - Bug Fix Test</h1>
+            <p>Test für die behobenen Probleme: Toggle-Funktionalität, Edit-Button, Doppelklick-Events</p>
+        </div>
+        
+        <!-- Plugin Settings Mock (wie in der Sidebar) -->
+        <div class="test-section">
+            <h3>⚙️ Plugin Einstellungen (Mock Sidebar)</h3>
+            <div class="sidebar-setting">
+                <label class="toggle-label">
+                    <input type="checkbox" id="quill-enabled-toggle" onchange="toggleQuillPluginFromUI()">
+                    <span class="toggle-slider"></span>
+                    Plugin aktivieren
+                </label>
+            </div>
+            <div class="sidebar-setting">
+                <div class="setting-info">
+                    <strong>Status:</strong> <span id="quill-status">Deaktiviert</span>
+                </div>
+            </div>
+            
+            <button class="test-button" onclick="testToggleFunctionality()">Toggle testen</button>
+            <button class="test-button" onclick="forceEnable()">Force Enable</button>
+            <button class="test-button" onclick="forceDisable()">Force Disable</button>
+            <div class="test-output" id="toggle-test-output"></div>
+        </div>
+        
+        <!-- Mock Card Modal -->
+        <div class="test-section">
+            <h3>📇 Test Card (Mock Full-Card-Modal)</h3>
+            <div class="test-card-mock">
+                <h4>Test Karte mit Markdown Content</h4>
+                <div class="card-content-full" data-card-id="test-card-123" data-column-id="test-column-456">
+                    <div class="markdown-content">
+                        <h1>Test Markdown Content</h1>
+                        <p>Dies ist ein <strong>Test-Inhalt</strong> mit verschiedenen Markdown-Elementen:</p>
+                        <h2>Features</h2>
+                        <ul>
+                            <li>Listen-Element 1</li>
+                            <li>Listen-Element 2</li>
+                            <li><em>Kursiver Text</em></li>
+                        </ul>
+                        <h2>Code</h2>
+                        <pre><code>console.log('Hello World');</code></pre>
+                        <blockquote>
+                            <p>Dies ist ein Blockquote</p>
+                        </blockquote>
+                        <p><a href="https://github.com">Link zu GitHub</a></p>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="test-button" onclick="testEditButton()">Edit-Button Test</button>
+            <button class="test-button" onclick="testDoubleClick()">Doppelklick Test</button>
+            <button class="test-button" onclick="testEscKey()">ESC-Taste Test</button>
+            <div class="test-output" id="editor-test-output"></div>
+        </div>
+        
+        <!-- Debug Information -->
+        <div class="test-section">
+            <h3>🔍 Debug Information</h3>
+            <button class="test-button" onclick="showDebugInfo()">Debug Info anzeigen</button>
+            <button class="test-button" onclick="clearOutput('debug-output')">Clear</button>
+            <div class="test-output" id="debug-output"></div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+    
+    <!-- Basis-Scripts -->
+    <script src="utils.js"></script>
+    <script src="storage.js"></script>
+    <script src="colors.js"></script>
+    <script src="init.js"></script>
+    <script src="board.js"></script>
+    <script src="column.js"></script>
+    <script src="card.js"></script>
+    <script src="chatbot.js"></script>
+    
+    <!-- Plugin -->
+    <script src="quilljs-plugin.js"></script>
+    
+    <script>
+        // Test-Variablen
+        let testCardId = 'test-card-123';
+        let testColumnId = 'test-column-456';
+        let testBoardId = 'test-board-789';
+        
+        // Mock currentBoard für Tests
+        window.currentBoard = {
+            id: testBoardId,
+            name: 'Test Board für Quill.js Plugin',
+            columns: [
+                {
+                    id: testColumnId,
+                    name: 'Test Column',
+                    cards: [
+                        {
+                            id: testCardId,
+                            heading: 'Test Card mit Markdown Content',
+                            content: `# Test Markdown Content
+
+Dies ist ein **Test-Inhalt** mit verschiedenen Markdown-Elementen:
+
+## Features
+- Listen-Element 1
+- Listen-Element 2
+- *Kursiver Text*
+
+## Code
+\`\`\`javascript
+console.log('Hello World');
+\`\`\`
+
+> Dies ist ein Blockquote
+
+[Link zu GitHub](https://github.com)`,
+                            color: 'color-gradient-1',
+                            labels: 'Test, Quill, Plugin',
+                            comments: 'Dies ist ein Test-Kommentar',
+                            url: 'https://example.com',
+                            inactive: false
+                        }
+                    ]
+                }
+            ]
+        };
+        
+        // Mock saveAllBoards function
+        window.saveAllBoards = function() {
+            console.log('💾 saveAllBoards() called (mock)');
+            logToOutput('editor-test-output', '💾 Mock saveAllBoards called', 'success');
+        };
+        
+        // Logging-Funktion
+        function logToOutput(outputId, message, type = 'info') {
+            const output = document.getElementById(outputId);
+            const timestamp = new Date().toLocaleTimeString();
+            const statusClass = `status-${type}`;
+            const logClass = `log-entry ${type}`;
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = logClass;
+            logEntry.innerHTML = `<span class="status-indicator ${statusClass}"></span>[${timestamp}] ${message}`;
+            
+            output.appendChild(logEntry);
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        function clearOutput(outputId) {
+            document.getElementById(outputId).innerHTML = '';
+        }
+        
+        // Toggle-Funktionalität testen
+        function testToggleFunctionality() {
+            clearOutput('toggle-test-output');
+            logToOutput('toggle-test-output', '🔄 Teste Toggle-Funktionalität...', 'info');
+            
+            try {
+                // Aktuellen Status lesen
+                const checkbox = document.getElementById('quill-enabled-toggle');
+                const statusElement = document.getElementById('quill-status');
+                
+                logToOutput('toggle-test-output', `Checkbox checked: ${checkbox.checked}`, 'info');
+                logToOutput('toggle-test-output', `Status Text: ${statusElement.textContent}`, 'info');
+                
+                // Plugin-Status abfragen
+                if (typeof window.QuillPlugin !== 'undefined') {
+                    logToOutput('toggle-test-output', `Plugin isEnabled: ${window.QuillPlugin.isEnabled()}`, 'info');
+                    logToOutput('toggle-test-output', 'QuillPlugin object verfügbar ✅', 'success');
+                } else {
+                    logToOutput('toggle-test-output', 'QuillPlugin object nicht verfügbar ❌', 'error');
+                }
+                
+                // Checkbox umschalten und Reaktion testen
+                checkbox.checked = !checkbox.checked;
+                toggleQuillPluginFromUI();
+                
+                logToOutput('toggle-test-output', `Nach Toggle - Checkbox: ${checkbox.checked}`, 'info');
+                logToOutput('toggle-test-output', `Nach Toggle - Status: ${statusElement.textContent}`, 'info');
+                
+                if (window.QuillPlugin) {
+                    logToOutput('toggle-test-output', `Nach Toggle - Plugin: ${window.QuillPlugin.isEnabled()}`, 'info');
+                }
+                
+                logToOutput('toggle-test-output', '✅ Toggle-Test abgeschlossen', 'success');
+                
+            } catch (error) {
+                logToOutput('toggle-test-output', `❌ Toggle-Test Fehler: ${error.message}`, 'error');
+            }
+        }
+        
+        function forceEnable() {
+            logToOutput('toggle-test-output', '🔄 Force Enable...', 'info');
+            if (window.QuillPlugin) {
+                window.QuillPlugin.enable();
+                logToOutput('toggle-test-output', '✅ Plugin enabled via QuillPlugin.enable()', 'success');
+            } else {
+                toggleQuillPluginFromUI(true);
+                logToOutput('toggle-test-output', '✅ Plugin enabled via toggleQuillPluginFromUI(true)', 'success');
+            }
+        }
+        
+        function forceDisable() {
+            logToOutput('toggle-test-output', '🔄 Force Disable...', 'info');
+            if (window.QuillPlugin) {
+                window.QuillPlugin.disable();
+                logToOutput('toggle-test-output', '✅ Plugin disabled via QuillPlugin.disable()', 'success');
+            } else {
+                toggleQuillPluginFromUI(false);
+                logToOutput('toggle-test-output', '✅ Plugin disabled via toggleQuillPluginFromUI(false)', 'success');
+            }
+        }
+        
+        // Edit-Button Test
+        function testEditButton() {
+            clearOutput('editor-test-output');
+            logToOutput('editor-test-output', '🎯 Teste Edit-Button Funktionalität...', 'info');
+            
+            try {
+                const cardContent = document.querySelector('.card-content-full');
+                const editButton = cardContent.querySelector('.quill-edit-button');
+                
+                if (editButton) {
+                    logToOutput('editor-test-output', '✅ Edit-Button gefunden', 'success');
+                    logToOutput('editor-test-output', '🖱️ Klicke Edit-Button...', 'info');
+                    editButton.click();
+                    
+                    // Prüfen ob Editor aktiviert wurde
+                    setTimeout(() => {
+                        if (window.QuillPlugin && typeof window.QuillPlugin.isEnabled === 'function') {
+                            const hasActiveEditor = document.querySelector('.ql-editor');
+                            if (hasActiveEditor) {
+                                logToOutput('editor-test-output', '✅ Editor erfolgreich aktiviert', 'success');
+                            } else {
+                                logToOutput('editor-test-output', '❌ Editor nicht aktiviert', 'error');
+                            }
+                        }
+                    }, 1000);
+                    
+                } else {
+                    logToOutput('editor-test-output', '❌ Edit-Button nicht gefunden', 'error');
+                    logToOutput('editor-test-output', '💡 Stelle sicher, dass das Plugin aktiviert ist', 'warning');
+                }
+                
+            } catch (error) {
+                logToOutput('editor-test-output', `❌ Edit-Button Test Fehler: ${error.message}`, 'error');
+            }
+        }
+        
+        // Doppelklick Test
+        function testDoubleClick() {
+            logToOutput('editor-test-output', '🖱️ Teste Doppelklick Funktionalität...', 'info');
+            
+            try {
+                const markdownContent = document.querySelector('.markdown-content');
+                if (markdownContent) {
+                    logToOutput('editor-test-output', '✅ Markdown-Content gefunden', 'success');
+                    
+                    // Doppelklick simulieren
+                    const event = new MouseEvent('dblclick', {
+                        bubbles: true,
+                        cancelable: true,
+                        view: window
+                    });
+                    
+                    markdownContent.dispatchEvent(event);
+                    logToOutput('editor-test-output', '🖱️ Doppelklick Event ausgelöst', 'info');
+                    
+                    // Prüfen ob Editor aktiviert wurde
+                    setTimeout(() => {
+                        const hasActiveEditor = document.querySelector('.ql-editor');
+                        if (hasActiveEditor) {
+                            logToOutput('editor-test-output', '✅ Editor durch Doppelklick aktiviert', 'success');
+                        } else {
+                            logToOutput('editor-test-output', '❌ Editor nicht durch Doppelklick aktiviert', 'error');
+                        }
+                    }, 1000);
+                    
+                } else {
+                    logToOutput('editor-test-output', '❌ Markdown-Content nicht gefunden', 'error');
+                }
+                
+            } catch (error) {
+                logToOutput('editor-test-output', `❌ Doppelklick Test Fehler: ${error.message}`, 'error');
+            }
+        }
+        
+        // ESC-Taste Test
+        function testEscKey() {
+            logToOutput('editor-test-output', '⌨️ Teste ESC-Taste Funktionalität...', 'info');
+            
+            try {
+                // ESC-Taste simulieren
+                const event = new KeyboardEvent('keydown', {
+                    key: 'Escape',
+                    bubbles: true,
+                    cancelable: true
+                });
+                
+                document.dispatchEvent(event);
+                logToOutput('editor-test-output', '⌨️ ESC KeyDown Event ausgelöst', 'info');
+                
+                // Prüfen ob Editor deaktiviert wurde
+                setTimeout(() => {
+                    const hasActiveEditor = document.querySelector('.ql-editor');
+                    if (!hasActiveEditor) {
+                        logToOutput('editor-test-output', '✅ Editor durch ESC deaktiviert', 'success');
+                    } else {
+                        logToOutput('editor-test-output', '❌ Editor noch aktiv nach ESC', 'warning');
+                    }
+                }, 500);
+                
+            } catch (error) {
+                logToOutput('editor-test-output', `❌ ESC Test Fehler: ${error.message}`, 'error');
+            }
+        }
+        
+        // Debug Information anzeigen
+        function showDebugInfo() {
+            clearOutput('debug-output');
+            logToOutput('debug-output', '🔍 Debug Information:', 'info');
+            
+            try {
+                // Plugin Status
+                logToOutput('debug-output', '=== PLUGIN STATUS ===', 'info');
+                logToOutput('debug-output', `window.QuillPlugin exists: ${typeof window.QuillPlugin !== 'undefined'}`, 'info');
+                
+                if (window.QuillPlugin) {
+                    logToOutput('debug-output', `Plugin enabled: ${window.QuillPlugin.isEnabled()}`, 'info');
+                    logToOutput('debug-output', `Plugin settings: ${JSON.stringify(window.QuillPlugin.settings)}`, 'info');
+                }
+                
+                // DOM Elements
+                logToOutput('debug-output', '=== DOM ELEMENTS ===', 'info');
+                const checkbox = document.getElementById('quill-enabled-toggle');
+                const statusElement = document.getElementById('quill-status');
+                const cardContent = document.querySelector('.card-content-full');
+                const editButton = cardContent ? cardContent.querySelector('.quill-edit-button') : null;
+                
+                logToOutput('debug-output', `Checkbox found: ${!!checkbox}`, 'info');
+                logToOutput('debug-output', `Status element found: ${!!statusElement}`, 'info');
+                logToOutput('debug-output', `Card content found: ${!!cardContent}`, 'info');
+                logToOutput('debug-output', `Edit button found: ${!!editButton}`, 'info');
+                
+                if (checkbox) {
+                    logToOutput('debug-output', `Checkbox checked: ${checkbox.checked}`, 'info');
+                }
+                
+                if (statusElement) {
+                    logToOutput('debug-output', `Status text: ${statusElement.textContent}`, 'info');
+                }
+                
+                if (cardContent) {
+                    logToOutput('debug-output', `Card data-card-id: ${cardContent.getAttribute('data-card-id')}`, 'info');
+                    logToOutput('debug-output', `Card data-column-id: ${cardContent.getAttribute('data-column-id')}`, 'info');
+                }
+                
+                // Active Editors
+                logToOutput('debug-output', '=== ACTIVE EDITORS ===', 'info');
+                const activeEditors = document.querySelectorAll('.ql-editor');
+                logToOutput('debug-output', `Active Quill editors: ${activeEditors.length}`, 'info');
+                
+                // Data Structure
+                logToOutput('debug-output', '=== DATA STRUCTURE ===', 'info');
+                logToOutput('debug-output', `window.currentBoard exists: ${!!window.currentBoard}`, 'info');
+                if (window.currentBoard) {
+                    logToOutput('debug-output', `Board columns: ${window.currentBoard.columns ? window.currentBoard.columns.length : 0}`, 'info');
+                    if (window.currentBoard.columns && window.currentBoard.columns[0]) {
+                        logToOutput('debug-output', `Cards in first column: ${window.currentBoard.columns[0].cards ? window.currentBoard.columns[0].cards.length : 0}`, 'info');
+                    }
+                }
+                
+                logToOutput('debug-output', '✅ Debug Info vollständig', 'success');
+                
+            } catch (error) {
+                logToOutput('debug-output', `❌ Debug Info Fehler: ${error.message}`, 'error');
+            }
+        }
+        
+        // Automatischer Test nach dem Laden
+        setTimeout(() => {
+            logToOutput('debug-output', '🚀 Automatischer Initialisierungs-Test...', 'info');
+            showDebugInfo();
+        }, 2000);
+        
+    </script>
+</body>
+</html>

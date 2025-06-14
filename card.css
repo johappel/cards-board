@@ -412,7 +412,6 @@
     color: #2d3748;
     font-size: 1.05rem;
     line-height: 1.6;
-    white-space: pre-line;
     margin: 0;
     padding: 1rem;
     background: #f7fafc;
@@ -420,11 +419,37 @@
     border: 1px solid #e2e8f0;
     min-height: 400px;
     overflow: auto;
+    /* Verbesserte Zeilenumbruch-Behandlung - OHNE pre-wrap */
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: normal; /* WICHTIG: normal statt pre-wrap */
+    overflow-x: hidden;
+    max-width: 100%;
 }
-
+.card-content-full p{
+    overflow-wrap: break-word;
+    word-break: break-word;
+    word-wrap: break-word;
+    white-space: normal; /* WICHTIG: normal statt pre-wrap */
+}
+.card-content-full div {
+    overflow-wrap: break-word;
+    word-break: break-word;
+    word-wrap: break-word;
+    white-space: normal; /* WICHTIG: normal statt pre-wrap */
+}
 .card-content-full ul, .card-content-full ol{
     white-space: normal;
     margin: 0.5rem 0;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+.card-content-full li {
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
 }
 
 /* Comments and URLs in Full Modal */

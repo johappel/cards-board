@@ -370,3 +370,127 @@
     border-right: 1px solid #e2e8f0;
     border-top: none;
 }
+
+/* ===== QUILL EDITOR WORD WRAP & TEXT FLOW ===== */
+
+/* Zeilenumbruch für Quill Editor erzwingen */
+.card-content-full .ql-editor {
+    /* Erzwinge Wortumbruch für lange Wörter und Zeilen */
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    white-space: normal !important; /* WICHTIG: normal statt pre-wrap */
+    
+    /* Verhindere horizontales Scrollen */
+    overflow-x: hidden !important;
+    max-width: 100% !important;
+    
+    /* Bessere Lesbarkeit */
+    line-height: 1.6 !important;
+    padding: 15px !important;
+    font-family: inherit !important;
+    font-size: 14px !important;
+}
+
+/* Spezielle Behandlung für verschiedene Content-Typen im Quill Editor */
+.card-content-full .ql-editor p {
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    white-space: normal !important; /* WICHTIG: normal statt pre-wrap */
+    margin-bottom: 1em !important;
+}
+
+.card-content-full .ql-editor div {
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    white-space: normal !important; /* WICHTIG: normal statt pre-wrap */
+}
+
+/* Für Code-Blöcke spezielles Handling */
+.card-content-full .ql-editor pre {
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+    overflow-x: auto !important;
+    max-width: 100% !important;
+}
+
+/* Listen sollten auch umbrechen */
+.card-content-full .ql-editor ul,
+.card-content-full .ql-editor ol,
+.card-content-full .ql-editor li {
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+}
+
+/* Quill Container selbst auch sicherstellen */
+.card-content-full .ql-container {
+    border: 1px solid #ccc;
+    background: white;
+    min-height: 200px;
+    overflow-x: hidden !important; /* Verhindere horizontales Scrollen */
+    word-wrap: break-word !important;
+}
+
+/* Markdown Content Anzeige - auch hier Zeilenumbruch sicherstellen */
+.card-content-full .markdown-content {
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    white-space: normal !important; /* WICHTIG: normal für korrekte Zeilenumbrüche bei Leerzeichen */
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+}
+
+.card-content-full .markdown-content p,
+.card-content-full .markdown-content div {
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    white-space: normal !important; /* WICHTIG: normal für korrekte Zeilenumbrüche bei Leerzeichen */
+}
+
+/* ===== IFRAME EMBED SUPPORT ===== */
+
+/* iframe-embed Container Styling */
+.card-content-full .iframe-embed {
+    margin: 1rem 0;
+    padding: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #000;
+    position: relative;
+}
+
+.card-content-full .iframe-embed iframe {
+    width: 100% !important;
+    min-height: 315px;
+    border: none;
+    display: block;
+}
+
+/* Quill Editor iframe-embed Styling */
+.card-content-full .ql-editor .iframe-embed {
+    margin: 1rem 0 !important;
+    padding: 0 !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+    background: #000 !important;
+    position: relative !important;
+}
+
+.card-content-full .ql-editor .iframe-embed iframe {
+    width: 100% !important;
+    min-height: 315px !important;
+    border: none !important;
+    display: block !important;
+}
+
+/* Verhindere dass Quill iframe-Elemente als Text behandelt */
+.card-content-full .ql-editor iframe {
+    pointer-events: auto !important;
+    -webkit-user-select: none !important;
+    user-select: none !important;
+}

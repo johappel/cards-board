@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quill ESC-Taste Test</title>
+    
+    <!-- CSS für die Hauptanwendung -->
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="board.css">
+    <link rel="stylesheet" href="card.css">
+    <link rel="stylesheet" href="modal.css">
+    <link rel="stylesheet" href="sidebar.css">
+    <link rel="stylesheet" href="markdown.css">
+    <link rel="stylesheet" href="quilljs-plugin.css">
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        .test-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            background: #f9fafb;
+        }
+        
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px 10px 5px 0;
+            font-size: 14px;
+        }
+        
+        .test-button:hover {
+            background: #2563eb;
+        }
+        
+        .test-button.danger {
+            background: #dc2626;
+        }
+        
+        .test-button.danger:hover {
+            background: #b91c1c;
+        }
+        
+        .test-output {
+            background: #1f2937;
+            color: #f3f4f6;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px;
+            white-space: pre-wrap;
+        }
+        
+        .log-entry.success { color: #10b981; }
+        .log-entry.error { color: #ef4444; }
+        .log-entry.warning { color: #f59e0b; }
+        .log-entry.info { color: #60a5fa; }
+        
+        /* Test Card Mock */
+        .test-card-mock {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .card-content-full {
+            border: 2px solid #3b82f6;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            background: #f9fafb;
+            position: relative;
+            min-height: 200px;
+        }
+        
+        .markdown-content {
+            line-height: 1.6;
+        }
+        
+        .status-box {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .status-active {
+            background: #ecfdf5;
+            border-color: #10b981;
+            color: #065f46;
+        }
+        
+        .status-inactive {
+            background: #fef2f2;
+            border-color: #ef4444;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>🔧 Quill ESC-Taste & Strukturwiederherstellung Test</h1>
+            <p>Test für die korrekte Wiederherstellung der markdown-content Struktur nach ESC</p>
+        </div>
+        
+        <!-- Plugin Settings -->
+        <div class="test-section">
+            <h3>⚙️ Plugin Setup</h3>
+            <div class="sidebar-setting">
+                <label class="toggle-label">
+                    <input type="checkbox" id="quill-enabled-toggle" onchange="toggleQuillPluginFromUI()">
+                    <span class="toggle-slider"></span>
+                    Plugin aktivieren
+                </label>
+            </div>
+            <div class="sidebar-setting">
+                <div class="setting-info">
+                    <strong>Status:</strong> <span id="quill-status">Deaktiviert</span>
+                </div>
+            </div>
+            
+            <button class="test-button" onclick="forceEnable()">Force Enable</button>
+            <button class="test-button" onclick="showDebugInfo()">Debug Info</button>
+        </div>
+        
+        <!-- Test Card -->
+        <div class="test-section">
+            <h3>📇 Test Card mit Original Struktur</h3>
+            <div class="test-card-mock">
+                <h4>Test Karte - Originalstruktur überwachen</h4>
+                
+                <!-- Status Monitor -->
+                <div id="structure-status" class="status-box status-inactive">
+                    Status: Warte auf Initialisierung...
+                </div>
+                
+                <!-- Mock Full-Card-Modal Struktur -->
+                <div class="card-content-full" data-card-id="test-card-esc" data-column-id="test-column-esc">
+                    <div class="markdown-content">
+                        <h1>Original Markdown Content</h1>
+                        <p>Dies ist der <strong>ursprüngliche Inhalt</strong> der in der .markdown-content div steht.</p>
+                        <h2>Wichtige Punkte:</h2>
+                        <ul>
+                            <li>Diese Struktur muss nach ESC <strong>exakt wiederhergestellt</strong> werden</li>
+                            <li>Die <code>data-card-id</code> und <code>data-column-id</code> müssen erhalten bleiben</li>
+                            <li>Der <strong>Content muss aus localStorage synchronisiert</strong> werden</li>
+                        </ul>
+                        <h2>Test-Verfahren:</h2>
+                        <ol>
+                            <li>Editor mit Edit-Button oder Doppelklick aktivieren</li>
+                            <li>Content im Editor ändern (wird automatisch gespeichert)</li>
+                            <li>ESC drücken</li>
+                            <li>Prüfen ob originale Struktur mit neuem Content da ist</li>
+                        </ol>
+                        <blockquote>
+                            <p><strong>Erwartet:</strong> Nach ESC sollte dieser Content durch den im Editor geänderten Content ersetzt werden, aber in der korrekten .markdown-content Struktur mit data-Attributen.</p>
+                        </blockquote>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="test-button" onclick="activateEditor()">1. Editor aktivieren</button>
+            <button class="test-button" onclick="modifyContent()">2. Content ändern</button>
+            <button class="test-button" onclick="simulateEsc()">3. ESC simulieren</button>
+            <button class="test-button" onclick="inspectStructure()">4. Struktur prüfen</button>
+            <button class="test-button danger" onclick="resetTest()">Reset Test</button>
+            
+            <div class="test-output" id="test-output"></div>
+        </div>
+        
+        <!-- Structure Inspector -->
+        <div class="test-section">
+            <h3>🔍 Struktur-Inspektor</h3>
+            <button class="test-button" onclick="inspectCurrentStructure()">Aktuelle Struktur analysieren</button>
+            <button class="test-button" onclick="compareWithOriginal()">Mit Original vergleichen</button>
+            <button class="test-button" onclick="clearOutput('inspector-output')">Clear</button>
+            <div class="test-output" id="inspector-output"></div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+    <script src="utils.js"></script>
+    <script src="storage.js"></script>
+    <script src="colors.js"></script>
+    <script src="init.js"></script>
+    <script src="board.js"></script>
+    <script src="column.js"></script>
+    <script src="card.js"></script>
+    <script src="chatbot.js"></script>
+    <script src="quilljs-plugin.js"></script>
+    
+    <script>
+        // Test-Daten
+        const testCardId = 'test-card-esc';
+        const testColumnId = 'test-column-esc';
+        
+        // Mock currentBoard
+        window.currentBoard = {
+            id: 'test-board-esc',
+            name: 'ESC Test Board',
+            columns: [
+                {
+                    id: testColumnId,
+                    name: 'Test Column',
+                    cards: [
+                        {
+                            id: testCardId,
+                            heading: 'ESC Test Card',
+                            content: `# Original Markdown Content
+
+Dies ist der **ursprüngliche Inhalt** der in der .markdown-content div steht.
+
+## Wichtige Punkte:
+- Diese Struktur muss nach ESC **exakt wiederhergestellt** werden
+- Die \`data-card-id\` und \`data-column-id\` müssen erhalten bleiben
+- Der **Content muss aus localStorage synchronisiert** werden
+
+## Test-Verfahren:
+1. Editor mit Edit-Button oder Doppelklick aktivieren
+2. Content im Editor ändern (wird automatisch gespeichert)  
+3. ESC drücken
+4. Prüfen ob originale Struktur mit neuem Content da ist
+
+> **Erwartet:** Nach ESC sollte dieser Content durch den im Editor geänderten Content ersetzt werden, aber in der korrekten .markdown-content Struktur mit data-Attributen.`,
+                            color: 'color-gradient-1',
+                            labels: 'Test, ESC, Structure',
+                            comments: '',
+                            url: '',
+                            inactive: false
+                        }
+                    ]
+                }
+            ]
+        };
+        
+        // Mock saveAllBoards
+        window.saveAllBoards = function() {
+            console.log('💾 saveAllBoards() called (mock)');
+            logToOutput('test-output', '💾 Mock saveAllBoards called', 'success');
+        };
+        
+        // Originale Struktur für Vergleich speichern
+        let originalStructure = null;
+        
+        // Status-Monitor
+        function updateStatus(message, type = 'info') {
+            const statusBox = document.getElementById('structure-status');
+            statusBox.textContent = 'Status: ' + message;
+            statusBox.className = 'status-box ' + (type === 'success' ? 'status-active' : 'status-inactive');
+        }
+        
+        // Logging-Funktion
+        function logToOutput(outputId, message, type = 'info') {
+            const output = document.getElementById(outputId);
+            const timestamp = new Date().toLocaleTimeString();
+            const logClass = `log-entry ${type}`;
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = logClass;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            
+            output.appendChild(logEntry);
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        function clearOutput(outputId) {
+            document.getElementById(outputId).innerHTML = '';
+        }
+        
+        // Plugin aktivieren
+        function forceEnable() {
+            if (window.QuillPlugin) {
+                window.QuillPlugin.enable();
+                updateStatus('Plugin aktiviert', 'success');
+                logToOutput('test-output', '✅ Plugin aktiviert', 'success');
+            }
+        }
+        
+        // Editor aktivieren
+        function activateEditor() {
+            logToOutput('test-output', '🔄 Aktiviere Editor...', 'info');
+            
+            const cardContent = document.querySelector('.card-content-full');
+            const editButton = cardContent.querySelector('.quill-edit-button');
+            
+            if (editButton) {
+                editButton.click();
+                updateStatus('Editor aktiviert', 'success');
+                logToOutput('test-output', '✅ Editor aktiviert durch Edit-Button', 'success');
+            } else {
+                // Fallback: Doppelklick
+                const markdownContent = cardContent.querySelector('.markdown-content');
+                if (markdownContent) {
+                    markdownContent.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+                    updateStatus('Editor aktiviert (Doppelklick)', 'success');
+                    logToOutput('test-output', '✅ Editor aktiviert durch Doppelklick', 'success');
+                } else {
+                    updateStatus('Fehler: Kein Editor aktiviert', 'error');
+                    logToOutput('test-output', '❌ Konnte Editor nicht aktivieren', 'error');
+                }
+            }
+        }
+        
+        // Content im Editor ändern
+        function modifyContent() {
+            const editor = document.querySelector('.ql-editor');
+            if (editor) {
+                const newContent = `<h1>GEÄNDERTER CONTENT</h1>
+<p>Dieser Content wurde <strong>im Editor geändert</strong> und sollte nach ESC korrekt angezeigt werden.</p>
+<h2>Änderungen:</h2>
+<ul>
+<li>Neuer Titel</li>
+<li>Geänderte Beschreibung</li>
+<li>Zusätzlicher Absatz</li>
+</ul>
+<p><em>Änderungszeit: ${new Date().toLocaleTimeString()}</em></p>`;
+                
+                editor.innerHTML = newContent;
+                updateStatus('Content geändert - Auto-Save läuft...', 'success');
+                logToOutput('test-output', '✅ Content im Editor geändert', 'success');
+                
+                // Kurz warten damit Auto-Save wirkt
+                setTimeout(() => {
+                    updateStatus('Content gespeichert', 'success');
+                    logToOutput('test-output', '💾 Auto-Save sollte abgeschlossen sein', 'info');
+                }, 1000);
+            } else {
+                updateStatus('Fehler: Kein Editor aktiv', 'error');
+                logToOutput('test-output', '❌ Kein aktiver Editor gefunden', 'error');
+            }
+        }
+        
+        // ESC-Taste simulieren
+        function simulateEsc() {
+            logToOutput('test-output', '⌨️ Simuliere ESC-Taste...', 'info');
+            updateStatus('ESC gedrückt - Editor wird deaktiviert...', 'info');
+            
+            const event = new KeyboardEvent('keydown', {
+                key: 'Escape',
+                bubbles: true,
+                cancelable: true
+            });
+            
+            document.dispatchEvent(event);
+            
+            // Kurz warten und dann Status prüfen
+            setTimeout(() => {
+                inspectStructure();
+            }, 500);
+        }
+        
+        // Struktur nach ESC prüfen
+        function inspectStructure() {
+            logToOutput('test-output', '🔍 Prüfe Struktur nach ESC...', 'info');
+            
+            const cardContent = document.querySelector('.card-content-full');
+            const markdownContent = cardContent.querySelector('.markdown-content');
+            const activeEditor = document.querySelector('.ql-editor');
+            
+            logToOutput('test-output', '=== STRUKTUR-ANALYSE ===', 'info');
+            logToOutput('test-output', `card-content-full vorhanden: ${!!cardContent}`, 'info');
+            logToOutput('test-output', `markdown-content vorhanden: ${!!markdownContent}`, 'info');
+            logToOutput('test-output', `Aktiver Editor vorhanden: ${!!activeEditor}`, 'info');
+            
+            if (cardContent) {
+                const cardId = cardContent.getAttribute('data-card-id');
+                const columnId = cardContent.getAttribute('data-column-id');
+                logToOutput('test-output', `data-card-id: ${cardId || 'FEHLT!'}`, cardId ? 'success' : 'error');
+                logToOutput('test-output', `data-column-id: ${columnId || 'FEHLT!'}`, columnId ? 'success' : 'error');
+            }
+            
+            if (markdownContent) {
+                const content = markdownContent.innerHTML;
+                logToOutput('test-output', `Content Länge: ${content.length} Zeichen`, 'info');
+                logToOutput('test-output', `Content enthält 'GEÄNDERTER': ${content.includes('GEÄNDERTER')}`, 
+                    content.includes('GEÄNDERTER') ? 'success' : 'warning');
+                
+                if (content.includes('GEÄNDERTER')) {
+                    updateStatus('✅ ESC Test erfolgreich - Struktur korrekt', 'success');
+                    logToOutput('test-output', '✅ ERFOLG: Struktur korrekt wiederhergestellt', 'success');
+                } else {
+                    updateStatus('❌ Content nicht aktualisiert', 'error');
+                    logToOutput('test-output', '❌ FEHLER: Content nicht synchronisiert', 'error');
+                }
+            } else {
+                updateStatus('❌ markdown-content Struktur fehlt', 'error');
+                logToOutput('test-output', '❌ FEHLER: markdown-content div fehlt', 'error');
+            }
+            
+            if (!activeEditor) {
+                logToOutput('test-output', '✅ Editor korrekt deaktiviert', 'success');
+            } else {
+                logToOutput('test-output', '❌ Editor noch aktiv nach ESC', 'error');
+            }
+        }
+        
+        // Test zurücksetzen
+        function resetTest() {
+            logToOutput('test-output', '🔄 Teste wird zurückgesetzt...', 'info');
+            
+            // Alle aktiven Editoren deaktivieren
+            if (window.QuillPlugin) {
+                window.QuillPlugin.deactivateAll();
+            }
+            
+            // Original-Struktur wiederherstellen
+            const cardContent = document.querySelector('.card-content-full');
+            if (cardContent) {
+                cardContent.innerHTML = `<div class="markdown-content">
+                    <h1>Original Markdown Content</h1>
+                    <p>Dies ist der <strong>ursprüngliche Inhalt</strong> der in der .markdown-content div steht.</p>
+                    <h2>Wichtige Punkte:</h2>
+                    <ul>
+                        <li>Diese Struktur muss nach ESC <strong>exakt wiederhergestellt</strong> werden</li>
+                        <li>Die <code>data-card-id</code> und <code>data-column-id</code> müssen erhalten bleiben</li>
+                        <li>Der <strong>Content muss aus localStorage synchronisiert</strong> werden</li>
+                    </ul>
+                    <h2>Test-Verfahren:</h2>
+                    <ol>
+                        <li>Editor mit Edit-Button oder Doppelklick aktivieren</li>
+                        <li>Content im Editor ändern (wird automatisch gespeichert)</li>
+                        <li>ESC drücken</li>
+                        <li>Prüfen ob originale Struktur mit neuem Content da ist</li>
+                    </ol>
+                    <blockquote>
+                        <p><strong>Erwartet:</strong> Nach ESC sollte dieser Content durch den im Editor geänderten Content ersetzt werden, aber in der korrekten .markdown-content Struktur mit data-Attributen.</p>
+                    </blockquote>
+                </div>`;
+                
+                // Data-Attribute sicherstellen
+                cardContent.setAttribute('data-card-id', testCardId);
+                cardContent.setAttribute('data-column-id', testColumnId);
+                
+                // Edit-Button wieder hinzufügen
+                if (window.QuillPlugin && window.QuillPlugin.isEnabled()) {
+                    setTimeout(() => {
+                        const addEditButtonToCard = window.QuillPlugin.addEditButtonToCard || 
+                            window.addEditButtonToCard;
+                        if (addEditButtonToCard) {
+                            addEditButtonToCard(cardContent);
+                        }
+                    }, 100);
+                }
+            }
+            
+            // Originale Card-Daten auch zurücksetzen
+            if (window.currentBoard && window.currentBoard.columns[0].cards[0]) {
+                window.currentBoard.columns[0].cards[0].content = `# Original Markdown Content
+
+Dies ist der **ursprüngliche Inhalt** der in der .markdown-content div steht.
+
+## Wichtige Punkte:
+- Diese Struktur muss nach ESC **exakt wiederhergestellt** werden
+- Die \`data-card-id\` und \`data-column-id\` müssen erhalten bleiben
+- Der **Content muss aus localStorage synchronisiert** werden
+
+## Test-Verfahren:
+1. Editor mit Edit-Button oder Doppelklick aktivieren
+2. Content im Editor ändern (wird automatisch gespeichert)  
+3. ESC drücken
+4. Prüfen ob originale Struktur mit neuem Content da ist
+
+> **Erwartet:** Nach ESC sollte dieser Content durch den im Editor geänderten Content ersetzt werden, aber in der korrekten .markdown-content Struktur mit data-Attributen.`;
+            }
+            
+            updateStatus('Test zurückgesetzt', 'info');
+            logToOutput('test-output', '✅ Test zurückgesetzt', 'success');
+        }
+        
+        // Debug Info
+        function showDebugInfo() {
+            clearOutput('inspector-output');
+            logToOutput('inspector-output', '🔍 Debug Information:', 'info');
+            
+            logToOutput('inspector-output', `Plugin verfügbar: ${typeof window.QuillPlugin !== 'undefined'}`, 'info');
+            if (window.QuillPlugin) {
+                logToOutput('inspector-output', `Plugin aktiviert: ${window.QuillPlugin.isEnabled()}`, 'info');
+            }
+            
+            const cardContent = document.querySelector('.card-content-full');
+            logToOutput('inspector-output', `card-content-full: ${!!cardContent}`, 'info');
+            
+            if (cardContent) {
+                logToOutput('inspector-output', `Edit-Button: ${!!cardContent.querySelector('.quill-edit-button')}`, 'info');
+                logToOutput('inspector-output', `markdown-content: ${!!cardContent.querySelector('.markdown-content')}`, 'info');
+            }
+        }
+        
+        // Aktuelle Struktur analysieren
+        function inspectCurrentStructure() {
+            clearOutput('inspector-output');
+            logToOutput('inspector-output', '📋 Aktuelle DOM-Struktur:', 'info');
+            
+            const cardContent = document.querySelector('.card-content-full');
+            if (cardContent) {
+                logToOutput('inspector-output', 'card-content-full innerHTML:', 'info');
+                logToOutput('inspector-output', cardContent.innerHTML.substring(0, 300) + '...', 'info');
+                
+                logToOutput('inspector-output', `CSS-Klassen: ${cardContent.className}`, 'info');
+                logToOutput('inspector-output', `data-card-id: ${cardContent.getAttribute('data-card-id')}`, 'info');
+                logToOutput('inspector-output', `data-column-id: ${cardContent.getAttribute('data-column-id')}`, 'info');
+            }
+        }
+        
+        // Mit Original vergleichen
+        function compareWithOriginal() {
+            logToOutput('inspector-output', '🔍 Vergleich mit erwarteter Struktur:', 'info');
+            
+            const cardContent = document.querySelector('.card-content-full');
+            const markdownContent = cardContent ? cardContent.querySelector('.markdown-content') : null;
+            
+            const checks = [
+                {
+                    test: !!cardContent,
+                    name: 'card-content-full Element vorhanden'
+                },
+                {
+                    test: !!markdownContent,
+                    name: 'markdown-content div vorhanden'
+                },
+                {
+                    test: cardContent && cardContent.getAttribute('data-card-id') === testCardId,
+                    name: 'data-card-id korrekt'
+                },
+                {
+                    test: cardContent && cardContent.getAttribute('data-column-id') === testColumnId,
+                    name: 'data-column-id korrekt'
+                },
+                {
+                    test: !document.querySelector('.ql-editor'),
+                    name: 'Kein aktiver Quill-Editor'
+                },
+                {
+                    test: !document.querySelector('.ql-toolbar'),
+                    name: 'Keine Quill-Toolbar'
+                }
+            ];
+            
+            let passed = 0;
+            checks.forEach(check => {
+                const status = check.test ? '✅' : '❌';
+                const type = check.test ? 'success' : 'error';
+                logToOutput('inspector-output', `${status} ${check.name}`, type);
+                if (check.test) passed++;
+            });
+            
+            logToOutput('inspector-output', `Ergebnis: ${passed}/${checks.length} Tests bestanden`, 
+                passed === checks.length ? 'success' : 'warning');
+        }
+        
+        // Auto-Init
+        setTimeout(() => {
+            if (window.QuillPlugin) {
+                window.QuillPlugin.enable();
+                updateStatus('Plugin automatisch aktiviert', 'success');
+            }
+            showDebugInfo();
+        }, 1000);
+        
+    </script>
+</body>
+</html>

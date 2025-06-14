@@ -389,14 +389,15 @@ function showCardFullModal(cardId, columnId) {
                         <button class="close-btn" onclick="closeCardFullModal()" title="Schließen">&times;</button>
                     </div>
                 </div>
-            </div>            <div class="modal-body">${foundCard.thumbnail ? `<div class='card-thumb-modal'><img src='${foundCard.thumbnail}' alt='thumbnail' /></div>` : ''}
+            </div>            
+            <div class="modal-body">${foundCard.thumbnail ? `<div class='card-thumb-modal'><img src='${foundCard.thumbnail}' alt='thumbnail' /></div>` : ''}
                 <div class="card-content-full" data-card-id="${cardId}" data-column-id="${foundColumn.id}">${window.renderMarkdownToHtml ? window.renderMarkdownToHtml(foundCard.content || '') : (foundCard.content || '')}</div>
                 ${foundCard.comments ? `<div class="card-comment">${window.renderMarkdownToHtml ? window.renderMarkdownToHtml(foundCard.comments) : foundCard.comments}</div>` : ''}
-                ${foundCard.url ? `<div class="card-url"><a href="${card.url}" class="card-url-link" target="_blank" rel="noopener noreferrer">${foundCard.url}</a></div>` : ''}
+                ${foundCard.url ? `<div class="card-url"><a href="${foundCard.url}" class="card-url-link" target="_blank" rel="noopener noreferrer">${foundCard.url}</a></div>` : ''}
                 ${foundCard.labels ? `<div class="card-labels-full">${foundCard.labels.split(',').map(label => {
-        const colorClass = getLabelColorClass(label.trim());
-        return `<span class="card-label-full ${colorClass}">${label.trim()}</span>`;
-    }).join('')}</div>` : ''}
+                    const colorClass = getLabelColorClass(label.trim());
+                    return `<span class="card-label-full ${colorClass}">${label.trim()}</span>`;
+                }).join('')}</div>` : ''}
             </div>
         </div>
     `;
@@ -458,7 +459,8 @@ function updateFullCardModal(cardId) {
                         <button class="close-btn" onclick="closeCardFullModal()" title="Schließen">&times;</button>
                     </div>
                 </div>
-            </div>            <div class="modal-body">                ${card.thumbnail ? `<div class='card-thumb-modal'><img src='${card.thumbnail}' alt='thumbnail' /></div>` : ''}
+            </div>            
+            <div class="modal-body">${card.thumbnail ? `<div class='card-thumb-modal'><img src='${card.thumbnail}' alt='thumbnail' /></div>` : ''}
                 <div class="card-content-full" data-card-id="${cardId}" data-column-id="${column.id}">${window.renderMarkdownToHtml ? window.renderMarkdownToHtml(card.content || '') : (card.content || '')}</div>
                 ${card.comments ? `<div class="card-comment">${window.renderMarkdownToHtml ? window.renderMarkdownToHtml(card.comments) : card.comments}</div>` : ''}
                 ${card.url ? `<div class="card-url"><a href="${card.url}" class="card-url-link" target="_blank" rel="noopener noreferrer">${card.url}</a></div>` : ''}

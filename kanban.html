@@ -152,7 +152,7 @@
                 <h4>📝 WYSIWYG Editor (Quill.js)</h4>
                 <div class="sidebar-setting">
                     <label class="toggle-label">
-                        <input type="checkbox" id="quill-enabled-toggle" onchange="toggleQuillPlugin()">
+                        <input type="checkbox" id="quill-enabled-toggle" onchange="toggleQuillPluginFromUI()">
                         <span class="toggle-slider"></span>
                         Plugin aktivieren
                     </label>
@@ -975,13 +975,14 @@
                 }
             }, 2000);
         });
+        
     </script>
     
     <!-- Nostr Publishing Test Script -->
     <script src="test-publishing.js"></script>
     
     <!-- Quill.js WYSIWYG Editor Plugin -->
-    <script src="quilljs-plugin-manual.js"></script>
+    <script src="quilljs-plugin.js"></script>
    
 </script>
 </html>
