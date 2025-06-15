@@ -180,11 +180,12 @@ function createColumnElement(column, index) {
     columnEl.className = `kanban-column ${colorClass}`;
     columnEl.dataset.columnId = column.id;
     columnEl.dataset.columnIndex = index;
-    
-    columnEl.innerHTML = `
+      columnEl.innerHTML = `
         <div class="column-header">
             <div class="column-title">${column.name}</div>
             <div class="column-actions">
+                <button class="column-btn column-ai-btn" onclick="openColumnAIModal('${column.id}')" title="AI-Assistent für diese Spalte">🤖</button>
+                <button class="column-btn column-delete-btn" onclick="deleteColumn('${column.id}')" title="Spalte löschen">🗑️</button>
                 <button class="menu-dots" onclick="openColumnSettings('${column.id}')">⋮</button>
             </div>
         </div>

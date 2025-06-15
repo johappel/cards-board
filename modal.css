@@ -373,3 +373,36 @@ input#ai-include-column-context {
 .url-preview .url-link:hover {
     text-decoration: underline;
 }
+
+/* Column AI Modal Styles */
+#column-ai-modal .info-display {
+    background-color: rgba(0, 0, 0, 0.05);
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin: 8px 0;
+    font-family: monospace;
+}
+
+#column-ai-modal .info-display strong {
+    color: #2196F3;
+}
+
+#column-ai-modal .max-480 {
+    max-width: 480px;
+}
+
+/* AI Notification animations */
+.ai-notification {
+    animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}

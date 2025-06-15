@@ -180,3 +180,42 @@
     color: rgb(0, 0, 0) !important;
     border-radius: 8px 8px 0 0 !important;
 }
+
+/* Column action buttons */
+.column-btn {
+    background: none;
+    border: none;
+    padding: 4px 6px;
+    margin: 0 2px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+    color: inherit;
+}
+
+.column-btn:hover {
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+/* AI Button - immer sichtbar */
+.column-ai-btn {
+    display: inline-block;
+}
+
+/* Delete Button - nur bei selected-for-paste sichtbar */
+.column-delete-btn {
+    display: none;
+    color: #ff6b6b;
+}
+
+.kanban-column.selected-for-paste .column-delete-btn {
+    display: inline-block;
+}
+
+.column-delete-btn:hover {
+    background-color: rgba(255, 107, 107, 0.2) !important;
+}

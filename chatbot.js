@@ -2,7 +2,7 @@
 // Diese Datei implementiert die Chatbot-Logik und die Integration mit dem Kanban-Board
 
 // --- Konfiguration ---
-let websocketUrl = localStorage.getItem('ai_websocketUrl') ;
+let websocketUrl = localStorage.getItem('ai_websocketUrl');
 let n8nAgentWebhookUrl = localStorage.getItem('ai_n8nAgentWebhookUrl');
 let aiColumnsUrl = localStorage.getItem('ai_columnsUrl');
 let aiCardsUrl = localStorage.getItem('ai_cardsUrl');
@@ -78,8 +78,8 @@ function addColumnWithCards(columnName, cards) {
     cards.forEach(cardData => {
         //const exists = column.cards.some(card => card.heading === (cardData.title || 'Unbenannt'));
         const exists = column.cards.some(card => card.content === (cardData.content || 'Kein Inhalt'));
-        if (!exists) {            
-              const newCard = {
+        if (!exists) {
+            const newCard = {
                 id: generateId(),
                 heading: cardData.title || 'Unbenannt',
                 content: cardData.content || '',
@@ -91,7 +91,7 @@ function addColumnWithCards(columnName, cards) {
                 inactive: false
             };
             column.cards.push(newCard);
-            
+
         }
     });
     if (typeof saveAllBoards === 'function') saveAllBoards();
@@ -107,7 +107,7 @@ if (!window.marked) {
     document.head.appendChild(script);
 }
 // markdown.css einbinden
-(function() {
+(function () {
     if (!document.getElementById('markdown-css')) {
         const link = document.createElement('link');
         link.id = 'markdown-css';
@@ -123,7 +123,7 @@ function renderMarkdownToHtml(markdownText) {
         let html = window.marked.parse(markdownText);
         // <think>-Tag als Accordion/Details-Container
         if (html.includes('<think>')) {
-            html = html.replace(/<think>([\s\S]*?)<\/think>/gi, function(_, content) {
+            html = html.replace(/<think>([\s\S]*?)<\/think>/gi, function (_, content) {
                 return `<details class="think-accordion" open><summary>Denken ...</summary><div class="markdown-content">${content}</div></details>`;
             });
         }
@@ -143,7 +143,7 @@ function displayMessage(textOrHtml, sender = 'bot') {
         }
         return;
     }
-    
+
     const chatbox = document.getElementById('chatbox');
     const messageElement = document.createElement('div');
     const senderClass = sender + '-message';
@@ -153,7 +153,7 @@ function displayMessage(textOrHtml, sender = 'bot') {
     messageElement.innerHTML = html;
     chatbox.appendChild(messageElement);
     chatbox.scrollTop = chatbox.scrollHeight;
-    
+
     // Chat-Nachrichten für aktuelles Board speichern (nur Bot und User Messages, keine System-Messages)
     const boardId = window.currentBoard && window.currentBoard.id ? window.currentBoard.id : 'default';
     const currentMessages = getCurrentChatMessages();
@@ -177,10 +177,10 @@ function showTemporaryStatus(message, isError = false, duration = TEMPORARY_STAT
     if (temporaryStatusTimeout) {
         clearTimeout(temporaryStatusTimeout);
     }
-    
+
     // Temporäre Nachricht anzeigen
     updateConnectionStatus(message, isError);
-    
+
     // Nach der angegebenen Zeit zur normalen Anzeige zurückkehren
     temporaryStatusTimeout = setTimeout(() => {
         temporaryStatusTimeout = null;
@@ -211,7 +211,7 @@ function checkWebSocketStatus() {
     if (temporaryStatusTimeout) {
         return; // Temporären Status nicht überschreiben
     }
-    
+
     if (!socket || socket.readyState !== WebSocket.OPEN) {
         updateConnectionStatus('Verbindung zum Chat Agenten abgebrochen!', true);
     } else {
@@ -284,13 +284,13 @@ function getWebSocketUrlForBoard(boardId) {
     }
     // Nutze global konfiguriertes websocketUrl
     let url = websocketUrl;
-    
+
     // Null/undefined-Prüfung hinzufügen
     if (!url) {
         console.error('WebSocket URL ist nicht konfiguriert. Bitte in den AI-Settings einstellen.');
         return null;
     }
-    
+
     if (!/^wss?:\/\//.test(url)) url = 'wss://' + url.replace(/^https?:\/\//, '');
     return url + '/?clientId=' + encodeURIComponent(connectionId);
 }
@@ -302,7 +302,7 @@ function connectWebSocket() {
         console.log('WebSocket connection already in progress...');
         return;
     }
-    
+
     // Bestehende Verbindung schließen
     if (socket && socket.readyState !== WebSocket.CLOSED) {
         try {
@@ -312,13 +312,13 @@ function connectWebSocket() {
         }
         socket = null;
     }
-    
+
     isConnecting = true;
-    
+
     // Board-ID bestimmen (z.B. window.currentBoard.id)
     const boardId = window.currentBoard && window.currentBoard.id ? window.currentBoard.id : 'default';
     const wsUrl = getWebSocketUrlForBoard(boardId);
-    
+
     // Prüfung, ob wsUrl gültig ist
     if (!wsUrl) {
         updateConnectionStatus('WebSocket URL fehlt. Bitte AI-Settings konfigurieren.', true);
@@ -326,12 +326,12 @@ function connectWebSocket() {
         isConnecting = false;
         return;
     }
-    
+
     updateConnectionStatus('Verbinde mit WebSocket-Server...');
-    
+
     try {
         socket = new WebSocket(wsUrl);
-        
+
         socket.onopen = function () {
             isConnecting = false;
             updateConnectionStatus('Verbunden mit WebSocket-Server.');
@@ -343,81 +343,88 @@ function connectWebSocket() {
             startHeartbeat();
         };
 
-    socket.onmessage = function (event) {
-        // Heartbeat/Keepalive
-        if (event.data === 'pong') {
-            lastPongTimestamp = Date.now();
-            return;
-        }        
-        try {
-            const data = JSON.parse(event.data);
-            if (data.type === 'welcome' && data.connectionId) {
-                const boardId = window.currentBoard && window.currentBoard.id ? window.currentBoard.id : 'default';
-                setServerAssignedConnectionId(boardId, data.connectionId);
-                showConnectionId();
-                if (!connectionStatusInterval) {
-                    connectionStatusInterval = setInterval(checkWebSocketStatus, 3000);
-                }
+        socket.onmessage = function (event) {
+            // Heartbeat/Keepalive
+            if (event.data === 'pong') {
+                lastPongTimestamp = Date.now();
                 return;
-            } else if (data.type === 'final_answer') {
-                displayMessage(data.text || data.message, 'bot');
-                resetChatInputUI(); // UI wieder freigeben nach finaler Antwort
-                return;
-            } else if ((data.type === 'suggestion' || data.type === 'suggestions') && (data.suggestion || data.text || data.suggestions)) {
-                // Nur als Button anzeigen, nicht mehr als Chatnachricht
-                const suggestionText = data.suggestion || data.text;
-                if (suggestionText) {
-                    renderSuggestions([suggestionText]);
-                } else if (Array.isArray(data.suggestions)) {
-                    renderSuggestions(data.suggestions);
-                }
-                resetChatInputUI(); // UI wieder freigeben nach Suggestions
-                return;            
-            } else if (data.type === 'thinking' && (data.message || data.text)) {
-                const thinkingLabel = data.label || 'Denken...';
-                displayMessage('<div class="think"><details open><summary>' + thinkingLabel + '</summary>' + (data.message || data.text) + '</details></div>', 'bot');
-                // HINWEIS: Bei thinking messages UI NICHT zurücksetzen, da noch weitere Nachrichten erwartet werden
-                return;
-            } else if (data.type === 'cards' && Array.isArray(data.cards)) {
-                let targetColumn = data.column || 'Material';
-                const columnWasCreated = addColumnWithCards(targetColumn, data.cards);
-                if (columnWasCreated) {
-                    displayMessage(`Spalte "${targetColumn}" wurde neu angelegt und ${data.cards.length} Karten hinzugefügt.`, 'system');
-                } else {
-                    displayMessage(`${data.cards.length} Karten wurden zur Spalte "${targetColumn}" hinzugefügt.`, 'system');
-                }
-                resetChatInputUI(); // UI wieder freigeben nach Karten-Antwort
-                return;            } else if (data.type === 'column' && data.column && Array.isArray(data.cards)) {
-                const newColumnWasCreated = addColumnWithCards(data.column, data.cards);
-                if (newColumnWasCreated) {
-                    displayMessage(`Neue Spalte "${data.column}" mit ${data.cards.length} Karten angelegt.`, 'system');
-                } else {
-                    displayMessage(`${data.cards.length} Karten wurden zur Spalte "${data.column}" hinzugefügt.`, 'system');
-                }
-                resetChatInputUI(); // UI wieder freigeben nach Spalten-Antwort
-                return;
-            } else if (data.type === 'summary' && (data.text || data.summary)) {
-                const summaryText = data.text || data.summary;
-                updateBoardSummary(summaryText);
-                displayMessage('Board-Zusammenfassung wurde generiert und aktualisiert.', 'system');
-                resetChatInputUI(); // UI wieder freigeben nach Summary-Antwort
-                return;
-            } else {
-                displayMessage(`Unbekannte Nachricht vom Server: ${event.data}`, 'system');
-                resetChatInputUI(); // UI wieder freigeben bei unbekannten Nachrichten
             }
-        } catch (e) {
-            displayMessage(`Fehler beim Verarbeiten der Server-Nachricht: ${event.data}`, 'system');
-            console.error("Error parsing message from server or unknown message type:", e, event.data);
-            resetChatInputUI(); // UI wieder freigeben bei Parsing-Fehlern
-        }
-    };        socket.onclose = function (event) {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.type === 'welcome' && data.connectionId) {
+                    const boardId = window.currentBoard && window.currentBoard.id ? window.currentBoard.id : 'default';
+                    setServerAssignedConnectionId(boardId, data.connectionId);
+                    showConnectionId();
+                    if (!connectionStatusInterval) {
+                        connectionStatusInterval = setInterval(checkWebSocketStatus, 3000);
+                    }
+                    return;
+                } else if (data.type === 'final_answer') {
+                    displayMessage(data.text || data.message, 'bot');
+                    resetChatInputUI(); // UI wieder freigeben nach finaler Antwort
+                    return;
+                } else if ((data.type === 'suggestion' || data.type === 'suggestions') && (data.suggestion || data.text || data.suggestions)) {
+                    // Nur als Button anzeigen, nicht mehr als Chatnachricht
+                    const suggestionText = data.suggestion || data.text;
+                    if (suggestionText) {
+                        renderSuggestions([suggestionText]);
+                    } else if (Array.isArray(data.suggestions)) {
+                        renderSuggestions(data.suggestions);
+                    }
+                    resetChatInputUI(); // UI wieder freigeben nach Suggestions
+                    return;
+                } else if (data.type === 'thinking' && (data.message || data.text)) {
+                    const thinkingLabel = data.label || 'Denken...';
+                    displayMessage('<div class="think"><details open><summary>' + thinkingLabel + '</summary>' + (data.message || data.text) + '</details></div>', 'bot');
+                    // HINWEIS: Bei thinking messages UI NICHT zurücksetzen, da noch weitere Nachrichten erwartet werden
+                    return;
+                } else if (data.type === 'cards' && Array.isArray(data.cards)) {
+                    let targetColumn = data.column || 'Material';
+                    const columnWasCreated = addColumnWithCards(targetColumn, data.cards);
+                    if (columnWasCreated) {
+                        displayMessage(`Spalte "${targetColumn}" wurde neu angelegt und ${data.cards.length} Karten hinzugefügt.`, 'system');
+                    } else {
+                        displayMessage(`${data.cards.length} Karten wurden zur Spalte "${targetColumn}" hinzugefügt.`, 'system');
+                    }
+                    resetChatInputUI(); // UI wieder freigeben nach Karten-Antwort
+                    return;
+                } else if (data.type === 'column' && data.column && Array.isArray(data.cards)) {
+                    const newColumnWasCreated = addColumnWithCards(data.column, data.cards);
+                    if (newColumnWasCreated) {
+                        displayMessage(`Neue Spalte "${data.column}" mit ${data.cards.length} Karten angelegt.`, 'system');
+                    } else {
+                        displayMessage(`${data.cards.length} Karten wurden zur Spalte "${data.column}" hinzugefügt.`, 'system');
+                    }
+                    resetChatInputUI(); // UI wieder freigeben nach Spalten-Antwort
+                    return;
+                } else if (data.type === 'summary' && (data.text || data.summary)) {
+                    const summaryText = data.text || data.summary;
+                    updateBoardSummary(summaryText);
+                    displayMessage('Board-Zusammenfassung wurde generiert und aktualisiert.', 'system');
+                    resetChatInputUI(); // UI wieder freigeben nach Summary-Antwort
+                    return;
+                } else if (data.type === 'update-cards' && data.columnId && Array.isArray(data.cards)) {
+                    // Neue Funktionalität: Karten in einer Spalte aktualisieren
+                    updateColumnCards(data.columnId, data.cards, data.columnName);
+                    displayMessage(`✅ Spalte "${data.columnName || 'Unbekannt'}" wurde durch AI aktualisiert (${data.cards.length} Karten).`, 'system');
+                    resetChatInputUI(); // UI wieder freigeben nach Karten-Update
+                    return;
+                } else {
+                    displayMessage(`Unbekannte Nachricht vom Server: ${event.data}`, 'system');
+                    resetChatInputUI(); // UI wieder freigeben bei unbekannten Nachrichten
+                }
+            } catch (e) {
+                displayMessage(`Fehler beim Verarbeiten der Server-Nachricht: ${event.data}`, 'system');
+                console.error("Error parsing message from server or unknown message type:", e, event.data);
+                resetChatInputUI(); // UI wieder freigeben bei Parsing-Fehlern
+            }
+        }; socket.onclose = function (event) {
             isConnecting = false;
             updateConnectionStatus(`Verbindung zum Chat Agenten abgebrochen! (Code: ${event.code})`, true);
             displayMessage(`Verbindung zum Chat Agenten verloren. Code: ${event.code}`, 'system');
             const boardId = window.currentBoard && window.currentBoard.id ? window.currentBoard.id : 'default';
             clearServerAssignedConnectionId(boardId);
-            socket = null;            if (connectionStatusInterval) {
+            socket = null; if (connectionStatusInterval) {
                 clearInterval(connectionStatusInterval);
                 connectionStatusInterval = null;
             }
@@ -434,7 +441,7 @@ function connectWebSocket() {
                     connectWebSocket();
                 }, RECONNECT_DELAY);
             }
-        };socket.onerror = function (error) {
+        }; socket.onerror = function (error) {
             isConnecting = false;
             updateConnectionStatus('WebSocket Fehler!', true);
             displayMessage('Ein Fehler ist mit der WebSocket-Verbindung aufgetreten.', 'system');
@@ -464,8 +471,8 @@ function startHeartbeat() {
         if (lastPongTimestamp && Date.now() - lastPongTimestamp > HEARTBEAT_INTERVAL * 2) {
             // Keine Antwort -> Verbindung als tot betrachten
             updateConnectionStatus('Verbindung zum Chat Agenten: Timeout, versuche Neuverbindung...', true);
-            try { 
-                if (socket) socket.close(); 
+            try {
+                if (socket) socket.close();
             } catch (e) {
                 console.warn('Error closing socket:', e);
             }
@@ -483,7 +490,7 @@ function stopHeartbeat() {
 // sendQueryToN8NAgent muss vor allen Event-Handlern deklariert werden!
 function sendQueryToN8NAgent(queryText) {
     if (!queryText) return;
-    
+
     // UI-Elemente für Progress-Anzeige
     const sendButton = document.getElementById('sendButton');
     const progressIndicator = document.getElementById('progressIndicator');
@@ -509,27 +516,27 @@ function sendQueryToN8NAgent(queryText) {
             console.error('Error in resetUIOnError:', error);
         }
     }
-    
+
     // Prüfung, ob n8nAgentWebhookUrl konfiguriert ist
     if (!n8nAgentWebhookUrl) {
         displayMessage('⚠️ Fehler: N8N Agent Webhook URL ist nicht konfiguriert. Bitte öffnen Sie die AI-Settings und konfigurieren Sie die Webhook URL.', 'system');
         resetUIOnError();
         return;
     }
-      if (!socket || socket.readyState !== WebSocket.OPEN) {
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
         console.log('[sendQueryToN8NAgent] WebSocket nicht verbunden, versuche Verbindung aufzubauen...');
-        
+
         // Versuche WebSocket-Verbindung herzustellen, falls sie nicht existiert
         if (!socket && !isConnecting) {
             console.log('[sendQueryToN8NAgent] Keine Socket-Verbindung, starte connectWebSocket()');
             connectWebSocket();
         }
-        
+
         displayMessage('WebSocket-Verbindung wird aufgebaut. Bitte warten Sie einen Moment und versuchen Sie es erneut.', 'system');
         resetUIOnError();
         return;
     }
-    
+
     const boardId = window.currentBoard && window.currentBoard.id ? window.currentBoard.id : 'default';
     const serverAssignedConnectionId = getServerAssignedConnectionId(boardId);
     if (!serverAssignedConnectionId) {
@@ -552,16 +559,16 @@ function sendQueryToN8NAgent(queryText) {
         userInput.disabled = true;
         console.log('User input disabled');
     }
-    
+
     // Automatisches UI-Reset nach 30 Sekunden planen
     scheduleUIReset(30000);
-    
+
     displayMessage(queryText, 'user');
     const payload = {
         query: queryText,
         connectionId: serverAssignedConnectionId
     };
-    
+
     fetch(n8nAgentWebhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -587,7 +594,7 @@ function renderSuggestions(suggestions) {
         const btn = document.createElement('button');
         btn.className = 'suggestion-btn';
         btn.textContent = suggestion;
-        btn.onclick = function() {
+        btn.onclick = function () {
             const userInput = document.getElementById('userInput');
             userInput.value = suggestion;
             window.sendQueryToN8NAgent(suggestion);
@@ -604,21 +611,21 @@ function renderSuggestions(suggestions) {
 function setupChatbotUI() {
     const sendButton = document.getElementById('sendButton');
     const userInput = document.getElementById('userInput');
-    
+
     console.log('setupChatbotUI called', {
         sendButton: !!sendButton,
         userInput: !!userInput
     });
-    
+
     if (sendButton) {
-        sendButton.addEventListener('click', function() {
+        sendButton.addEventListener('click', function () {
             const inputValue = userInput.value.trim();
             console.log('Send button clicked, input value:', inputValue);
             window.sendQueryToN8NAgent(inputValue);
             userInput.value = '';
         });
     }
-    
+
     if (userInput) {
         userInput.addEventListener('keypress', function (event) {
             if (event.key === 'Enter') {
@@ -639,7 +646,7 @@ function isChatbotModalVisible() {
 }
 
 // Chatbot-Modal beim Start immer verstecken (robust)
-window.addEventListener('DOMContentLoaded', function() {
+window.addEventListener('DOMContentLoaded', function () {
     var modal = document.getElementById('chatbot-modal');
     if (modal) {
         modal.classList.remove('show');
@@ -657,43 +664,43 @@ window.addEventListener('DOMContentLoaded', function() {
 });
 
 // Event-Handler für "Neuer Chat"-Button
-window.addEventListener('DOMContentLoaded', function() {
+window.addEventListener('DOMContentLoaded', function () {
     const newChatBtn = document.getElementById('newChatBtn');
     if (newChatBtn) {
-        newChatBtn.onclick = function() {
+        newChatBtn.onclick = function () {
             try {
                 const boardId = window.currentBoard && window.currentBoard.id ? window.currentBoard.id : 'default';
-                
+
                 console.log('[Neuer Chat] Button geklickt, Board ID:', boardId);
-                
+
                 // UI erst mal freigeben, falls sie blockiert ist
                 resetChatInputUI();
-                
+
                 // Chat-Nachrichten für aktuelles Board löschen
                 clearChatMessages(boardId);
-                
+
                 // Chat-UI leeren
                 const chatbox = document.getElementById('chatbox');
                 if (chatbox) chatbox.innerHTML = '';
-                
+
                 // Connection-IDs löschen
                 clearBoardChatConnectionId(boardId);
                 clearServerAssignedConnectionId(boardId);
-                
+
                 // WebSocket-Verbindung sicher schließen
-                if (socket) { 
-                    try { 
+                if (socket) {
+                    try {
                         console.log('[Neuer Chat] Schließe bestehende WebSocket-Verbindung');
-                        socket.close(); 
-                    } catch(e) {
+                        socket.close();
+                    } catch (e) {
                         console.warn('[Neuer Chat] Fehler beim Schließen der WebSocket:', e);
                     }
                 }
-                
+
                 // Socket auf null setzen um sicherzustellen, dass neue Verbindung erstellt wird
                 socket = null;
                 isConnecting = false; // Flag zurücksetzen
-                  // Alle Timeout-Handler stoppen
+                // Alle Timeout-Handler stoppen
                 if (reconnectTimeout) {
                     clearTimeout(reconnectTimeout);
                     reconnectTimeout = null;
@@ -707,12 +714,12 @@ window.addEventListener('DOMContentLoaded', function() {
                     uiResetTimeout = null;
                 }
                 stopHeartbeat();
-                
+
                 // Sofort neue Verbindung starten
                 console.log('[Neuer Chat] Starte neue WebSocket-Verbindung');
                 connectWebSocket();
                 displayMessage('Neuer Chat gestartet. Die Verbindung wird neu aufgebaut...', 'system');
-                
+
             } catch (error) {
                 console.error('[Neuer Chat] Fehler beim Neustarten des Chats:', error);
                 displayMessage('Fehler beim Neustarten des Chats. Bitte versuchen Sie es erneut.', 'system');
@@ -742,12 +749,12 @@ function openChatbotModal() {
     // Status sichtbar machen
     const status = document.getElementById('connectionStatus');
     if (status) status.style.display = 'block';
-    
+
     // Chat-Nachrichten für aktuelles Board laden
     const boardId = window.currentBoard && window.currentBoard.id ? window.currentBoard.id : 'default';
     const savedMessages = loadChatMessages(boardId);
     restoreChatMessages(savedMessages);
-    
+
     if (!window._chatbotInitialized) {
         connectWebSocket();
         setupChatbotUI();
@@ -764,10 +771,10 @@ function openAISettingsModal() {
     openModal('ai-settings-modal');
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const aiSettingsForm = document.getElementById('ai-settings-form');
     if (aiSettingsForm) {
-        aiSettingsForm.onsubmit = function(e) {
+        aiSettingsForm.onsubmit = function (e) {
             e.preventDefault();
             const wsUrl = document.getElementById('ai-websocket-url').value.trim();
             const webhookUrl = document.getElementById('ai-webhook-url').value.trim();
@@ -786,7 +793,7 @@ function resetChatInputUI() {
         const sendButton = document.getElementById('sendButton');
         const progressIndicator = document.getElementById('progressIndicator');
         const userInput = document.getElementById('userInput');
-        
+
         console.log('resetChatInputUI called', {
             sendButton: !!sendButton,
             progressIndicator: !!progressIndicator,
@@ -794,20 +801,20 @@ function resetChatInputUI() {
             sendButtonDisabled: sendButton ? sendButton.disabled : 'N/A',
             progressIndicatorClasses: progressIndicator ? progressIndicator.className : 'N/A'
         });
-        
+
         // UI-Reset-Timeout löschen, wenn manuell resettet wird
         if (uiResetTimeout) {
             clearTimeout(uiResetTimeout);
             uiResetTimeout = null;
             console.log('UI reset timeout cleared');
         }
-        
+
         // Send Button aktivieren
         if (sendButton) {
             sendButton.disabled = false;
             console.log('Send button enabled');
         }
-        
+
         // Progress Indicator verstecken - beide Klassen setzen für Sicherheit
         if (progressIndicator) {
             progressIndicator.classList.remove('show');
@@ -815,13 +822,13 @@ function resetChatInputUI() {
             progressIndicator.style.display = 'none'; // Zusätzliche Sicherheit
             console.log('Progress indicator hidden, new classes:', progressIndicator.className);
         }
-        
+
         // User Input aktivieren
         if (userInput) {
             userInput.disabled = false;
             console.log('User input enabled');
         }
-        
+
         console.log('resetChatInputUI completed successfully');
     } catch (error) {
         console.error('Error in resetChatInputUI:', error);
@@ -834,13 +841,13 @@ function scheduleUIReset(timeoutMs = 30000) { // 30 Sekunden Standard-Timeout
     if (uiResetTimeout) {
         clearTimeout(uiResetTimeout);
     }
-    
+
     uiResetTimeout = setTimeout(() => {
         console.log('UI reset timeout triggered - automatically resetting UI');
         resetChatInputUI();
         displayMessage('Timeout: UI wurde automatisch wieder freigegeben.', 'system');
     }, timeoutMs);
-    
+
     console.log(`UI reset scheduled for ${timeoutMs}ms from now`);
 }
 
@@ -849,13 +856,13 @@ function handleBoardChange(newBoardId) {
     // Prüfen ob Chatbot-Modal geöffnet ist
     const modal = document.getElementById('chatbot-modal');
     const isModalVisible = modal && modal.classList.contains('show');
-    
+
     if (isModalVisible) {
         if (newBoardId === null) {
             // Zurück zum Dashboard - Chat leeren und Verbindung schließen
             const chatbox = document.getElementById('chatbox');
             if (chatbox) chatbox.innerHTML = '';
-            
+
             if (socket && socket.readyState === WebSocket.OPEN) {
                 try {
                     socket.close();
@@ -867,7 +874,7 @@ function handleBoardChange(newBoardId) {
             // Chat-Nachrichten für neues Board laden
             const savedMessages = loadChatMessages(newBoardId);
             restoreChatMessages(savedMessages);
-            
+
             // Board-Wechsel - Verbindung neu aufbauen
             if (socket && socket.readyState === WebSocket.OPEN) {
                 try {
@@ -875,7 +882,7 @@ function handleBoardChange(newBoardId) {
                 } catch (e) {
                     console.log('Fehler beim Schließen der WebSocket-Verbindung:', e);
                 }
-                
+
                 // Neue Verbindung für das neue Board aufbauen
                 setTimeout(() => {
                     connectWebSocket();
@@ -917,42 +924,42 @@ function clearChatMessages(boardId) {
 // Board Summary Update Funktion
 function updateBoardSummary(newSummaryText) {
     if (!window.currentBoard) return;
-    
+
     // Bestehende Summary nur überschreiben, wenn sie leer ist
-    if (!window.currentBoard.summary || window.currentBoard.summary.trim() === '' || 
-        window.currentBoard.summary === 'No summary yet...' || 
+    if (!window.currentBoard.summary || window.currentBoard.summary.trim() === '' ||
+        window.currentBoard.summary === 'No summary yet...' ||
         window.currentBoard.summary === 'Board summary will appear here...') {
         window.currentBoard.summary = newSummaryText;
     } else {
         // Neue Summary anhängen oder als Aktualisierung markieren
         window.currentBoard.summary = newSummaryText;
     }
-    
+
     // Board-View aktualisieren
     if (typeof updateBoardView === 'function') {
         updateBoardView();
     }
-    
+
     // Boards speichern
     if (typeof saveAllBoards === 'function') {
         saveAllBoards();
     }
-    
+
     console.log('[Chatbot] Board Summary updated:', newSummaryText);
 }
 
 function getCurrentChatMessages() {
     const chatbox = document.getElementById('chatbox');
     if (!chatbox) return [];
-    
+
     const messages = [];
     const messageElements = chatbox.querySelectorAll('.message');
-    
+
     messageElements.forEach(el => {
         const isUserMessage = el.classList.contains('user-message');
         const isBotMessage = el.classList.contains('bot-message');
         const isSystemMessage = el.classList.contains('system-message');
-        
+
         // Nur Bot- und User-Messages speichern, keine System-Messages
         if (isUserMessage) {
             messages.push({
@@ -969,17 +976,17 @@ function getCurrentChatMessages() {
         }
         // System-Messages werden übersprungen
     });
-    
+
     return messages;
 }
 
 function restoreChatMessages(messages) {
     const chatbox = document.getElementById('chatbox');
     if (!chatbox) return;
-    
+
     // Chat leeren
     chatbox.innerHTML = '';
-    
+
     // Nur Bot- und User-Messages wiederherstellen, keine System-Messages
     messages.forEach(msg => {
         if (msg.sender === 'user' || msg.sender === 'bot') {
@@ -990,14 +997,67 @@ function restoreChatMessages(messages) {
             chatbox.appendChild(messageElement);
         }
     });
-    
+
     // Zum Ende scrollen
     chatbox.scrollTop = chatbox.scrollHeight;
+}
+
+// Karten in einer Spalte aktualisieren (für Column AI)
+function updateColumnCards(columnId, newCards, columnName) {
+    if (!currentBoard || !currentBoard.columns) {
+        console.error('No current board available');
+        return;
+    }
+
+    const column = currentBoard.columns.find(c => c.id === columnId);
+    if (!column) {
+        console.error(`Column with ID ${columnId} not found`);
+        return;
+    }
+
+    console.log(`🔄 Updating column "${column.name}" with ${newCards.length} cards from AI`);
+
+    // Karten aktualisieren - sicherstellen, dass alle Karten gültige IDs haben
+    const updatedCards = newCards.map(card => {
+        // Bestehende Karte finden anhand von heading oder id
+        const existingCard = column.cards.find(c =>
+            (card.id && c.id === card.id) ||
+            (card.heading && c.heading === card.heading)
+        );
+
+        return {
+            id: existingCard?.id || card.id || generateId(),
+            heading: card.heading || '',
+            content: card.content || '',
+            color: card.color || existingCard?.color || 'color-gradient-1',
+            thumbnail: card.thumbnail || existingCard?.thumbnail || '',
+            comments: card.comments || existingCard?.comments || '',
+            url: card.url || existingCard?.url || '',
+            labels: card.labels || existingCard?.labels || '',
+            inactive: card.inactive || existingCard?.inactive || false,
+            expanded: card.expanded || existingCard?.expanded || false
+        };
+    });
+
+    // Spalte mit neuen Karten aktualisieren
+    column.cards = updatedCards;
+
+    // Board speichern und neu rendern
+    saveAllBoards();
+    renderColumns();
+
+    // Erfolgs-Benachrichtigung
+    if (typeof showAINotification === 'function') {
+        showAINotification(`✅ Spalte "${column.name}" erfolgreich aktualisiert!`, 'success');
+    }
+
+    console.log(`✅ Column "${column.name}" updated successfully with ${updatedCards.length} cards`);
 }
 
 // Export für globale Nutzung
 window.addCardToColumn = addCardToColumn;
 window.addColumnWithCards = addColumnWithCards;
+window.updateColumnCards = updateColumnCards;
 window.sendQueryToN8NAgent = sendQueryToN8NAgent;
 window.connectWebSocket = connectWebSocket;
 window.openChatbotModal = openChatbotModal;

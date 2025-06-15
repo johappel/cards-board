@@ -268,6 +268,37 @@
         </div>
     </div>
 
+    <!-- Column AI Modal -->
+    <div class="modal" id="column-ai-modal">
+        <div class="modal-content max-480">
+            <div class="modal-header">
+                <h3>🤖 AI-Assistent für Spalte</h3>
+                <button class="close-btn" onclick="closeColumnAIModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Spalte:</label>
+                    <div id="column-ai-info" class="info-display">
+                        <strong id="column-ai-name">Spaltenname</strong>
+                        <span id="column-ai-cards-count">(0 Karten)</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="column-ai-prompt">Anweisung für AI:</label>
+                    <textarea id="column-ai-prompt" rows="4" placeholder="Beschreibe, wie die AI die Karten in dieser Spalte bearbeiten soll...
+Beispiel: 'Ergänze fehlende Details in den Karten', 'Erstelle To-Do-Listen aus den Kartentiteln', 'Verbessere die Beschreibungen'"></textarea>
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" id="column-ai-include-board-context"> Board-Kontext einbeziehen (Name und Summary)</label>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-primary" onclick="submitColumnAIRequest()">🚀 AI ausführen</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeColumnAIModal()">Abbrechen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Column Settings Modal -->
     <div class="modal" id="column-modal">
         <div class="modal-content">

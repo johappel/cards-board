@@ -379,7 +379,7 @@ input[type="checkbox"]:checked + .toggle-slider::before {
     transform: translateX(20px);
 }
 
-input[type="checkbox"] {
+#settings-sidebar input[type="checkbox"] {
     display: none;
 }
 
