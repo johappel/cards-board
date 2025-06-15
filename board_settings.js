@@ -11,11 +11,7 @@ function openBoardSettings() {
         loadBoardColorSettings(currentBoard);
     }
     
-    // AI-Konfiguration wird nicht mehr pro Board angezeigt!
-    document.getElementById('ai-provider').parentElement.style.display = 'none';
-    document.getElementById('ai-api-key').parentElement.style.display = 'none';
-    document.getElementById('ai-model').parentElement.style.display = 'none';
-    document.getElementById('ai-base-url-group').style.display = 'none';
+    
     toggleAIFields();
     openModal('board-settings-modal');
 }
