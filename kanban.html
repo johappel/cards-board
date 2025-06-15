@@ -520,20 +520,28 @@
     <div class="modal" id="ai-settings-modal">
       <div class="modal-content max-420">
         <div class="modal-header">
-          <h3>Globale AI &amp; n8n Einstellungen</h3>
+          <h3>Globale AI Endpoints</h3>
           <button class="close-btn" onclick="closeModal('ai-settings-modal')">&times;</button>
         </div>
         <div class="modal-body">
           <form id="ai-settings-form">
             <div class="form-group">
               <label for="ai-websocket-url">WebSocket Endpoint</label>
-              <input type="url" id="ai-websocket-url" required placeholder="wss://exaample.com/chat-websocket-endpoint">
+              <input type="url" id="ai-websocket-url" required placeholder="wss://example.com/chat-websocket-endpoint">
             </div>
             <div class="form-group">
-              <label for="ai-webhook-url">n8n Webhook Endpoint</label>
+              <label for="ai-webhook-url">Chatbot Endpoint</label>
               <input type="url" id="ai-webhook-url" required placeholder="https://n8n.io/webhook/chat-endpoint">
             </div>
             <div class="form-group">
+              <label for="ai-columns-url">Columns Endpoint</label>
+              <input type="url" id="ai-columns-url" required placeholder="https://n8n.io/webhook/columns-endpoint">
+            </div>
+            <div class="form-group">
+              <label for="ai-cards-url">Cards Endpoint</label>
+              <input type="url" id="ai-cards-url" required placeholder="https://n8n.io/webhook/cards-endpoint">
+            </div>
+            <!-- <div class="form-group">
               <label for="ai-provider">LLM Provider</label>
               <select id="ai-provider">
                 <option value="">(kein)</option>
@@ -553,7 +561,7 @@
             <div class="form-group">
               <label for="ai-base-url">Base URL</label>
               <input type="url" id="ai-base-url" placeholder="https://api.example.com">
-            </div>
+            </div> -->
             <div class="modal-actions">
               <button type="submit" class="btn btn-primary">Speichern</button>
               <button type="button" class="btn btn-secondary" onclick="closeModal('ai-settings-modal')">Abbrechen</button>
@@ -750,8 +758,10 @@
     <script src="import_export.js"></script>
     <script src="drag_drop.js"></script>
     <script src="onpaste.js"></script>
+    <script src="onpaste-init.js"></script>
     <script src="onpaste-url-plugin.js"></script>
-    <script src="import-fix-test.js"></script>
+    <!-- <script src="import-fix-test.js"></script> -->
+    
     <!-- nostr-tools - the standard Nostr library for JS -->
     <script type="module">
         // Import nostr-tools functions from multiple CDN sources as fallback
@@ -856,17 +866,6 @@
         loadNostrTools();
     </script>
     <script src="share_via_nostr.js"></script>
-    
-    <script src="nostr-test.js"></script>
-    <script src="test-publishing.js"></script>
-    <script src="test-board-rendering.js"></script>
-    <script src="import-debug.js"></script>
-    <script src="nevent-debug.js"></script>
-    <script src="nevent-fix.js"></script>
-    <script src="improved-import-workflow.js"></script>
-    <script src="master-nostr-test.js"></script>
-    <script src="nostr-test-cleanup.js"></script>
-   
     <script src="init.js"></script>
     <script src="api.js"></script>
     <script src="colors.js"></script>
@@ -876,110 +875,17 @@
     <script src="sortable-duplicate.js"></script>
     <script src="sidebar.js"></script>
     <script src="board-colors.js"></script>
+    
     <script>
         // Initialize column width changer
         document.addEventListener('DOMContentLoaded', function() {
             column_width_changer();
         });
-        
-        // Test-Funktion um verfügbare Funktionen zu prüfen
-        window.checkNostrFunctions = function() {
-            console.log('🔍 Checking available Nostr functions:');
-            const funcs = [
-                'openNostrModal',
-                'generateNostrKeys', 
-                'publishBoardToNostr',
-                'debugNostrState',
-                'testNostrConnection',
-                'createTestBoardForNostr'
-            ];
-            
-            funcs.forEach(funcName => {
-                console.log(`  ${funcName}: ${typeof window[funcName] === 'function' ? '✅' : '❌'}`);
-            });
-            
-            console.log('  window.nostrTools:', window.nostrTools ? '✅' : '❌');
-            console.log('  window.cryptoReady:', window.cryptoReady ? '✅' : '❌');
-        };
-        
-        // Automatischer Check nach 3 Sekunden (DEAKTIVIERT um kontinuierliche Board-Erstellung zu stoppen)
-        setTimeout(() => {
-            console.log('🧪 Auto-checking Nostr functions...');
-            window.checkNostrFunctions();
-            
-            // AUTOMATISCHE TESTS DEAKTIVIERT - können manuell ausgeführt werden
-            console.log('⚡ Automatic tests disabled. Run manually:');
-            console.log('  - quickNostrTest()');
-            console.log('  - runCompleteNostrTest()');
-            console.log('  - testPublishImportWorkflow()');
-            
-        }, 3000);
-        
-        // Paste-Funktionalität initialisieren
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof initPasteFunctionality === 'function') {
-                initPasteFunctionality();
-                console.log('🎯 Paste functionality initialized from kanban.html');
-            } else {
-                console.warn('❌ initPasteFunctionality function not found');
-            }
-            
-            // URL Preview Plugin initialisieren
-            if (typeof URLPreviewPlugin !== 'undefined' && URLPreviewPlugin.init) {
-                URLPreviewPlugin.init();
-                console.log('🔗 URL Preview Plugin initialized from kanban.html');
-            } else {
-                console.warn('❌ URLPreviewPlugin not found');
-            }
-            
-            // YouTube Test-Funktion für Debugging
-            window.testYouTubePreview = function() {
-                console.log("🎥 Testing YouTube URL Preview...");
-                
-                const testUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
-                const testPreview = {
-                    title: "Rick Astley - Never Gonna Give You Up (Official Video)",
-                    description: "The official video for Rick Astley's 'Never Gonna Give You Up'",
-                    image: "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
-                    url: testUrl,
-                    isYouTube: true,
-                    videoId: "dQw4w9WgXcQ",
-                    embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-                    authorName: "Rick Astley"
-                };
-                
-                const testTarget = {
-                    type: 'column',
-                    columnId: 'col-1748536608900-to-do'
-                };
-                
-                // Test YouTube functions
-                if (typeof isYouTubeUrl !== 'undefined') {
-                    console.log("✅ YouTube detection:", isYouTubeUrl(testUrl));
-                }
-                if (typeof extractYouTubeVideoId !== 'undefined') {
-                    console.log("✅ Video ID:", extractYouTubeVideoId(testUrl));
-                }
-                if (typeof showUrlPreviewModal !== 'undefined') {
-                    console.log("✅ Showing YouTube preview modal...");
-                    showUrlPreviewModal(testPreview, testTarget);
-                } else {
-                    console.log("❌ showUrlPreviewModal not found");
-                }
-            };
-            
-            // Auto-test nach 2 Sekunden
-            setTimeout(() => {
-                if (window.location.search.includes('test-youtube')) {
-                    window.testYouTubePreview();
-                }
-            }, 2000);
-        });
-        
     </script>
     
+    
     <!-- Nostr Publishing Test Script -->
-    <script src="test-publishing.js"></script>
+    <!-- <script src="test-publishing.js"></script> -->
     
     <!-- Quill.js WYSIWYG Editor Plugin -->
     <script src="quilljs-plugin.js"></script>

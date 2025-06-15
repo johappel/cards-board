@@ -438,7 +438,8 @@ const URLPreviewPlugin = {
             title: domain.replace('www.', '').split('.')[0],
             description: `Webseite von ${domain}`,
             image: `${this.config.googleFaviconApi}${domain}&sz=128`,
-            url: url
+            url: url,
+            isYouTube: false
         };
     },
 

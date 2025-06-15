@@ -381,6 +381,41 @@ async function testBoardRendering() {
     }
 }
 
+
+
+// Test-Funktion um verfügbare Funktionen zu prüfen
+window.checkNostrFunctions = function() {
+    console.log('🔍 Checking available Nostr functions:');
+    const funcs = [
+        'openNostrModal',
+        'generateNostrKeys', 
+        'publishBoardToNostr',
+        'debugNostrState',
+        'testNostrConnection',
+        'createTestBoardForNostr'
+    ];
+    
+    funcs.forEach(funcName => {
+        console.log(`  ${funcName}: ${typeof window[funcName] === 'function' ? '✅' : '❌'}`);
+    });
+    
+    console.log('  window.nostrTools:', window.nostrTools ? '✅' : '❌');
+    console.log('  window.cryptoReady:', window.cryptoReady ? '✅' : '❌');
+};
+
+// Automatischer Check nach 3 Sekunden (DEAKTIVIERT um kontinuierliche Board-Erstellung zu stoppen)
+setTimeout(() => {
+    console.log('🧪 Auto-checking Nostr functions...');
+    window.checkNostrFunctions();
+    
+    // AUTOMATISCHE TESTS DEAKTIVIERT - können manuell ausgeführt werden
+    console.log('⚡ Automatic tests disabled. Run manually:');
+    console.log('  - quickNostrTest()');
+    console.log('  - runCompleteNostrTest()');
+    console.log('  - testPublishImportWorkflow()');
+    
+}, 3000);
+
 console.log('🧪 Publishing test functions loaded:');
 console.log('  - testDirectPublishing() - Complete publishing test');
 console.log('  - testNostrUI() - Test UI modal');
@@ -420,3 +455,4 @@ setTimeout(() => {
         console.warn('⚠️ Missing functions:', missing);
     }
 }, 1000);
+
