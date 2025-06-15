@@ -150,7 +150,7 @@ async function submitColumnAIRequest() {
         boardId: currentBoard.id,
         columnId: currentColumnForAI.id,
         columnName: currentColumnForAI.name,
-        prompt: prompt,
+        chatInput: prompt,
         cards: currentColumnForAI.cards,
         timestamp: new Date().toISOString()
     };
@@ -176,6 +176,7 @@ async function submitColumnAIRequest() {
         if (response.ok) {
             // Modal schließen
             closeColumnAIModal();
+            openChatbotModal();
             
             // Erfolgs-Benachrichtigung
             showAINotification('🤖 AI-Anfrage gesendet. Antwort wird über WebSocket empfangen...', 'info');
