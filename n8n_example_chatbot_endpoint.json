@@ -1,0 +1,620 @@
+{
+  "name": "n8n_example_chatbot_endpoint",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "n8n_example_chatbot_endpoint",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -360,
+        -140
+      ],
+      "id": "e3dc774a-d62e-4889-bba3-ca9b83509c9e",
+      "name": "Webhook",
+      "webhookId": "534cceeb-d984-4de7-9995-1b47fb95a180"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [  \n  {\n    \"messagePayload\": {\n      \"type\": \"final_answer\",\n      \"message\" : \"Deine Anfrage wurde bearbeitet und die Spalte \"+$('incomming-column').first().json.columnName + \"aktualisiert\"\n    }\n  },\n  {\n    \"messagePayload\": {\n      type: \"update-cards\",\n      column: $(\"incomming-column\").first().json.columnName,\n      columnId : $('incomming-column').first().json.columnId, \n      cards: $input.first().json.cards\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1620,
+        -40
+      ],
+      "id": "e6d049c7-b80b-4abb-9f6a-ac763d0e18fd",
+      "name": "payload"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "cards",
+        "options": {
+          "destinationFieldName": "card"
+        }
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        400,
+        -40
+      ],
+      "id": "1f503dc4-0554-4a8c-965e-02ce5abcad2c",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.type }}",
+                    "rightValue": "card-ai-request",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "71129045-4116-42d5-a251-acef80f30ad2"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "card"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "22e8ab9d-5c51-4534-a77f-86fa5028869f",
+                    "leftValue": "={{ $json.body.type }}",
+                    "rightValue": "column-ai-request",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "column"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "1b5a4559-6b1e-4475-b915-562fd41ff5dd",
+                    "leftValue": "={{ $json.body.type }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notExists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "chat"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -160,
+        -140
+      ],
+      "id": "e4f83771-8559-49dc-868b-a2a195511dc1",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"type\": {{ $json.body.type.toJsonString() }},\n  \"connectionId\": {{ $json.body.connectionId.toJsonString() }},\n  \"columnName\": {{ $json.body.columnName.toJsonString() }},\n  \"columnId\": {{ $json.body.columnId.toJsonString() }},\n  \"chatInput\": {{ $json.body.chatInput.toJsonString() }},\n  \"card\": {{ $json.body.card.toJsonString() }},\n  \"boardContext\": {{ $json.body.boardContext.toJsonString() }},\n  \"timestamp\": {{ $json.body.timestamp.toDateTime() }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        140,
+        -280
+      ],
+      "id": "c4ba6da9-6c53-41f8-85be-ba2ccbf7b0c6",
+      "name": "incomming-card"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"type\": {{ $json.body.type.toJsonString() }},\n  \"connectionId\": {{ $json.body.connectionId.toJsonString() }},\n  \"columnName\": {{ $json.body.columnName.toJsonString() }},\n  \"columnId\": {{ $json.body.columnId.toJsonString() }},\n  \"chatInput\": {{ $json.body.chatInput.toJsonString() }},\n  \"cards\": {{ $json.body.cards.toJsonString() }},\n  \"boardContext\": {{ $json.body.boardContext.toJsonString() }},\n  \"timestamp\": {{ $json.body.timestamp.toDateTime() }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        160,
+        -40
+      ],
+      "id": "74101fb0-e9f6-4edb-ae19-97813b319292",
+      "name": "incomming-column"
+    },
+    {
+      "parameters": {
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        960,
+        -380
+      ],
+      "id": "ff076076-ddb7-40aa-86f9-be509738c8ad",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "99a244c7-0eed-4599-b873-59b386041063",
+              "leftValue": "={{ $json.card.content.trim() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        360,
+        -280
+      ],
+      "id": "813cca26-a9b0-4b0f-9d20-8af327bbc200",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "df858295-2f91-4de6-8ab3-8c1dba4926ad",
+              "name": "chatInput",
+              "value": "={{ $('incomming-card').item.json.chatInput }}\n\n\n**KONTEXT**\n\n{{ $('incomming-card').item.json.boardContext.name }}\n---\n\n{{ $('incomming-card').item.json.boardContext.summary }}\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        640,
+        -260
+      ],
+      "id": "48656d29-6a21-4b23-a92f-5900dbdead0d",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "df858295-2f91-4de6-8ab3-8c1dba4926ad",
+              "name": "chatInput",
+              "value": "={{ $('incomming-card').item.json.chatInput }}\n\n\n**KONTEXT**\n\n**Kontext Karte**:\n\nTitel: {{ $('incomming-card').item.json.card.heading }}\nInhalt: {{ $('incomming-card').item.json.card.content }}\n\n---\nKommentar: \n{{ $('incomming-card').item.json.card.comments }}\n\nLabel:\n{{ $('incomming-card').item.json.card.labels }}\n\n**Kontext Board**:\n\n{{ $('incomming-card').item.json.boardContext.name }}\n---\n\n{{ $('incomming-card').item.json.boardContext.summary }}\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        640,
+        -440
+      ],
+      "id": "2de8b08c-f4c5-42e5-8198-0d4fdc539461",
+      "name": "has content"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-nano",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-nano"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        960,
+        -200
+      ],
+      "id": "97372004-8095-4e89-a420-0a6342867cb3",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "rKBVpFpkPo7QXGN7",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "42716a98-82c5-46b8-b155-cce2ac1d607d",
+              "name": "card",
+              "value": "={{ $('incomming-card').item.json.card }}",
+              "type": "object"
+            },
+            {
+              "id": "2bd73ba2-6b97-43df-afb6-8b0349997e56",
+              "name": "card.content",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1320,
+        -380
+      ],
+      "id": "307ac55b-2796-4c35-b343-8cec0edfd391",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [  \n  {\n    \"messagePayload\": {\n      \"type\": \"final_answer\",\n      \"message\" : \"Deine Anfrage wurde bearbeitet: Karte \\\"\" \n        +$('incomming-card').first().json.card.heading+\n        \"\\\" aktualisiert\"\n    }\n  },\n  {\n    \"messagePayload\": {\n      \"type\": \"update-card\",\n      \"cardId\":  $input.first().json.card.id,\n      \"columnId\" : $('incomming-card').first().json.columnId, \n      \"card\": $input.first().json.card\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        -380
+      ],
+      "id": "0acdadaa-17d6-46b9-948e-f8f7f24e5206",
+      "name": "payloadcard"
+    },
+    {
+      "parameters": {
+        "jsCode": "const cards =[];\nfor (const item of $input.all()) {\n  if(item.json.card.content){\n    item.json.card.content += \" more \";\n  }\n  cards.push(item.json.card);\n}\nreturn {\n  cards: cards\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        -40
+      ],
+      "id": "cb69da59-f0de-49c9-81ec-1e5a0d80d041",
+      "name": "manipulate content"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"type\": \"chat\",\n  \"connectionId\": {{ $json.body.connectionId.toJsonString() }},\n  \"chatInput\": {{ $json.body.chatInput.toJsonString() }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        160,
+        200
+      ],
+      "id": "e09b23b1-cefd-42c9-a3bd-a0cf800d304a",
+      "name": "Incomming-chat"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://n8n.rpi-virtuell.de/send-to-websocket",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"targetConnectionId\": {{ $('Switch').item.json.body.connectionId.toJsonString() }},\n    \"messagePayload\": {{ $json.messagePayload.toJsonString() }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1900,
+        -40
+      ],
+      "id": "fd312560-9be1-4165-860f-59ad4a39e420",
+      "name": "Send To Websocket"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    \"messagePayload\": {\n      type: \"thinking\",\n      text: \"Ich denke nach.\"\n    }\n  },\n  {\n    \"messagePayload\": {\n      type: \"final_answer\",\n      text: \"Dies ist eine Testnachricht vom n8n-Workflow.\"\n    }\n  },\n  {\n    \"messagePayload\": {\n      type: \"suggestion\",\n      suggestion: \"Hier ist ein Vorschlag für deine nächste Aktion.\"\n    }\n  },\n  {\n    \"messagePayload\": {\n      type: \"cards\",\n      column: \"Testspalte\",\n      labels: \"Einstiegsphase, Vertiefungsphase\",\n      cards: [\n        { title: \"Testkarte 1\", content: \"Dies ist der Inhalt der ersten Testkarte.\", \"comment\":\"Das ist eine Erläuterung zum Inhalt der ersten Karte\",\"url\":\"https://url-zum-original-inhalt\" },\n        { title: \"Testkarte 2\", content: \"<think>Das habe ich vorher überlegt</think> Dies ist der Inhalt der zweiten Testkarte.\" }\n      ]\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1620,
+        200
+      ],
+      "id": "8c0a93ff-cdbc-4683-868c-62e290012ffa",
+      "name": "Test-Messages"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "payload": {
+      "main": [
+        [
+          {
+            "node": "Send To Websocket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "manipulate content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "incomming-card",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "incomming-column",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Incomming-chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "incomming-column": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "incomming-card": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "has content",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "has content": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "payloadcard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "payloadcard": {
+      "main": [
+        [
+          {
+            "node": "Send To Websocket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "manipulate content": {
+      "main": [
+        [
+          {
+            "node": "payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Incomming-chat": {
+      "main": [
+        [
+          {
+            "node": "Test-Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test-Messages": {
+      "main": [
+        [
+          {
+            "node": "Send To Websocket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3b795dfb-6053-467f-87d1-0aa9c2fe15c1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "634e789e9cac462123b2b4acaedfe20e105965d27f018a60d1d4305ae72b1acb"
+  },
+  "id": "IIM9D0wL6bGNlDtp",
+  "tags": [
+    {
+      "createdAt": "2025-05-15T06:47:46.005Z",
+      "updatedAt": "2025-05-15T06:47:46.005Z",
+      "id": "i6hB4PGiu5hi45Yy",
+      "name": "websocket"
+    },
+    {
+      "createdAt": "2025-05-30T09:34:05.167Z",
+      "updatedAt": "2025-05-30T09:34:05.167Z",
+      "id": "EfkHxYdNUlIPZ7nk",
+      "name": "cards-board"
+    },
+    {
+      "createdAt": "2025-05-30T09:34:58.417Z",
+      "updatedAt": "2025-05-30T09:34:58.417Z",
+      "id": "wJYZVVO5k3FCcfa5",
+      "name": "material"
+    }
+  ]
+}

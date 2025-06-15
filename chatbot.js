@@ -43,10 +43,14 @@ function addCardToColumn(columnName, cardData) {
             cards: []
         };
         currentBoard.columns.push(column);
-    }    // Card anlegen
+    }    
+    // Card anlegen
+    if(!cardData.heading && cardData.title) {
+        cardData.heading = cardData.title;
+    }
     const newCard = {
         id: generateId(),
-        heading: cardData.title || 'Unbenannt',
+        heading: cardData.heading || 'Unbenannt',
         content: cardData.content || '',
         color: 'color-gradient-1',
         thumbnail: cardData.thumbnail || '',
@@ -76,12 +80,15 @@ function addColumnWithCards(columnName, cards) {
     }
     // Karten nur hinzufügen, wenn sie noch nicht existieren (nach Titel vergleichen)
     cards.forEach(cardData => {
-        //const exists = column.cards.some(card => card.heading === (cardData.title || 'Unbenannt'));
         const exists = column.cards.some(card => card.content === (cardData.content || 'Kein Inhalt'));
         if (!exists) {
+            if(!cardData.heading && cardData.title) {
+                cardData.heading = cardData.title;
+            }
+
             const newCard = {
                 id: generateId(),
-                heading: cardData.title || 'Unbenannt',
+                heading: cardData.heading || 'Unbenannt',
                 content: cardData.content || '',
                 color: 'color-gradient-1',
                 thumbnail: cardData.thumbnail || '',
@@ -402,10 +409,11 @@ function connectWebSocket() {
                     updateBoardSummary(summaryText);
                     displayMessage('Board-Zusammenfassung wurde generiert und aktualisiert.', 'system');
                     resetChatInputUI(); // UI wieder freigeben nach Summary-Antwort
-                    return;                } else if (data.type === 'update-cards' && data.columnId && Array.isArray(data.cards)) {
-                    // Neue Funktionalität: Karten in einer Spalte aktualisieren
-                    updateColumnCards(data.columnId, data.cards, data.columnName);
-                    displayMessage(`✅ Spalte "${data.columnName || 'Unbekannt'}" wurde durch AI aktualisiert (${data.cards.length} Karten).`, 'system');
+                    return;
+                } else if (data.type === 'update-cards' && data.columnId && data.column && Array.isArray(data.cards)) {
+                    // Neue Funktionalität: Karten in einer Spalte aktualisieren (über columnName)
+                    updateColumnCardsByName(data.column,data.columnId, data.cards);
+                    displayMessage(`✅ Spalte "${data.columnName}" wurde durch AI aktualisiert (${data.cards.length} Karten).`, 'system');
                     resetChatInputUI(); // UI wieder freigeben nach Karten-Update
                     return;
                 } else if (data.type === 'update-card' && data.cardId && data.columnId && data.card) {
@@ -416,6 +424,7 @@ function connectWebSocket() {
                     return;
                 } else {
                     displayMessage(`Unbekannte Nachricht vom Server: ${event.data}`, 'system');
+                    console.error('Unknown message type from server:', event.data);
                     resetChatInputUI(); // UI wieder freigeben bei unbekannten Nachrichten
                 }
             } catch (e) {
@@ -1065,21 +1074,21 @@ function updateSingleCard(cardId, columnId, updatedCard) {
         console.error('No current board available');
         return;
     }
-    
+
     const column = currentBoard.columns.find(c => c.id === columnId);
     if (!column) {
         console.error(`Column with ID ${columnId} not found`);
         return;
     }
-    
+
     const cardIndex = column.cards.findIndex(c => c.id === cardId);
     if (cardIndex === -1) {
         console.error(`Card with ID ${cardId} not found in column ${columnId}`);
         return;
     }
-    
+
     console.log(`🔄 Updating card "${column.cards[cardIndex].heading}" with AI response`);
-    
+
     // Karte aktualisieren - bestehende Eigenschaften beibehalten
     const existingCard = column.cards[cardIndex];
     const mergedCard = {
@@ -1094,26 +1103,79 @@ function updateSingleCard(cardId, columnId, updatedCard) {
         inactive: updatedCard.inactive !== undefined ? updatedCard.inactive : existingCard.inactive,
         expanded: updatedCard.expanded !== undefined ? updatedCard.expanded : existingCard.expanded
     };
-    
+
     // Karte ersetzen
     column.cards[cardIndex] = mergedCard;
-    
+
     // Board speichern und neu rendern
     saveAllBoards();
     renderColumns();
-    
+
     // Erfolgs-Benachrichtigung
     if (typeof showAINotification === 'function') {
         showAINotification(`✅ Karte "${mergedCard.heading}" erfolgreich aktualisiert!`, 'success');
     }
-    
+
     console.log(`✅ Card "${mergedCard.heading}" updated successfully`);
+}
+
+// Karten in einer Spalte aktualisieren basierend auf Spaltenname (für Column AI)
+function updateColumnCardsByName(columnName, columnId, newCards) {
+    if (!currentBoard || !currentBoard.columns) {
+        console.error('No current board available');
+        return;
+    }
+
+    const column = currentBoard.columns.find(c => c.name === columnName && c.id === columnId);
+    if (!column) {
+        console.error(`Column with name "${columnName}" and ID "${columnId}" not found`);
+        return;
+    }
+
+    console.log(`🔄 Updating column "${column.name}" with ${newCards.length} cards from AI`);
+
+    // Karten aktualisieren - sicherstellen, dass alle Karten gültige IDs haben
+    const updatedCards = newCards.map(card => {
+        // Bestehende Karte finden anhand von heading oder id
+        const existingCard = column.cards.find(c =>
+            (card.id && c.id === card.id) ||
+            (card.heading && c.heading === card.heading)
+        );
+
+        return {
+            id: existingCard?.id || card.id || generateId(),
+            heading: card.heading || '',
+            content: card.content || '',
+            color: card.color || existingCard?.color || 'color-gradient-1',
+            thumbnail: card.thumbnail || existingCard?.thumbnail || '',
+            comments: card.comments || '',
+            url: card.url || '',
+            labels: card.labels || '',
+            inactive: card.inactive !== undefined ? card.inactive : (existingCard?.inactive || false),
+            expanded: card.expanded !== undefined ? card.expanded : (existingCard?.expanded || false)
+        };
+    });
+
+    // Spalte mit neuen Karten aktualisieren
+    column.cards = updatedCards;
+
+    // Board speichern und neu rendern
+    saveAllBoards();
+    renderColumns();
+
+    // Erfolgs-Benachrichtigung
+    if (typeof showAINotification === 'function') {
+        showAINotification(`✅ Spalte "${column.name}" erfolgreich aktualisiert!`, 'success');
+    }
+
+    console.log(`✅ Column "${column.name}" updated successfully with ${updatedCards.length} cards`);
 }
 
 // Export für globale Nutzung
 window.addCardToColumn = addCardToColumn;
 window.addColumnWithCards = addColumnWithCards;
 window.updateColumnCards = updateColumnCards;
+window.updateColumnCardsByName = updateColumnCardsByName;
 window.updateSingleCard = updateSingleCard;
 window.sendQueryToN8NAgent = sendQueryToN8NAgent;
 window.connectWebSocket = connectWebSocket;

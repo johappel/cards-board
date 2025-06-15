@@ -152,18 +152,25 @@ async function submitCardAIRequest() {
         alert('Bitte geben Sie eine Anweisung für die AI ein');
         return;
     }
-    
-    const includeColumnContext = document.getElementById('ai-include-column-context').checked;
+      const includeColumnContext = document.getElementById('ai-include-column-context').checked;
     const includeBoardContext = document.getElementById('ai-include-board-context').checked;
+    
+    // Connection ID für WebSocket-Routing abrufen
+    const connectionId = getServerAssignedConnectionId(currentBoard.id);
+    if (!connectionId) {
+        alert('Keine WebSocket-Verbindung verfügbar. Bitte versuchen Sie es später erneut.');
+        return;
+    }
     
     // Prepare payload
     const payload = {
         type: 'card-ai-request',
         boardId: currentBoard.id,
+        connectionId: connectionId,
         cardId: currentCardForAI.id,
         columnId: currentColumn.id,
         columnName: currentColumn.name,
-        prompt: prompt,
+        chatInput: prompt,
         card: currentCardForAI,
         timestamp: new Date().toISOString()
     };
@@ -260,17 +267,32 @@ async function submitColumnAIRequest() {
         alert('Bitte geben Sie eine Anweisung für die AI ein');
         return;
     }
+      const includeContext = document.getElementById('column-ai-include-board-context').checked;
     
-    const includeContext = document.getElementById('column-ai-include-board-context').checked;
-    
-    // Prepare payload
+    // Connection ID für WebSocket-Routing abrufen
+    const connectionId = getServerAssignedConnectionId(currentBoard.id);
+    if (!connectionId) {
+        alert('Keine WebSocket-Verbindung verfügbar. Bitte versuchen Sie es später erneut.');
+        return;
+    }
+      // Prepare payload - vereinfachtes Format ohne interne IDs
     const payload = {
         type: 'column-ai-request',
-        boardId: currentBoard.id,
-        columnId: currentColumnForAI.id,
+        connectionId: connectionId,
         columnName: currentColumnForAI.name,
+        columnId: currentColumnForAI.id,
         chatInput: prompt,
-        cards: currentColumnForAI.cards,
+        cards: currentColumnForAI.cards.map(card => ({
+            id: card.id,
+            heading: card.heading,
+            content: card.content,
+            color: card.color,
+            thumbnail: card.thumbnail,
+            comments: card.comments,
+            url: card.url,
+            labels: card.labels,
+            inactive: card.inactive || false
+        })),
         timestamp: new Date().toISOString()
     };
     
