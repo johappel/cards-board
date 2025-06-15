@@ -775,3 +775,16 @@
 .card-label-full.label-color-10 {
     background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%); /* Himmelblau */
 }
+
+/* Card AI Button - nur bei selected sichtbar */
+.card-ai-btn {
+    display: none;
+}
+
+.kanban-card.selected .card-ai-btn {
+    display: inline-block;
+}
+
+.card-ai-btn:hover {
+    background-color: rgba(51, 154, 240, 0.2) !important;
+}

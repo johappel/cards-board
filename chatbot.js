@@ -402,11 +402,16 @@ function connectWebSocket() {
                     updateBoardSummary(summaryText);
                     displayMessage('Board-Zusammenfassung wurde generiert und aktualisiert.', 'system');
                     resetChatInputUI(); // UI wieder freigeben nach Summary-Antwort
-                    return;
-                } else if (data.type === 'update-cards' && data.columnId && Array.isArray(data.cards)) {
+                    return;                } else if (data.type === 'update-cards' && data.columnId && Array.isArray(data.cards)) {
                     // Neue Funktionalität: Karten in einer Spalte aktualisieren
                     updateColumnCards(data.columnId, data.cards, data.columnName);
                     displayMessage(`✅ Spalte "${data.columnName || 'Unbekannt'}" wurde durch AI aktualisiert (${data.cards.length} Karten).`, 'system');
+                    resetChatInputUI(); // UI wieder freigeben nach Karten-Update
+                    return;
+                } else if (data.type === 'update-card' && data.cardId && data.columnId && data.card) {
+                    // Neue Funktionalität: Einzelne Karte aktualisieren
+                    updateSingleCard(data.cardId, data.columnId, data.card);
+                    displayMessage(`✅ Karte "${data.card.heading || 'Unbekannt'}" wurde durch AI aktualisiert.`, 'system');
                     resetChatInputUI(); // UI wieder freigeben nach Karten-Update
                     return;
                 } else {
@@ -1054,10 +1059,62 @@ function updateColumnCards(columnId, newCards, columnName) {
     console.log(`✅ Column "${column.name}" updated successfully with ${updatedCards.length} cards`);
 }
 
+// Einzelne Karte aktualisieren (für Card AI)
+function updateSingleCard(cardId, columnId, updatedCard) {
+    if (!currentBoard || !currentBoard.columns) {
+        console.error('No current board available');
+        return;
+    }
+    
+    const column = currentBoard.columns.find(c => c.id === columnId);
+    if (!column) {
+        console.error(`Column with ID ${columnId} not found`);
+        return;
+    }
+    
+    const cardIndex = column.cards.findIndex(c => c.id === cardId);
+    if (cardIndex === -1) {
+        console.error(`Card with ID ${cardId} not found in column ${columnId}`);
+        return;
+    }
+    
+    console.log(`🔄 Updating card "${column.cards[cardIndex].heading}" with AI response`);
+    
+    // Karte aktualisieren - bestehende Eigenschaften beibehalten
+    const existingCard = column.cards[cardIndex];
+    const mergedCard = {
+        id: existingCard.id, // ID muss gleich bleiben
+        heading: updatedCard.heading || existingCard.heading,
+        content: updatedCard.content || existingCard.content,
+        color: updatedCard.color || existingCard.color,
+        thumbnail: updatedCard.thumbnail || existingCard.thumbnail,
+        comments: updatedCard.comments || existingCard.comments,
+        url: updatedCard.url || existingCard.url,
+        labels: updatedCard.labels || existingCard.labels,
+        inactive: updatedCard.inactive !== undefined ? updatedCard.inactive : existingCard.inactive,
+        expanded: updatedCard.expanded !== undefined ? updatedCard.expanded : existingCard.expanded
+    };
+    
+    // Karte ersetzen
+    column.cards[cardIndex] = mergedCard;
+    
+    // Board speichern und neu rendern
+    saveAllBoards();
+    renderColumns();
+    
+    // Erfolgs-Benachrichtigung
+    if (typeof showAINotification === 'function') {
+        showAINotification(`✅ Karte "${mergedCard.heading}" erfolgreich aktualisiert!`, 'success');
+    }
+    
+    console.log(`✅ Card "${mergedCard.heading}" updated successfully`);
+}
+
 // Export für globale Nutzung
 window.addCardToColumn = addCardToColumn;
 window.addColumnWithCards = addColumnWithCards;
 window.updateColumnCards = updateColumnCards;
+window.updateSingleCard = updateSingleCard;
 window.sendQueryToN8NAgent = sendQueryToN8NAgent;
 window.connectWebSocket = connectWebSocket;
 window.openChatbotModal = openChatbotModal;

@@ -391,6 +391,26 @@ input#ai-include-column-context {
     max-width: 480px;
 }
 
+/* Card AI Modal Info Display */
+#ai-card-info {
+    background-color: rgba(0, 0, 0, 0.05);
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin: 8px 0;
+    font-family: monospace;
+}
+
+#ai-card-info strong {
+    color: #2196F3;
+    display: block;
+    margin-bottom: 4px;
+}
+
+#ai-card-column {
+    color: #666;
+    font-size: 0.9em;
+}
+
 /* AI Notification animations */
 .ai-notification {
     animation: slideInRight 0.3s ease;

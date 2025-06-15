@@ -249,19 +249,29 @@
     <div class="modal" id="ai-prompt-modal">
         <div class="modal-content max-420">
             <div class="modal-header">
-                <h3>AI Prompt</h3>
+                <h3>🤖 AI Assistent für Karte</h3>
                 <button class="close-btn" onclick="closeAIPromptModal()">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="ai-prompt-input">Prompt</label>
-                    <textarea id="ai-prompt-input" placeholder="Stelle eine Frage oder gib einen Befehl an die KI..."></textarea>
+                    <label>Karte:</label>
+                    <div id="ai-card-info" class="info-display">
+                        <strong id="ai-card-title">Kartentitel</strong>
+                        <div id="ai-card-column">in Spalte: <span id="ai-card-column-name">Spaltenname</span></div>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label><input type="checkbox" id="ai-include-column-context"> Spalte als Kontext einbeziehen</label>
+                    <label for="ai-prompt-input">Anweisung für AI:</label>
+                    <textarea id="ai-prompt-input" rows="4" placeholder="Beschreibe, wie die AI diese Karte bearbeiten soll... Beispiel: 'Ergänze fehlende Details', 'Verbessere den Inhalt'"></textarea>
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" id="ai-include-column-context"> Spalten-Kontext einbeziehen</label>
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" id="ai-include-board-context"> Board-Kontext einbeziehen (Name und Summary)</label>
                 </div>
                 <div class="modal-actions">
-                    <button class="btn btn-primary" onclick="submitAIPrompt()">Absenden</button>
+                    <button class="btn btn-primary" onclick="submitAIPrompt()">🚀 AI ausführen</button>
                     <button class="btn btn-secondary" onclick="closeAIPromptModal()">Abbrechen</button>
                 </div>    
             </div>

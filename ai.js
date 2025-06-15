@@ -63,6 +63,9 @@ function generateWithAI(prompt, context) {
 // AI-Integration für Card-Modal
 // Sorgt dafür, dass das AI-Icon im Card-Modal das Prompt-Modal öffnet und die generierten Inhalte in das Card-Content-Feld schreibt
 
+// Variable für aktuell ausgewählte Karte im AI-Modal
+let currentCardForAI = null;
+
 document.addEventListener('DOMContentLoaded', function() {
     // AI-Icon im Card-Modal
     const aiBtn = document.getElementById('open-ai-modal');
@@ -74,27 +77,143 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Card AI Modal öffnen
+function openCardAIModal(cardId, columnId) {
+    const column = currentBoard.columns.find(c => c.id === columnId);
+    if (!column) {
+        alert('Spalte nicht gefunden');
+        return;
+    }
+    
+    const card = column.cards.find(c => c.id === cardId);
+    if (!card) {
+        alert('Karte nicht gefunden');
+        return;
+    }
+    
+    currentCardForAI = card;
+    currentColumn = column; // Für bestehende Kompatibilität
+    
+    // Modal-Inhalte füllen
+    document.getElementById('ai-card-title').textContent = card.heading || 'Unbenannte Karte';
+    document.getElementById('ai-card-column-name').textContent = column.name;
+    document.getElementById('ai-prompt-input').value = '';
+    document.getElementById('ai-include-column-context').checked = false;
+    document.getElementById('ai-include-board-context').checked = true;
+    
+    // Modal öffnen
+    openAIPromptModal();
+}
+
 // openAIPromptModal überschreiben, damit das Modal immer leer startet
 function openAIPromptModal() {
     document.getElementById('ai-prompt-modal').classList.add('show');
-    document.getElementById('ai-prompt-input').value = '';
-    document.getElementById('ai-include-column-context').checked = false;
+    // Nur leeren wenn keine Karte ausgewählt ist
+    if (!currentCardForAI) {
+        document.getElementById('ai-prompt-input').value = '';
+        document.getElementById('ai-include-column-context').checked = false;
+        document.getElementById('ai-include-board-context').checked = false;
+    }
 }
 
 // submitAIPrompt: Prompt und Kontext an generateWithAI übergeben, Modal schließen
 async function submitAIPrompt() {
-    const prompt = document.getElementById('ai-prompt-input').value;
-    const includeContext = document.getElementById('ai-include-column-context').checked;
-    let context = '';
-    if (includeContext && currentColumn) {
-        context = currentColumn.cards.map(c => `${c.heading}: ${c.content}`).join('\n');
+    const prompt = document.getElementById('ai-prompt-input').value.trim();
+    
+    // Wenn eine Karte ausgewählt ist, verwende Card AI
+    if (currentCardForAI) {
+        await submitCardAIRequest();
+    } else {
+        // Fallback zur alten Funktionalität
+        const includeContext = document.getElementById('ai-include-column-context').checked;
+        let context = '';
+        if (includeContext && currentColumn) {
+            context = currentColumn.cards.map(c => `${c.heading}: ${c.content}`).join('\n');
+        }
+        await generateWithAI(prompt, context);
     }
-    await generateWithAI(prompt, context);
     closeAIPromptModal();
+}
+
+async function submitCardAIRequest() {
+    if (!currentCardForAI) {
+        alert('Keine Karte ausgewählt');
+        return;
+    }
+    
+    const cardsUrl = localStorage.getItem('ai_cardsUrl');
+    if (!cardsUrl) {
+        alert('Bitte konfigurieren Sie die AI-Endpoints in den Einstellungen');
+        return;
+    }
+    
+    const prompt = document.getElementById('ai-prompt-input').value.trim();
+    if (!prompt) {
+        alert('Bitte geben Sie eine Anweisung für die AI ein');
+        return;
+    }
+    
+    const includeColumnContext = document.getElementById('ai-include-column-context').checked;
+    const includeBoardContext = document.getElementById('ai-include-board-context').checked;
+    
+    // Prepare payload
+    const payload = {
+        type: 'card-ai-request',
+        boardId: currentBoard.id,
+        cardId: currentCardForAI.id,
+        columnId: currentColumn.id,
+        columnName: currentColumn.name,
+        prompt: prompt,
+        card: currentCardForAI,
+        timestamp: new Date().toISOString()
+    };
+    
+    // Spalten-Kontext hinzufügen wenn gewünscht
+    if (includeColumnContext) {
+        payload.columnCards = currentColumn.cards;
+    }
+    
+    // Board-Kontext hinzufügen wenn gewünscht
+    if (includeBoardContext) {
+        payload.boardContext = {
+            name: currentBoard.name,
+            summary: currentBoard.summary || ''
+        };
+    }
+    
+    try {
+        // POST request an Cards Endpoint
+        const response = await fetch(cardsUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        if (response.ok) {
+            // Erfolgs-Benachrichtigung
+            showAINotification('🤖 AI-Anfrage für Karte gesendet. Antwort wird über WebSocket empfangen...', 'info');
+            
+            // Chatbot-Modal öffnen um den Status zu zeigen
+            if (typeof openChatbotModal === 'function') {
+                openChatbotModal();
+                if (typeof displayMessage === 'function') {
+                    displayMessage(`🤖 AI verarbeitet Karte "${currentCardForAI.heading}" in Spalte "${currentColumn.name}"...`, 'system');
+                }
+            }
+        } else {
+            throw new Error(`Server antwortet mit Status ${response.status}`);
+        }
+    } catch (error) {
+        console.error('Fehler beim Senden der Card AI-Anfrage:', error);
+        showAINotification(`❌ Fehler: ${error.message}`, 'error');
+    }
 }
 
 function closeAIPromptModal() {
     document.getElementById('ai-prompt-modal').classList.remove('show');
+    currentCardForAI = null; // Reset der Karten-Auswahl
 }
 
 // Column AI-Funktionalität
@@ -235,7 +354,9 @@ function showAINotification(message, type = 'info') {
 }
 
 // Export AI functions for global use
+window.openCardAIModal = openCardAIModal;
 window.openColumnAIModal = openColumnAIModal;
 window.closeColumnAIModal = closeColumnAIModal;
 window.submitColumnAIRequest = submitColumnAIRequest;
+window.submitCardAIRequest = submitCardAIRequest;
 window.showAINotification = showAINotification;

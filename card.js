@@ -295,14 +295,14 @@ function createCardElement(card, columnId) {
              ondblclick="showCardFullModal('${card.id}', '${columnId}')"
              ontouchstart="cardTouchStart(event, '${card.id}', '${columnId}')"
              ontouchend="cardTouchEnd(event)">
-            ${card.thumbnail ? `<div class='card-thumb'><img src='${card.thumbnail}' alt='thumbnail' /></div>` : ''}
-            <div class="card-header">
+            ${card.thumbnail ? `<div class='card-thumb'><img src='${card.thumbnail}' alt='thumbnail' /></div>` : ''}            <div class="card-header">
                 <div class="card-title">${card.heading || ''}</div>
                 <div class="card-actions">
+                    <button class="card-btn card-ai-btn" onclick="event.stopPropagation();openCardAIModal('${card.id}', '${columnId}')" title="AI-Assistent für diese Karte">🤖</button>
                     <button class="card-btn card-delete" onclick="event.stopPropagation();deleteCard('${card.id}', '${columnId}')" title="Karte löschen">🗑️</button>
                     <button class="card-btn" onclick="event.stopPropagation();openCardModal('${columnId}', '${card.id}')" title="Karte bearbeiten">⋮</button>
                 </div>
-            </div>            
+            </div>
             <div class="card-preview-content" style="padding-top:0.1rem;padding-bottom:0.1rem;">
                 <ul style="margin-top:0.2em;margin-bottom:0.2em;">${previewText}</ul>
             </div>
