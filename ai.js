@@ -1,7 +1,8 @@
 // AI Functions
 function generateBoardSummary() {
-    if (!currentBoard.aiConfig?.provider || !currentBoard.aiConfig?.apiKey) {
-        alert('Please configure AI settings in Board Settings first.');
+    const columnsUrl = localStorage.getItem('ai_columnsUrl');
+    if (!columnsUrl) {
+        alert('Please configure AI endpoints in Settings first.');
         return;
     }
     
@@ -41,8 +42,9 @@ Der Arbeitsablauf verläuft durch folgende Bereiche: ${currentBoard.columns.map(
 }
 
 function generateWithAI(prompt, context) {
-    if (!currentBoard.aiConfig?.provider || !currentBoard.aiConfig?.apiKey) {
-        alert('Please configure AI settings in Board Settings first.');
+    const cardsUrl = localStorage.getItem('ai_cardsUrl');
+    if (!cardsUrl) {
+        alert('Please configure AI endpoints in Settings first.');
         return;
     }
     // Simulate AI content generation
@@ -53,7 +55,7 @@ function generateWithAI(prompt, context) {
     if (context) {
         mockContent += `\nKontext:\n${context}\n`;
     }
-    mockContent += `\nDies ist KI-generierter Beispielinhalt mit ${currentBoard.aiConfig.provider} (${currentBoard.aiConfig.model}).`;
+    mockContent += `\nDies ist KI-generierter Beispielinhalt mit konfigurierten AI-Endpoints.`;
     document.getElementById('card-content').value = mockContent;
     alert('Content generated! (This is a mock implementation)');
 }

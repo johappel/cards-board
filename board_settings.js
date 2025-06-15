@@ -49,14 +49,10 @@ async function saveBoardSettings(e) {
         currentBoard.backgroundHex = getCurrentBoardBackgroundHex();
     }
     
-    currentBoard.aiConfig = {
-        provider: document.getElementById('ai-provider').value,
-        apiKey: document.getElementById('ai-api-key').value,
-        model: document.getElementById('ai-model').value,
-        baseUrl: document.getElementById('ai-base-url').value
-    };
+    // AI-Konfiguration wird nicht mehr pro Board gespeichert
     updateBoardView();
-      // Apply board background style
+    
+    // Apply board background style
     if (typeof applyBoardBackgroundStyle === 'function') {
         applyBoardBackgroundStyle();
     }

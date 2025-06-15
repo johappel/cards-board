@@ -254,35 +254,18 @@ function loadBoardSettings() {
         setTimeout(() => loadBoardColorSettings(currentBoard), 200);
     }
     
-    // Load AI settings
-    const aiProvider = document.getElementById('ai-provider');
-    const aiBaseUrl = document.getElementById('ai-base-url');
-    const aiApiKey = document.getElementById('ai-api-key');
-    const aiModel = document.getElementById('ai-model');
-    
-    if (currentBoard.aiConfig) {
-        if (aiProvider) aiProvider.value = currentBoard.aiConfig.provider || '';
-        if (aiBaseUrl) aiBaseUrl.value = currentBoard.aiConfig.baseUrl || '';
-        if (aiApiKey) aiApiKey.value = currentBoard.aiConfig.apiKey || '';
-        if (aiModel) aiModel.value = currentBoard.aiConfig.model || '';
-    }
+    // AI-Konfiguration wird nicht mehr pro Board geladen
 }
 
 function loadAISettings() {
-    // Load global AI settings from localStorage
-    const aiSettings = JSON.parse(localStorage.getItem('kanban-ai-settings') || '{}');
-    
+    // Load AI endpoints from localStorage
     const wsUrl = document.getElementById('ai-websocket-url');
     const webhookUrl = document.getElementById('ai-webhook-url');
-    const provider = document.getElementById('ai-provider');
-    const apiKey = document.getElementById('ai-api-key');
-    const model = document.getElementById('ai-model');
-    const baseUrl = document.getElementById('ai-base-url');
+    const columnsUrl = document.getElementById('ai-columns-url');
+    const cardsUrl = document.getElementById('ai-cards-url');
     
-    if (wsUrl) wsUrl.value = aiSettings.websocketUrl || '';
-    if (webhookUrl) webhookUrl.value = aiSettings.webhookUrl || '';
-    if (provider) provider.value = aiSettings.provider || '';
-    if (apiKey) apiKey.value = aiSettings.apiKey || '';
-    if (model) model.value = aiSettings.model || '';
-    if (baseUrl) baseUrl.value = aiSettings.baseUrl || '';
+    if (wsUrl) wsUrl.value = localStorage.getItem('ai_websocketUrl') || '';
+    if (webhookUrl) webhookUrl.value = localStorage.getItem('ai_n8nAgentWebhookUrl') || '';
+    if (columnsUrl) columnsUrl.value = localStorage.getItem('ai_columnsUrl') || '';
+    if (cardsUrl) cardsUrl.value = localStorage.getItem('ai_cardsUrl') || '';
 }

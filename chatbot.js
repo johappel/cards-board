@@ -4,27 +4,18 @@
 // --- Konfiguration ---
 let websocketUrl = localStorage.getItem('ai_websocketUrl') ;
 let n8nAgentWebhookUrl = localStorage.getItem('ai_n8nAgentWebhookUrl');
+let aiColumnsUrl = localStorage.getItem('ai_columnsUrl');
+let aiCardsUrl = localStorage.getItem('ai_cardsUrl');
 
-// Globale AI-Settings (Model, Provider, API-Key, Base-URL)
-let globalAISettings = {
-    provider: localStorage.getItem('ai_provider') || '',
-    apiKey: localStorage.getItem('ai_apiKey') || '',
-    model: localStorage.getItem('ai_model') || '',
-    baseUrl: localStorage.getItem('ai_baseUrl') || ''
-};
-
-function saveGlobalAISettings(settings) {
-    Object.entries(settings).forEach(([key, value]) => {
-        localStorage.setItem('ai_' + key, value);
-        globalAISettings[key] = value;
-    });
-}
-
-function saveAIEndpoints(wsUrl, webhookUrl) {
+function saveAIEndpoints(wsUrl, webhookUrl, columnsUrl, cardsUrl) {
     localStorage.setItem('ai_websocketUrl', wsUrl);
     localStorage.setItem('ai_n8nAgentWebhookUrl', webhookUrl);
+    localStorage.setItem('ai_columnsUrl', columnsUrl);
+    localStorage.setItem('ai_cardsUrl', cardsUrl);
     websocketUrl = wsUrl;
     n8nAgentWebhookUrl = webhookUrl;
+    aiColumnsUrl = columnsUrl;
+    aiCardsUrl = cardsUrl;
 }
 
 let socket = null;
@@ -768,10 +759,8 @@ function openChatbotModal() {
 function openAISettingsModal() {
     document.getElementById('ai-websocket-url').value = localStorage.getItem('ai_websocketUrl') || '';
     document.getElementById('ai-webhook-url').value = localStorage.getItem('ai_n8nAgentWebhookUrl') || '';
-    document.getElementById('ai-provider').value = localStorage.getItem('ai_provider') || '';
-    document.getElementById('ai-api-key').value = localStorage.getItem('ai_apiKey') || '';
-    document.getElementById('ai-model').value = localStorage.getItem('ai_model') || '';
-    document.getElementById('ai-base-url').value = localStorage.getItem('ai_baseUrl') || '';
+    document.getElementById('ai-columns-url').value = localStorage.getItem('ai_columnsUrl') || '';
+    document.getElementById('ai-cards-url').value = localStorage.getItem('ai_cardsUrl') || '';
     openModal('ai-settings-modal');
 }
 
@@ -782,14 +771,11 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const wsUrl = document.getElementById('ai-websocket-url').value.trim();
             const webhookUrl = document.getElementById('ai-webhook-url').value.trim();
-            const provider = document.getElementById('ai-provider').value.trim();
-            const apiKey = document.getElementById('ai-api-key').value.trim();
-            const model = document.getElementById('ai-model').value.trim();
-            const baseUrl = document.getElementById('ai-base-url').value.trim();
-            saveAIEndpoints(wsUrl, webhookUrl);
-            saveGlobalAISettings({ provider, apiKey, model, baseUrl });
+            const columnsUrl = document.getElementById('ai-columns-url').value.trim();
+            const cardsUrl = document.getElementById('ai-cards-url').value.trim();
+            saveAIEndpoints(wsUrl, webhookUrl, columnsUrl, cardsUrl);
             closeModal('ai-settings-modal');
-            // alert('AI- und n8n-Einstellungen gespeichert!');
+            // alert('AI-Endpoints gespeichert!');
         };
     }
 });
