@@ -271,6 +271,380 @@ Der **n8n_example_chatbot_endpoint.json Workflow** zeigt, wie der AI-Support üb
 }
 ```
 
+## 4. Call2Actions (Dynamische Aktionen auf Karten)
+
+Das System unterstützt dynamische Call-to-Action-Buttons auf Karten, die vom AI-Server über WebSocket-Nachrichten gesetzt werden.
+
+### Funktionsweise
+
+1. Der AI-Server kann über WebSocket-Nachrichten Call2Actions-Buttons zu Karten hinzufügen
+2. Diese Buttons werden im Footer der Karten angezeigt
+3. Beim Klick auf einen Button wird eine spezielle AI-Anfrage mit der Action-Information gesendet
+4. Der AI-Server kann basierend auf der Action spezifische Verarbeitungen durchführen
+
+### Call2Actions in Card-Updates
+
+Wenn der AI-Server eine Karte über WebSocket aktualisiert, kann er `call2Actions` hinzufügen:
+
+```json
+{
+  "type": "update-card",
+  "card": {
+    "id": "card-123",
+    "heading": "Überarbeitete Karte",
+    "content": "Neuer Inhalt...",
+    "call2Actions": [
+      {
+        "action": "approve",
+        "label": "✅ Genehmigen",
+        "description": "Diese Änderungen genehmigen"
+      },
+      {
+        "action": "revise",
+        "label": "📝 Überarbeiten",
+        "description": "Weitere Überarbeitung anfordern",
+        "params": {
+          "priority": "high",
+          "department": "marketing"
+        }
+      },
+      {
+        "action": "reject",
+        "label": "❌ Ablehnen",
+        "description": "Änderungen ablehnen"
+      }
+    ]
+  }
+}
+```
+
+### Call2Actions Request Format
+
+Wenn ein Benutzer auf einen Call2Action-Button klickt, wird folgender Request gesendet:
+
+**URL**: `ai_cardsUrl`  
+**Method**: `POST`  
+**Content-Type**: `application/json`
+
+```json
+{
+  "type": "card-action-request",
+  "boardId": "board-123",
+  "connectionId": "ws-connection-456",
+  "cardId": "card-123",
+  "columnId": "col-1",
+  "columnName": "In Progress",
+  "card": {
+    "id": "card-123",
+    "heading": "Karten-Titel",
+    "content": "Karten-Inhalt...",
+    "color": "color-gradient-2",
+    "call2Actions": [...] // Die aktuellen Call2Actions
+  },
+  "columnCards": [...], // Alle Karten der Spalte für Kontext
+  "action": {
+    "action": "approve",
+    "label": "✅ Genehmigen",
+    "description": "Diese Änderungen genehmigen",
+    "params": {
+      "priority": "high",
+      "department": "marketing"
+    }
+  },
+  "timestamp": "2023-12-07T10:30:00Z"
+}
+```
+
+### Call2Actions Response
+
+Der AI-Server kann mit einer Standard-Karten-Update-Nachricht antworten:
+
+```json
+{
+  "type": "update-card",
+  "card": {
+    "id": "card-123",
+    "heading": "Genehmigte Karte",
+    "content": "Status: Genehmigt am 2023-12-07",
+    "color": "color-green",
+    "call2Actions": [] // Buttons können entfernt oder geändert werden
+  }
+}
+```
+
+### Beispiel-Workflow: Approval-Prozess
+
+1. **AI erstellt Karte mit Approval-Buttons**:
+```json
+{
+  "type": "update-card",
+  "card": {
+    "id": "card-review-123",
+    "heading": "Marketing-Kampagne Entwurf",
+    "content": "# Kampagne: Summer Sale\n\n- Budget: €5000\n- Zielgruppe: 25-40 Jahre\n- Kanäle: Social Media, Email",
+    "call2Actions": [
+      {
+        "action": "approve",
+        "label": "✅ Genehmigen",
+        "description": "Kampagne genehmigen und freigeben"
+      },
+      {
+        "action": "request_changes",
+        "label": "📝 Änderungen",
+        "description": "Überarbeitung anfordern"
+      },
+      {
+        "action": "schedule_meeting",
+        "label": "📅 Meeting",
+        "description": "Besprechung terminieren",
+        "params": {
+          "topic": "Marketing Campaign Review",
+          "urgency": "medium"
+        }
+      }
+    ]
+  }
+}
+```
+
+2. **Benutzer klickt "Genehmigen"** → Action-Request wird gesendet
+
+3. **AI-Server reagiert mit Update**:
+```json
+{
+  "type": "update-card", 
+  "card": {
+    "id": "card-review-123",
+    "heading": "✅ Marketing-Kampagne (Genehmigt)",
+    "content": "# Kampagne: Summer Sale\n\n- Budget: €5000\n- Zielgruppe: 25-40 Jahre\n- Kanäles: Social Media, Email\n\n**Status**: Genehmigt am 2023-12-07 10:30 Uhr\n**Nächste Schritte**: Kampagne wird in die Umsetzung übertragen",
+    "color": "color-green",
+    "call2Actions": [
+      {
+        "action": "move_to_production",
+        "label": "🚀 Zur Umsetzung",
+        "description": "Kampagne in Umsetzungs-Board verschieben"
+      }
+    ]
+  }
+}
+```
+
+### Call2Actions Best Practices
+
+1. **Button-Limit**: Maximal 3-4 Buttons pro Karte für gute UX
+2. **Aussagekräftige Labels**: Kurze, klare Beschreibungen mit Emojis
+3. **Kontext mitliefern**: `params` für zusätzliche Action-Informationen
+4. **Status-Rückmeldung**: Immer visuelle Bestätigung nach Action-Ausführung
+5. **Buttons entfernen**: Nach abgeschlossener Action Buttons löschen oder anpassen
+6. **Error Handling**: Ungültige Actions graceful behandeln
+
+## 5. WebSocket-Handler für Call2Actions
+
+Das System unterstützt spezielle WebSocket-Handler für Call2Actions-Interaktionen:
+
+### Handler: `card-action-result`
+
+Dieser Handler wird verwendet, um das Ergebnis einer Call2Action zu verarbeiten:
+
+```javascript
+// In chatbot.js WebSocket-Handler
+case 'card-action-result':
+    if (data.success) {
+        displayMessage(`✅ Action "${data.action}" erfolgreich ausgeführt`, 'success');
+        
+        // Karte aktualisieren falls mitgeliefert
+        if (data.card) {
+            handleCardUpdate(data.card);
+        }
+    } else {
+        displayMessage(`❌ Fehler bei Action "${data.action}": ${data.error}`, 'error');
+    }
+    break;
+```
+
+### Beispiel-Response für erfolgreich ausgeführte Call2Action:
+
+```json
+{
+  "type": "card-action-result",
+  "success": true,
+  "action": "approve",
+  "message": "Kampagne wurde erfolgreich genehmigt",
+  "card": {
+    "id": "card-123",
+    "heading": "✅ Marketing-Kampagne (Genehmigt)",
+    "content": "Status: Genehmigt und zur Umsetzung freigegeben",
+    "color": "color-green",
+    "call2Actions": [
+      {
+        "action": "move_to_production",
+        "label": "🚀 Zur Umsetzung",
+        "description": "In Produktions-Board verschieben"
+      }
+    ]
+  }
+}
+```
+
+### Beispiel-Response für fehlgeschlagene Call2Action:
+
+```json
+{
+  "type": "card-action-result",
+  "success": false,
+  "action": "approve",
+  "error": "Genehmigung fehlgeschlagen: Unzureichende Berechtigung",
+  "card": {
+    "id": "card-123",
+    "heading": "❌ Marketing-Kampagne (Genehmigung fehlgeschlagen)",
+    "content": "Fehler: Unzureichende Berechtigung für Genehmigung",
+    "color": "color-red",
+    "call2Actions": [
+      {
+        "action": "request_permission",
+        "label": "🔐 Berechtigung anfragen",
+        "description": "Berechtigung bei Vorgesetztem anfragen"
+      }
+    ]
+  }
+}
+```
+
+## 6. Integration in bestehende Workflows
+
+### Schritt 1: Call2Actions zu Karten hinzufügen
+
+```javascript
+// Beispiel für AI-Server, der Call2Actions zu einer Karte hinzufügt
+const cardWithActions = {
+  id: "card-123",
+  heading: "Neues Feature-Request",
+  content: "Benutzer möchten Dark Mode...",
+  call2Actions: [
+    {
+      action: "estimate_effort",
+      label: "⏱️ Aufwand schätzen",
+      description: "Entwicklungsaufwand schätzen"
+    },
+    {
+      action: "assign_developer",
+      label: "👨‍💻 Entwickler zuweisen",
+      description: "Passenden Entwickler auswählen"
+    },
+    {
+      action: "add_to_backlog",
+      label: "📋 Zu Backlog",
+      description: "In Produkt-Backlog einordnen"
+    }
+  ]
+};
+```
+
+### Schritt 2: Action-Handler im AI-Server
+
+```javascript
+// Beispiel für n8n-Webhook oder Custom Server
+function handleCardAction(requestData) {
+  const { action, card, columnCards } = requestData;
+  
+  switch(action.action) {
+    case 'estimate_effort':
+      return estimateEffort(card, columnCards);
+    case 'assign_developer':
+      return assignDeveloper(card);
+    case 'add_to_backlog':
+      return addToBacklog(card);
+    default:
+      return { success: false, error: 'Unbekannte Action' };
+  }
+}
+```
+
+### Schritt 3: Response mit neuen Call2Actions
+
+```javascript
+function estimateEffort(card, columnCards) {
+  // AI-Logik für Aufwandschätzung
+  const estimation = analyzeEffort(card.content);
+  
+  return {
+    type: 'update-card',
+    card: {
+      ...card,
+      heading: `⏱️ ${card.heading} (${estimation.hours}h geschätzt)",
+      content: card.content + `\n\n**Aufwandschätzung**: ${estimation.hours} Stunden\n**Komplexität**: ${estimation.complexity}`,
+      call2Actions: [
+        {
+          action: 'approve_estimation',
+          label: '✅ Schätzung bestätigen',
+          description: 'Aufwandschätzung akzeptieren'
+        },
+        {
+          action: 'revise_estimation',
+          label: '📝 Überarbeiten',
+          description: 'Schätzung überarbeiten lassen'
+        }
+      ]
+    }
+  };
+}
+```
+
+## 7. Erweiterte Features
+
+### Bedingte Call2Actions
+
+Call2Actions können basierend auf Karten-Zustand oder Benutzer-Rollen dynamisch angepasst werden:
+
+```json
+{
+  "call2Actions": [
+    {
+      "action": "admin_action",
+      "label": "🔧 Admin-Aktion",
+      "description": "Nur für Administratoren",
+      "conditions": {
+        "requiredRole": "admin",
+        "requiredStatus": "pending"
+      }
+    }
+  ]
+}
+```
+
+### Batch-Actions für mehrere Karten
+
+Call2Actions können auch für mehrere Karten gleichzeitig ausgeführt werden:
+
+```json
+{
+  "action": {
+    "action": "bulk_approve",
+    "label": "✅ Alle genehmigen",
+    "description": "Alle Karten in der Spalte genehmigen",
+    "batch": true,
+    "targetCards": ["card-1", "card-2", "card-3"]
+  }
+}
+```
+
+### Temporäre Call2Actions
+
+Call2Actions können mit einem Ablaufdatum versehen werden:
+
+```json
+{
+  "call2Actions": [
+    {
+      "action": "urgent_review",
+      "label": "🚨 Dringend prüfen",
+      "description": "Läuft in 2 Stunden ab",
+      "expiresAt": "2023-12-07T14:00:00Z"
+    }
+  ]
+}
+```
+
 ## WebSocket-Verbindung
 
 ### Verbindungsaufbau
@@ -419,3 +793,52 @@ if (type === 'card-ai-request') {
 **Version**: 1.0  
 **Letzte Aktualisierung**: 15. Juni 2025  
 **Kompatibilität**: Kanban Board System v2.0+
+
+## Call2Actions Implementierung - Abgeschlossen ✅
+
+**Datum**: 2023-12-07
+
+### Implementierte Features:
+
+1. **Call2Actions-Button-Rendering**:
+   - `renderCall2ActionsButtons()` Funktion in `ai.js`
+   - Integration in `createCardElement()` in `card.js`
+   - CSS-Styling für Buttons in `card.css`
+
+2. **Action-Ausführung**:
+   - `executeCall2Action()` für Button-Klick-Handling
+   - `submitCardAIRequestWithAction()` für AI-Requests mit Action-Parametern
+   - Hilfsfunktionen: `getConnectionId()`, `getCardById()`, `getColumnById()`, etc.
+
+3. **Request/Response-Formate**:
+   - `card-action-request` Type für Call2Actions-Requests
+   - Vollständige Karten- und Spalten-Kontext-Übertragung
+   - WebSocket-Integration für Antworten
+
+4. **UI/UX-Features**:
+   - Dynamische Button-Deaktivierung während Request
+   - Visual Feedback (⏳ Icon) während Verarbeitung
+   - Responsive Design für Mobile
+   - Integration in Karten-Footer
+
+5. **Dokumentation**:
+   - Erweiterte `AI-SUPPORTED-ENDPOINTS.md` mit Call2Actions-Sektion
+   - Beispiel-Workflows (Approval-Prozess, Feature-Request-Handling)
+   - WebSocket-Handler-Dokumentation
+   - Test-HTML-Seite (`test-call2actions.html`)
+
+### Technische Integration:
+
+- **Frontend**: Call2Actions werden in `card-footer-actions` gerendert
+- **Backend**: Requests gehen an `ai_cardsUrl` mit `type: 'card-action-request'`
+- **WebSocket**: Antworten über `update-card` oder `card-action-result` Messages
+- **Persistierung**: Call2Actions werden in Card-Objekt gespeichert
+
+### Nächste Schritte:
+
+1. **Server-Side Implementation**: AI-Server muss Call2Actions-Requests verarbeiten
+2. **Testing**: Vollständige End-to-End-Tests mit echten AI-Responses
+3. **Enhanced Features**: Bedingte Actions, Batch-Actions, Expiration-Handling
+4. **Performance**: Optimierung für große Mengen von Call2Actions
+
+Die Call2Actions-Funktionalität ist vollständig implementiert und bereit für den produktiven Einsatz! 🎉

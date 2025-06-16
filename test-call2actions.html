@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Call2Actions Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 1rem;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .call2actions-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .call2action-btn {
+            padding: 0.4rem 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .call2action-btn:hover {
+            background: white;
+            transform: translateY(-1px);
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 0.9rem;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 1rem 0;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            margin: 0.5rem;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn.success {
+            background: #28a745;
+        }
+        .btn.danger {
+            background: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <h1>Call2Actions Test</h1>
+    <p>Diese Seite demonstriert die Call2Actions-Funktionalität für Kanban-Karten.</p>
+
+    <div class="test-section">
+        <h2>1. Beispiel-Karte mit Call2Actions</h2>
+        <div class="test-card">
+            <h3>📋 Marketing-Kampagne Entwurf</h3>
+            <p>Budget: €5000 | Zielgruppe: 25-40 Jahre | Kanäle: Social Media, Email</p>
+            
+            <div class="call2actions-buttons">
+                <button class="call2action-btn" onclick="simulateAction('approve', 'Kampagne genehmigen')">
+                    ✅ Genehmigen
+                </button>
+                <button class="call2action-btn" onclick="simulateAction('request_changes', 'Änderungen anfordern')">
+                    📝 Änderungen
+                </button>
+                <button class="call2action-btn" onclick="simulateAction('schedule_meeting', 'Meeting planen')">
+                    📅 Meeting
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Simulierte AI-Antworten</h2>
+        <button class="btn" onclick="simulateWebSocketUpdate('approval')">Genehmigung simulieren</button>
+        <button class="btn success" onclick="simulateWebSocketUpdate('changes')">Änderungen simulieren</button>
+        <button class="btn danger" onclick="simulateWebSocketUpdate('rejection')">Ablehnung simulieren</button>
+        <button class="btn" onclick="clearLog()">Log löschen</button>
+    </div>
+
+    <div class="test-section">
+        <h2>3. WebSocket-Nachrichten Log</h2>
+        <div class="log" id="logOutput">
+            <div>Test-Umgebung geladen. Klicken Sie auf die Buttons oben, um Call2Actions zu testen.</div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Beispiel-Payloads</h2>
+        <h3>Call2Actions Request:</h3>
+        <pre id="requestExample" style="background: #f8f9fa; padding: 1rem; border-radius: 4px; overflow-x: auto;">
+{
+  "type": "card-action-request",
+  "boardId": "test-board",
+  "connectionId": "test-connection",
+  "cardId": "test-card",
+  "columnId": "test-column",
+  "columnName": "In Review",
+  "card": {
+    "id": "test-card",
+    "heading": "Marketing-Kampagne Entwurf",
+    "content": "Budget: €5000...",
+    "call2Actions": [...]
+  },
+  "action": {
+    "action": "approve",
+    "label": "✅ Genehmigen",
+    "description": "Kampagne genehmigen"
+  }
+}
+        </pre>
+
+        <h3>WebSocket Response:</h3>
+        <pre id="responseExample" style="background: #f8f9fa; padding: 1rem; border-radius: 4px; overflow-x: auto;">
+{
+  "type": "update-card",
+  "card": {
+    "id": "test-card",
+    "heading": "✅ Marketing-Kampagne (Genehmigt)",
+    "content": "Status: Genehmigt am 2023-12-07",
+    "color": "color-green",
+    "call2Actions": []
+  }
+}
+        </pre>
+    </div>
+
+    <script>
+        function simulateAction(action, description) {
+            const actionData = {
+                action: action,
+                label: description,
+                timestamp: new Date().toISOString()
+            };
+            
+            addLog(`🚀 Action ausgeführt: ${action}`, 'action');
+            addLog(`📤 Request gesendet: ${JSON.stringify(actionData)}`, 'request');
+            
+            // Simuliere Antwort nach kurzer Verzögerung
+            setTimeout(() => {
+                addLog(`📥 AI-Antwort empfangen für Action: ${action}`, 'response');
+                
+                // Simuliere Kartenupdate
+                const cardUpdate = {
+                    type: 'update-card',
+                    card: {
+                        id: 'test-card',
+                        heading: getUpdatedHeading(action),
+                        content: getUpdatedContent(action),
+                        color: getUpdatedColor(action),
+                        call2Actions: getUpdatedActions(action)
+                    }
+                };
+                
+                addLog(`📝 Karte aktualisiert: ${JSON.stringify(cardUpdate, null, 2)}`, 'update');
+            }, 1000);
+        }
+        
+        function simulateWebSocketUpdate(type) {
+            const updates = {
+                approval: {
+                    heading: '✅ Marketing-Kampagne (Genehmigt)',
+                    content: 'Status: Genehmigt am ' + new Date().toLocaleString(),
+                    color: 'color-green',
+                    call2Actions: []
+                },
+                changes: {
+                    heading: '📝 Marketing-Kampagne (Überarbeitung)',
+                    content: 'Status: Überarbeitung angefordert am ' + new Date().toLocaleString(),
+                    color: 'color-orange',
+                    call2Actions: [
+                        { action: 'submit_revision', label: '📤 Überarbeitung einreichen' }
+                    ]
+                },
+                rejection: {
+                    heading: '❌ Marketing-Kampagne (Abgelehnt)',
+                    content: 'Status: Abgelehnt am ' + new Date().toLocaleString(),
+                    color: 'color-red',
+                    call2Actions: [
+                        { action: 'create_new', label: '🔄 Neu erstellen' }
+                    ]
+                }
+            };
+            
+            const update = updates[type];
+            if (update) {
+                addLog(`📡 WebSocket Update empfangen: ${type}`, 'websocket');
+                addLog(`📝 ${JSON.stringify(update, null, 2)}`, 'update');
+            }
+        }
+        
+        function getUpdatedHeading(action) {
+            const headings = {
+                approve: '✅ Marketing-Kampagne (Genehmigt)',
+                request_changes: '📝 Marketing-Kampagne (Überarbeitung)',
+                schedule_meeting: '📅 Marketing-Kampagne (Meeting geplant)'
+            };
+            return headings[action] || 'Marketing-Kampagne';
+        }
+        
+        function getUpdatedContent(action) {
+            const contents = {
+                approve: 'Status: Genehmigt am ' + new Date().toLocaleString(),
+                request_changes: 'Status: Überarbeitung angefordert am ' + new Date().toLocaleString(),
+                schedule_meeting: 'Status: Meeting geplant für ' + new Date().toLocaleString()
+            };
+            return contents[action] || 'Status: Verarbeitet';
+        }
+        
+        function getUpdatedColor(action) {
+            const colors = {
+                approve: 'color-green',
+                request_changes: 'color-orange',
+                schedule_meeting: 'color-blue'
+            };
+            return colors[action] || 'color-gradient-1';
+        }
+        
+        function getUpdatedActions(action) {
+            const actions = {
+                approve: [],
+                request_changes: [
+                    { action: 'submit_revision', label: '📤 Einreichen', description: 'Überarbeitung einreichen' }
+                ],
+                schedule_meeting: [
+                    { action: 'join_meeting', label: '📞 Beitreten', description: 'Meeting beitreten' }
+                ]
+            };
+            return actions[action] || [];
+        }
+        
+        function addLog(message, type = 'info') {
+            const log = document.getElementById('logOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            const icons = {
+                action: '⚡',
+                request: '📤',
+                response: '📥',
+                update: '📝',
+                websocket: '📡',
+                info: 'ℹ️'
+            };
+            
+            const entry = document.createElement('div');
+            entry.style.marginBottom = '0.5rem';
+            entry.style.padding = '0.25rem';
+            entry.style.borderLeft = '3px solid #007bff';
+            entry.style.paddingLeft = '0.5rem';
+            entry.innerHTML = `<span style="color: #666;">[${timestamp}]</span> ${icons[type] || 'ℹ️'} ${message}`;
+            
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function clearLog() {
+            const log = document.getElementById('logOutput');
+            log.innerHTML = '<div>Log geleert.</div>';
+        }
+        
+        // Initialisierung
+        document.addEventListener('DOMContentLoaded', function() {
+            addLog('Call2Actions Test-Umgebung geladen', 'info');
+        });
+    </script>
+</body>
+</html>

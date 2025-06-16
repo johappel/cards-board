@@ -788,3 +788,56 @@
 .card-ai-btn:hover {
     background-color: rgba(51, 154, 240, 0.2) !important;
 }
+
+/* Call2Actions Buttons */
+.call2actions-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-top: 0.5rem;
+}
+
+.call2action-btn {
+    padding: 0.2rem 0.6rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    max-width: 120px;
+}
+
+.call2action-btn:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.call2action-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.call2action-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+    .call2actions-buttons {
+        gap: 0.2rem;
+    }
+    
+    .call2action-btn {
+        padding: 0.1rem 0.4rem;
+        font-size: 0.7rem;
+        max-width: 100px;
+    }
+}

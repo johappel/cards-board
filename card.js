@@ -306,12 +306,12 @@ function createCardElement(card, columnId) {
             <div class="card-preview-content" style="padding-top:0.1rem;padding-bottom:0.1rem;">
                 <ul style="margin-top:0.2em;margin-bottom:0.2em;">${previewText}</ul>
             </div>
-            ${commentHtml}
-            <div class="card-footer">
+            ${commentHtml}            <div class="card-footer">
                 <div class="card-footer-actions">
                     <span class="card-comments-count">💬 ${(card.comments && card.comments.trim()) ? '1' : '0'}</span>
                     ${urlHtml}
                     ${labelsHtml}
+                    ${typeof renderCall2ActionsButtons === 'function' ? renderCall2ActionsButtons(card, columnId) : ''}
                 </div>
             </div>
         </div>

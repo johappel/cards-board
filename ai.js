@@ -218,6 +218,126 @@ async function submitCardAIRequest() {
     }
 }
 
+// Hilfsfunktionen für Call2Actions
+function getConnectionId() {
+    // Versuche zuerst die gespeicherte Connection ID zu holen
+    if (currentBoard && currentBoard.id) {
+        return getServerAssignedConnectionId(currentBoard.id);
+    }
+    return null;
+}
+
+function getCardById(cardId) {
+    if (!currentBoard) return null;
+    
+    for (const column of currentBoard.columns) {
+        const card = column.cards.find(c => c.id === cardId);
+        if (card) return card;
+    }
+    return null;
+}
+
+function getColumnById(columnId) {
+    if (!currentBoard) return null;
+    return currentBoard.columns.find(c => c.id === columnId);
+}
+
+function getAllCardsFromColumn(columnId) {
+    const column = getColumnById(columnId);
+    return column ? column.cards : [];
+}
+
+function showNotification(message, type = 'info') {
+    // Verwende die AI-Notification-Funktion falls verfügbar
+    if (typeof showAINotification === 'function') {
+        const icon = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
+        showAINotification(`${icon} ${message}`, type);
+    } else {
+        // Fallback zu Browser-Alert
+        alert(message);
+    }
+}
+
+// Submit Card AI Request with Action (für Call2Actions)
+async function submitCardAIRequestWithAction(cardId, columnId, actionParams) {
+    const connectionId = getConnectionId();
+    if (!connectionId) {
+        showNotification('Keine Verbindung zum AI-Service', 'error');
+        return;
+    }
+    
+    const card = getCardById(cardId);
+    if (!card) {
+        showNotification('Karte nicht gefunden', 'error');
+        return;
+    }
+    
+    const column = getColumnById(columnId);
+    if (!column) {
+        showNotification('Spalte nicht gefunden', 'error');
+        return;
+    }
+    
+    // AI Cards URL abrufen
+    const cardsUrl = localStorage.getItem('ai_cardsUrl');
+    if (!cardsUrl) {
+        showNotification('AI-Endpoints nicht konfiguriert', 'error');
+        return;
+    }
+    
+    // Alle Karten der Spalte sammeln (für Context)
+    const allCards = getAllCardsFromColumn(columnId);
+    
+    const requestData = {
+        type: 'card-action-request',
+        boardId: currentBoard.id,
+        connectionId: connectionId,
+        cardId: card.id,
+        columnId: column.id,
+        columnName: column.name,
+        card: card,
+        columnCards: allCards,
+        action: actionParams,
+        timestamp: new Date().toISOString()
+    };
+    
+    try {
+        console.log('Sende Card Action Request:', requestData);
+        const response = await fetch(cardsUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('Card Action Response:', result);
+        
+        if (result.success) {
+            showNotification(`🤖 Action "${actionParams.action}" wird verarbeitet...`, 'info');
+            
+            // Chatbot-Modal öffnen um den Status zu zeigen
+            if (typeof openChatbotModal === 'function') {
+                openChatbotModal();
+                if (typeof displayMessage === 'function') {
+                    displayMessage(`🤖 AI führt "${actionParams.action}" für Karte "${card.heading}" aus...`, 'system');
+                }
+            }
+        } else {
+            throw new Error(result.error || 'Unbekannter Fehler');
+        }
+        
+    } catch (error) {
+        console.error('Fehler beim Card Action Request:', error);
+        showNotification('Fehler beim Ausführen der Action: ' + error.message, 'error');
+    }
+}
+
 function closeAIPromptModal() {
     document.getElementById('ai-prompt-modal').classList.remove('show');
     currentCardForAI = null; // Reset der Karten-Auswahl
@@ -375,10 +495,62 @@ function showAINotification(message, type = 'info') {
     }, 5000);
 }
 
+// Funktion zum Rendern von Call2Actions-Buttons für Karten
+function renderCall2ActionsButtons(card, columnId) {
+    if (!card.call2Actions || !Array.isArray(card.call2Actions) || card.call2Actions.length === 0) {
+        return '';
+    }
+    
+    const buttonsHtml = card.call2Actions.map(action => {
+        const safeAction = JSON.stringify(action).replace(/"/g, '&quot;');
+        return `<button class="call2action-btn" 
+                        onclick="event.stopPropagation();executeCall2Action('${card.id}', '${columnId}', ${safeAction})"
+                        title="${action.description || action.action}">
+                    ${action.label || action.action}
+                </button>`;
+    }).join('');
+    
+    return `<div class="call2actions-buttons">${buttonsHtml}</div>`;
+}
+
+// Funktion zum Ausführen einer Call2Action
+async function executeCall2Action(cardId, columnId, actionParams) {
+    console.log('Executing Call2Action:', actionParams);
+    
+    try {
+        // Button temporär deaktivieren
+        const button = event.target;
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = '⏳';
+        
+        await submitCardAIRequestWithAction(cardId, columnId, actionParams);
+        
+        // Button nach kurzer Zeit wieder aktivieren
+        setTimeout(() => {
+            button.disabled = false;
+            button.textContent = originalText;
+        }, 2000);
+        
+    } catch (error) {
+        console.error('Fehler beim Ausführen der Call2Action:', error);
+        showNotification('Fehler beim Ausführen der Action: ' + error.message, 'error');
+        
+        // Button wieder aktivieren
+        if (event.target) {
+            event.target.disabled = false;
+            event.target.textContent = originalText;
+        }
+    }
+}
+
 // Export AI functions for global use
 window.openCardAIModal = openCardAIModal;
 window.openColumnAIModal = openColumnAIModal;
 window.closeColumnAIModal = closeColumnAIModal;
 window.submitColumnAIRequest = submitColumnAIRequest;
 window.submitCardAIRequest = submitCardAIRequest;
+window.submitCardAIRequestWithAction = submitCardAIRequestWithAction;
 window.showAINotification = showAINotification;
+window.renderCall2ActionsButtons = renderCall2ActionsButtons;
+window.executeCall2Action = executeCall2Action;
