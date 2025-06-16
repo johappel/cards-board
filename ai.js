@@ -155,14 +155,15 @@ async function submitCardAIRequest() {
       const includeColumnContext = document.getElementById('ai-include-column-context').checked;
     const includeBoardContext = document.getElementById('ai-include-board-context').checked;
     
+    // Chatbot-Modal öffnen, weil sich sonst keine Connection ID ermitteln lässt und die Anfrage fehlschlägt
+    openChatbotModal();
+
     // Connection ID für WebSocket-Routing abrufen
     const connectionId = getServerAssignedConnectionId(currentBoard.id);
     if (!connectionId) {
         alert('Keine WebSocket-Verbindung verfügbar. Bitte versuchen Sie es später erneut.');
         return;
     }
-    // Chatbot-Modal öffnen, weil sich sonst keine Connection ID ermitteln lässt und die Anfrage fehlschlägt
-    openChatbotModal();
     
     // Prepare payload
     const payload = {
@@ -262,11 +263,6 @@ function showNotification(message, type = 'info') {
 
 // Submit Card AI Request with Action (für Call2Actions)
 async function submitCardAIRequestWithAction(cardId, columnId, actionParams) {
-    const connectionId = getConnectionId();
-    if (!connectionId) {
-        showNotification('Keine Verbindung zum AI-Service', 'error');
-        return;
-    }
     
     const card = getCardById(cardId);
     if (!card) {
@@ -286,8 +282,15 @@ async function submitCardAIRequestWithAction(cardId, columnId, actionParams) {
         showNotification('AI-Endpoints nicht konfiguriert', 'error');
         return;
     }
+    
+    // Chatbot-Modal öffnen, um die Connection ID zu erhalten
     openChatbotModal();
-
+    const connectionId = getConnectionId();
+    if (!connectionId) {
+        showNotification('Keine Verbindung zum AI-Service', 'error');
+        return;
+    }
+    
     // Alle Karten der Spalte sammeln (für Context)
     const allCards = getAllCardsFromColumn(columnId);
     
@@ -393,12 +396,13 @@ async function submitColumnAIRequest() {
       const includeContext = document.getElementById('column-ai-include-board-context').checked;
     
     // Connection ID für WebSocket-Routing abrufen
+    openChatbotModal(); // Sicherstellen, dass die Chatbot-Modal geöffnet ist, um die Connection ID zu erhalten
     const connectionId = getServerAssignedConnectionId(currentBoard.id);
     if (!connectionId) {
         alert('Keine WebSocket-Verbindung verfügbar. Bitte versuchen Sie es später erneut.');
         return;
     }
-    openChatbotModal();
+    
 
     // Prepare payload - vereinfachtes Format ohne interne IDs
     const payload = {
