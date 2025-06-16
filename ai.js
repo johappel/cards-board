@@ -161,6 +161,8 @@ async function submitCardAIRequest() {
         alert('Keine WebSocket-Verbindung verfügbar. Bitte versuchen Sie es später erneut.');
         return;
     }
+    // Chatbot-Modal öffnen, weil sich sonst keine Connection ID ermitteln lässt und die Anfrage fehlschlägt
+    openChatbotModal();
     
     // Prepare payload
     const payload = {
@@ -284,7 +286,8 @@ async function submitCardAIRequestWithAction(cardId, columnId, actionParams) {
         showNotification('AI-Endpoints nicht konfiguriert', 'error');
         return;
     }
-    
+    openChatbotModal();
+
     // Alle Karten der Spalte sammeln (für Context)
     const allCards = getAllCardsFromColumn(columnId);
     
@@ -395,7 +398,9 @@ async function submitColumnAIRequest() {
         alert('Keine WebSocket-Verbindung verfügbar. Bitte versuchen Sie es später erneut.');
         return;
     }
-      // Prepare payload - vereinfachtes Format ohne interne IDs
+    openChatbotModal();
+
+    // Prepare payload - vereinfachtes Format ohne interne IDs
     const payload = {
         type: 'column-ai-request',
         connectionId: connectionId,
@@ -437,8 +442,7 @@ async function submitColumnAIRequest() {
         if (response.ok) {
             // Modal schließen
             closeColumnAIModal();
-            openChatbotModal();
-            
+                        
             // Erfolgs-Benachrichtigung
             showAINotification('🤖 AI-Anfrage gesendet. Antwort wird über WebSocket empfangen...', 'info');
             
