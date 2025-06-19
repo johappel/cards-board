@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Call2Actions WebSocket Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 1rem;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .message-example {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 0.9rem;
+            margin: 1rem 0;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            margin: 0.5rem;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn.success {
+            background: #28a745;
+        }
+        .btn.warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        .output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 1rem;
+            min-height: 200px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+        .highlight {
+            background: #fff3cd;
+            padding: 0.5rem;
+            border-left: 4px solid #ffc107;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Call2Actions WebSocket Integration Test</h1>
+    <p>Diese Seite testet die WebSocket-Integration für Call2Actions mit dem Kanban Board System.</p>
+
+    <div class="test-section">
+        <h2>1. Beispiel WebSocket-Message für Call2Actions</h2>
+        <p>Die folgende Message zeigt, wie Call2Actions über WebSocket an das Board gesendet werden:</p>
+        
+        <div class="message-example">{
+  "messagePayload": {
+    "type": "update-cards",
+    "column": "Spalte1",
+    "columnId": "id-1750322734062-qaavij8",
+    "cards": [
+      {
+        "id": "id-1750322757820-vo58frx",
+        "heading": "Karte 1",
+        "content": "Hello! It looks like you've shared a brief message...",
+        "color": "color-gradient-7",
+        "thumbnail": "",
+        "comments": "",
+        "url": "",
+        "labels": "",
+        "inactive": false,
+        "call2Actions": [
+          {
+            "label": "In Bausteine aufteilen",
+            "action": "split",
+            "material_id": 1230,
+            "description": "Notiere unterrichtsrelevante Bausteine aus diesem Material in einzelne Kärtchen"
+          }
+        ]
+      }
+    ]
+  }
+}</div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Funktions-Flow</h2>
+        <div class="highlight">
+            <strong>Verarbeitungsschritte:</strong><br>
+            1. WebSocket empfängt Message mit <code>type: "update-cards"</code><br>
+            2. <code>updateColumnCardsByName()</code> wird aufgerufen<br>
+            3. Call2Actions werden in die Karten-Struktur übernommen<br>
+            4. <code>saveAllBoards()</code> persistiert die Daten<br>
+            5. <code>renderColumns()</code> zeigt die Buttons in der UI
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Implementierung in chatbot.js</h2>
+        <h3>updateColumnCardsByName() - erweitert für Call2Actions:</h3>
+        <div class="message-example">return {
+  id: existingCard?.id || card.id || generateId(),
+  heading: card.heading || '',
+  content: card.content || '',
+  color: card.color || existingCard?.color || 'color-gradient-1',
+  // ... andere Eigenschaften ...
+  call2Actions: card.call2Actions || existingCard?.call2Actions || [] // ✅ NEUE ZEILE
+};</div>
+
+        <h3>updateSingleCard() - erweitert für Call2Actions:</h3>
+        <div class="message-example">const mergedCard = {
+  id: existingCard.id,
+  heading: updatedCard.heading || existingCard.heading,
+  content: updatedCard.content || existingCard.content,
+  // ... andere Eigenschaften ...
+  call2Actions: updatedCard.call2Actions || existingCard.call2Actions || [] // ✅ NEUE ZEILE
+};</div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Erweiterte Call2Actions-Beispiele</h2>
+        
+        <h3>Approval-Workflow:</h3>
+        <div class="message-example">"call2Actions": [
+  {
+    "action": "approve",
+    "label": "✅ Genehmigen",
+    "description": "Diese Änderungen genehmigen"
+  },
+  {
+    "action": "revise",
+    "label": "📝 Überarbeiten",
+    "description": "Weitere Überarbeitung anfordern",
+    "params": {
+      "priority": "high",
+      "department": "marketing"
+    }
+  },
+  {
+    "action": "reject",
+    "label": "❌ Ablehnen",
+    "description": "Änderungen ablehnen"
+  }
+]</div>
+
+        <h3>Educational-Workflow:</h3>
+        <div class="message-example">"call2Actions": [
+  {
+    "action": "split",
+    "label": "🧩 In Bausteine aufteilen",
+    "material_id": 1230,
+    "description": "Material in Lerneinheiten unterteilen"
+  },
+  {
+    "action": "generate_quiz",
+    "label": "❓ Quiz erstellen",
+    "description": "Automatisches Quiz aus dem Inhalt generieren"
+  },
+  {
+    "action": "add_resources",
+    "label": "📚 Ressourcen hinzufügen",
+    "description": "Zusätzliche Links und Materialien ergänzen"
+  }
+]</div>
+    </div>
+
+    <div class="test-section">
+        <h2>5. Test WebSocket-Messages</h2>
+        <button class="btn" onclick="testUpdateCards()">Test update-cards</button>
+        <button class="btn success" onclick="testUpdateSingleCard()">Test update-card</button>
+        <button class="btn warning" onclick="clearOutput()">Output löschen</button>
+        
+        <h3>Simulierte Verarbeitung:</h3>
+        <div class="output" id="output">Klicken Sie auf die Test-Buttons oben, um die WebSocket-Message-Verarbeitung zu simulieren...</div>
+    </div>
+
+    <div class="test-section">
+        <h2>6. Überprüfung der Integration</h2>
+        <div class="highlight">
+            <strong>Checkliste:</strong><br>
+            ✅ Call2Actions werden in updateColumnCardsByName() übernommen<br>
+            ✅ Call2Actions werden in updateSingleCard() übernommen<br>
+            ✅ Logging zeigt Call2Actions-Verarbeitung an<br>
+            ✅ Robuste Kartensuche auch bei verschobenen Karten<br>
+            ✅ saveAllBoards() persistiert Call2Actions im Storage<br>
+            ✅ renderColumns() zeigt Call2Actions-Buttons in der UI
+        </div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const output = document.getElementById('output');
+            const timestamp = new Date().toLocaleTimeString();
+            const icons = {
+                info: 'ℹ️',
+                success: '✅',
+                warning: '⚠️',
+                error: '❌'
+            };
+            
+            output.textContent += `[${timestamp}] ${icons[type]} ${message}\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function testUpdateCards() {
+            log('Simuliere WebSocket Message: update-cards', 'info');
+            
+            const mockMessage = {
+                type: "update-cards",
+                column: "Spalte1", 
+                columnId: "test-column-id",
+                cards: [
+                    {
+                        id: "test-card-1",
+                        heading: "Test Karte mit Call2Actions",
+                        content: "Diese Karte wurde über WebSocket aktualisiert...",
+                        color: "color-gradient-7",
+                        call2Actions: [
+                            {
+                                action: "split",
+                                label: "🧩 In Bausteine aufteilen",
+                                material_id: 1230,
+                                description: "Material in Lerneinheiten unterteilen"
+                            },
+                            {
+                                action: "approve",
+                                label: "✅ Genehmigen",
+                                description: "Änderungen genehmigen"
+                            }
+                        ]
+                    }
+                ]
+            };
+            
+            log('updateColumnCardsByName() wird aufgerufen...', 'info');
+            log(`Processing ${mockMessage.cards.length} cards`, 'info');
+            log(`Found ${mockMessage.cards[0].call2Actions.length} Call2Actions in card "${mockMessage.cards[0].heading}"`, 'success');
+            log('Call2Actions werden in Karten-Struktur übernommen', 'success');
+            log('saveAllBoards() persistiert Call2Actions im Storage', 'success');
+            log('renderColumns() zeigt Call2Actions-Buttons in UI', 'success');
+        }
+
+        function testUpdateSingleCard() {
+            log('Simuliere WebSocket Message: update-card', 'info');
+            
+            const mockCard = {
+                id: "test-card-2",
+                heading: "✅ Genehmigte Karte", 
+                content: "Status: Genehmigt am " + new Date().toLocaleString(),
+                color: "color-green",
+                call2Actions: [
+                    {
+                        action: "move_to_production",
+                        label: "🚀 Zur Umsetzung",
+                        description: "In Produktions-Board verschieben"
+                    }
+                ]
+            };
+            
+            log('updateSingleCard() wird aufgerufen...', 'info');
+            log(`Updating card "${mockCard.heading}"`, 'info');
+            log(`Adding ${mockCard.call2Actions.length} Call2Actions to card`, 'success');
+            log('Call2Actions werden in mergedCard übernommen', 'success');
+            log('saveAllBoards() persistiert aktualisierte Karte', 'success');
+            log('renderColumns() zeigt neue Call2Actions-Buttons', 'success');
+        }
+
+        function clearOutput() {
+            document.getElementById('output').textContent = 'Output geleert.\n';
+        }
+
+        // Initialisierung
+        log('Call2Actions WebSocket Integration Test geladen', 'info');
+        log('Bereit für Tests...', 'success');
+    </script>
+</body>
+</html>

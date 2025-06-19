@@ -842,3 +842,78 @@ if (type === 'card-ai-request') {
 4. **Performance**: Optimierung für große Mengen von Call2Actions
 
 Die Call2Actions-Funktionalität ist vollständig implementiert und bereit für den produktiven Einsatz! 🎉
+
+### **Wichtig: Response-Format für Call2Actions**
+
+Der AI-Endpoint MUSS auf Call2Actions-Requests mit einem JSON-Response antworten, das ein `success`-Feld enthält:
+
+**Erfolgreiche Verarbeitung:**
+```json
+{
+  "success": true,
+  "message": "Action wird verarbeitet",
+  "action": "approve"
+}
+```
+
+**Fehlerhafte Verarbeitung:**
+```json
+{
+  "success": false,
+  "error": "Beschreibung des Fehlers",
+  "action": "approve"
+}
+```
+
+**HTTP Status Codes:**
+- `200 OK`: Erfolgreiche Verarbeitung (mit `success: true/false` im Body)
+- `4xx/5xx`: Systemfehler (werden als HTTP-Fehler behandelt)
+
+**Frontend-Verhalten:**
+- Bei `success: false` → Fehler-Notification mit `error`-Message
+- Bei `success: true` → Info-Notification und Chatbot-Status-Update
+- Bei HTTP-Fehler → Allgemeine Fehler-Notification
+
+**Beispiel-Implementation (n8n/Custom Server):**
+```javascript
+// Erfolgreiche Verarbeitung
+return {
+  statusCode: 200,
+  body: {
+    success: true,
+    message: "Action 'approve' wird verarbeitet"
+  }
+}
+
+// Fehler bei Verarbeitung  
+return {
+  statusCode: 200,
+  body: {
+    success: false,
+    error: "Berechtigung fehlt für Action 'approve'"
+  }
+}
+```
+
+### Call2Actions Response-Handling
+
+Der Frontend-Code erwartet spezifische Response-Formate:
+
+1. **Sofortige Response (HTTP 200 + success-Feld)**:
+   - Bestätigt, dass der Request empfangen wurde
+   - Zeigt Status-Notification an
+   - Öffnet Chatbot für weitere Updates
+
+2. **WebSocket-Update (asynchron)**:
+   - Liefert das eigentliche Karten-Update
+   - Kann Sekunden oder Minuten später erfolgen
+   - Enthält die aktualisierten Call2Actions
+
+**Workflow:**
+```
+User klickt Button → HTTP Request → HTTP Response (success: true) 
+                                     ↓
+                  Status-Notification + Chatbot öffnet sich
+                                     ↓  
+                  AI verarbeitet... → WebSocket Update → Karte aktualisiert
+```

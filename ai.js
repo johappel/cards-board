@@ -79,14 +79,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Card AI Modal öffnen
 function openCardAIModal(cardId, columnId) {
-    const column = currentBoard.columns.find(c => c.id === columnId);
-    if (!column) {
-        alert('Spalte nicht gefunden');
-        return;
+    // Zuerst versuchen, die Karte in der angegebenen Spalte zu finden
+    let column = currentBoard.columns.find(c => c.id === columnId);
+    let card = null;
+    
+    if (column) {
+        card = column.cards.find(c => c.id === cardId);
     }
     
-    const card = column.cards.find(c => c.id === cardId);
+    // Wenn Karte nicht in der ursprünglichen Spalte gefunden wurde,
+    // in allen Spalten suchen (für den Fall, dass sie verschoben wurde)
     if (!card) {
+        for (const col of currentBoard.columns) {
+            const foundCard = col.cards.find(c => c.id === cardId);
+            if (foundCard) {
+                card = foundCard;
+                column = col;
+                break;
+            }
+        }
+    }
+    
+    if (!card || !column) {
         alert('Karte nicht gefunden');
         return;
     }
@@ -152,7 +166,25 @@ async function submitCardAIRequest() {
         alert('Bitte geben Sie eine Anweisung für die AI ein');
         return;
     }
-      const includeColumnContext = document.getElementById('ai-include-column-context').checked;
+    
+    // Aktuelle Spalte der Karte ermitteln (falls sie verschoben wurde)
+    let actualColumn = null;
+    for (const column of currentBoard.columns) {
+        if (column.cards.find(c => c.id === currentCardForAI.id)) {
+            actualColumn = column;
+            break;
+        }
+    }
+    
+    if (!actualColumn) {
+        alert('Karte nicht gefunden - sie wurde möglicherweise gelöscht');
+        return;
+    }
+    
+    // currentColumn für Kompatibilität aktualisieren
+    currentColumn = actualColumn;
+    
+    const includeColumnContext = document.getElementById('ai-include-column-context').checked;
     const includeBoardContext = document.getElementById('ai-include-board-context').checked;
     
     // Chatbot-Modal öffnen, weil sich sonst keine Connection ID ermitteln lässt und die Anfrage fehlschlägt
@@ -171,16 +203,15 @@ async function submitCardAIRequest() {
         boardId: currentBoard.id,
         connectionId: connectionId,
         cardId: currentCardForAI.id,
-        columnId: currentColumn.id,
-        columnName: currentColumn.name,
+        columnId: actualColumn.id,
+        columnName: actualColumn.name,
         chatInput: prompt,
         card: currentCardForAI,
         timestamp: new Date().toISOString()
     };
-    
-    // Spalten-Kontext hinzufügen wenn gewünscht
+      // Spalten-Kontext hinzufügen wenn gewünscht
     if (includeColumnContext) {
-        payload.columnCards = currentColumn.cards;
+        payload.columnCards = actualColumn.cards;
     }
     
     // Board-Kontext hinzufügen wenn gewünscht
@@ -204,12 +235,11 @@ async function submitCardAIRequest() {
         if (response.ok) {
             // Erfolgs-Benachrichtigung
             showAINotification('🤖 AI-Anfrage für Karte gesendet. Antwort wird über WebSocket empfangen...', 'info');
-            
-            // Chatbot-Modal öffnen um den Status zu zeigen
+              // Chatbot-Modal öffnen um den Status zu zeigen
             if (typeof openChatbotModal === 'function') {
                 openChatbotModal();
                 if (typeof displayMessage === 'function') {
-                    displayMessage(`🤖 AI verarbeitet Karte "${currentCardForAI.heading}" in Spalte "${currentColumn.name}"...`, 'system');
+                    displayMessage(`🤖 AI verarbeitet Karte "${currentCardForAI.heading}" in Spalte "${actualColumn.name}"...`, 'system');
                 }
             }
         } else {
@@ -508,11 +538,10 @@ function renderCall2ActionsButtons(card, columnId) {
     if (!card.call2Actions || !Array.isArray(card.call2Actions) || card.call2Actions.length === 0) {
         return '';
     }
-    
-    const buttonsHtml = card.call2Actions.map(action => {
+      const buttonsHtml = card.call2Actions.map(action => {
         const safeAction = JSON.stringify(action).replace(/"/g, '&quot;');
         return `<button class="call2action-btn" 
-                        onclick="event.stopPropagation();executeCall2Action('${card.id}', '${columnId}', ${safeAction})"
+                        onclick="event.stopPropagation();executeCall2Action(event, '${card.id}', '${columnId}', ${safeAction})"
                         title="${action.description || action.action}">
                     ${action.label || action.action}
                 </button>`;
@@ -522,8 +551,24 @@ function renderCall2ActionsButtons(card, columnId) {
 }
 
 // Funktion zum Ausführen einer Call2Action
-async function executeCall2Action(cardId, columnId, actionParams) {
+async function executeCall2Action(event, cardId, columnId, actionParams) {
     console.log('Executing Call2Action:', actionParams);
+    
+    // Aktuelle Spalte der Karte ermitteln (falls sie verschoben wurde)
+    const card = getCardById(cardId);
+    if (!card) {
+        showNotification('Karte nicht gefunden', 'error');
+        return;
+    }
+    
+    // Aktuelle Spalte der Karte finden
+    let actualColumnId = columnId;
+    for (const column of currentBoard.columns) {
+        if (column.cards.find(c => c.id === cardId)) {
+            actualColumnId = column.id;
+            break;
+        }
+    }
     
     try {
         // Button temporär deaktivieren
@@ -532,12 +577,14 @@ async function executeCall2Action(cardId, columnId, actionParams) {
         button.disabled = true;
         button.textContent = '⏳';
         
-        await submitCardAIRequestWithAction(cardId, columnId, actionParams);
+        await submitCardAIRequestWithAction(cardId, actualColumnId, actionParams);
         
         // Button nach kurzer Zeit wieder aktivieren
         setTimeout(() => {
-            button.disabled = false;
-            button.textContent = originalText;
+            if (button) {
+                button.disabled = false;
+                button.textContent = originalText;
+            }
         }, 2000);
         
     } catch (error) {
@@ -545,9 +592,10 @@ async function executeCall2Action(cardId, columnId, actionParams) {
         showNotification('Fehler beim Ausführen der Action: ' + error.message, 'error');
         
         // Button wieder aktivieren
-        if (event.target) {
-            event.target.disabled = false;
-            event.target.textContent = originalText;
+        const button = event.target;
+        if (button) {
+            button.disabled = false;
+            button.textContent = originalText;
         }
     }
 }

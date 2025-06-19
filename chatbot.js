@@ -1073,23 +1073,38 @@ function updateSingleCard(cardId, columnId, updatedCard) {
     if (!currentBoard || !currentBoard.columns) {
         console.error('No current board available');
         return;
+    }    // Versuche zuerst in der angegebenen Spalte zu finden
+    let column = currentBoard.columns.find(c => c.id === columnId);
+    let cardIndex = -1;
+    
+    if (column) {
+        cardIndex = column.cards.findIndex(c => c.id === cardId);
     }
-
-    const column = currentBoard.columns.find(c => c.id === columnId);
-    if (!column) {
-        console.error(`Column with ID ${columnId} not found`);
-        return;
-    }
-
-    const cardIndex = column.cards.findIndex(c => c.id === cardId);
+    
+    // Falls nicht gefunden, in allen Spalten suchen (Karte könnte verschoben worden sein)
     if (cardIndex === -1) {
-        console.error(`Card with ID ${cardId} not found in column ${columnId}`);
+        for (const col of currentBoard.columns) {
+            const idx = col.cards.findIndex(c => c.id === cardId);
+            if (idx !== -1) {
+                column = col;
+                cardIndex = idx;
+                console.log(`🔄 Card found in different column: ${col.name}`);
+                break;
+            }
+        }
+    }
+    
+    if (!column || cardIndex === -1) {
+        console.error(`Card with ID ${cardId} not found in any column`);
         return;
     }
 
     console.log(`🔄 Updating card "${column.cards[cardIndex].heading}" with AI response`);
-
-    // Karte aktualisieren - bestehende Eigenschaften beibehalten
+    
+    // Log Call2Actions falls vorhanden
+    if (updatedCard.call2Actions && updatedCard.call2Actions.length > 0) {
+        console.log(`📋 Adding ${updatedCard.call2Actions.length} Call2Actions to card`);
+    }    // Karte aktualisieren - bestehende Eigenschaften beibehalten
     const existingCard = column.cards[cardIndex];
     const mergedCard = {
         id: existingCard.id, // ID muss gleich bleiben
@@ -1101,7 +1116,8 @@ function updateSingleCard(cardId, columnId, updatedCard) {
         url: updatedCard.url || existingCard.url,
         labels: updatedCard.labels || existingCard.labels,
         inactive: updatedCard.inactive !== undefined ? updatedCard.inactive : existingCard.inactive,
-        expanded: updatedCard.expanded !== undefined ? updatedCard.expanded : existingCard.expanded
+        expanded: updatedCard.expanded !== undefined ? updatedCard.expanded : existingCard.expanded,
+        call2Actions: updatedCard.call2Actions || existingCard.call2Actions || [] // Call2Actions übernehmen
     };
 
     // Karte ersetzen
@@ -1133,6 +1149,13 @@ function updateColumnCardsByName(columnName, columnId, newCards) {
     }
 
     console.log(`🔄 Updating column "${column.name}" with ${newCards.length} cards from AI`);
+    
+    // Log Call2Actions Statistics
+    const cardsWithActions = newCards.filter(card => card.call2Actions && card.call2Actions.length > 0);
+    if (cardsWithActions.length > 0) {
+        const totalActions = cardsWithActions.reduce((sum, card) => sum + card.call2Actions.length, 0);
+        console.log(`📋 Processing ${cardsWithActions.length} cards with ${totalActions} total Call2Actions`);
+    }
 
     // Karten aktualisieren - sicherstellen, dass alle Karten gültige IDs haben
     const updatedCards = newCards.map(card => {
@@ -1140,9 +1163,7 @@ function updateColumnCardsByName(columnName, columnId, newCards) {
         const existingCard = column.cards.find(c =>
             (card.id && c.id === card.id) ||
             (card.heading && c.heading === card.heading)
-        );
-
-        return {
+        );        return {
             id: existingCard?.id || card.id || generateId(),
             heading: card.heading || '',
             content: card.content || '',
@@ -1152,7 +1173,8 @@ function updateColumnCardsByName(columnName, columnId, newCards) {
             url: card.url || '',
             labels: card.labels || '',
             inactive: card.inactive !== undefined ? card.inactive : (existingCard?.inactive || false),
-            expanded: card.expanded !== undefined ? card.expanded : (existingCard?.expanded || false)
+            expanded: card.expanded !== undefined ? card.expanded : (existingCard?.expanded || false),
+            call2Actions: card.call2Actions || existingCard?.call2Actions || [] // Call2Actions übernehmen
         };
     });
 
