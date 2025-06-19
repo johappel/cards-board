@@ -1,4 +1,12 @@
 // AI Functions
+
+// Hilfsfunktionen für Connection ID Management (aus chatbot.js)
+function getServerAssignedConnectionId(boardId) {
+    if (!boardId) return null;
+    const key = 'serverAssignedConnectionId_' + boardId;
+    return sessionStorage.getItem(key) || localStorage.getItem(key);
+}
+
 function generateBoardSummary() {
     const columnsUrl = localStorage.getItem('ai_columnsUrl');
     if (!columnsUrl) {
@@ -186,16 +194,26 @@ async function submitCardAIRequest() {
     
     const includeColumnContext = document.getElementById('ai-include-column-context').checked;
     const includeBoardContext = document.getElementById('ai-include-board-context').checked;
-    
-    // Chatbot-Modal öffnen, weil sich sonst keine Connection ID ermitteln lässt und die Anfrage fehlschlägt
-    openChatbotModal();
-
-    // Connection ID für WebSocket-Routing abrufen
-    const connectionId = getServerAssignedConnectionId(currentBoard.id);
-    if (!connectionId) {
-        alert('Keine WebSocket-Verbindung verfügbar. Bitte versuchen Sie es später erneut.');
+      // Chatbot-Modal öffnen und auf Connection ID warten
+    try {
+        showNotification('Verbindung zum AI-Service wird hergestellt...', 'info');
+        const connectionId = await openChatbotModalAndWaitForConnection(currentBoard.id);
+        showNotification('Verbindung hergestellt, verarbeite Karten-Anfrage...', 'success');
+        
+        // Kurze Pause für bessere UX
+        await new Promise(resolve => setTimeout(resolve, 300));
+          // Hier weiter mit der eigentlichen Karten-Verarbeitung
+        await processCardAIRequest(connectionId, includeColumnContext, includeBoardContext, prompt, actualColumn);
+    } catch (error) {
+        console.error('Fehler beim Herstellen der AI-Verbindung:', error);
+        showNotification('Verbindung zum AI-Service fehlgeschlagen', 'error');
         return;
     }
+}
+
+// Separate async Funktion für die eigentliche Card AI Verarbeitung
+async function processCardAIRequest(connectionId, includeColumnContext, includeBoardContext, prompt, actualColumn) {
+    const cardsUrl = localStorage.getItem('ai_cardsUrl');
     
     // Prepare payload
     const payload = {
@@ -232,15 +250,12 @@ async function submitCardAIRequest() {
             body: JSON.stringify(payload)
         });
         
-        if (response.ok) {
-            // Erfolgs-Benachrichtigung
+        if (response.ok) {            // Erfolgs-Benachrichtigung
             showAINotification('🤖 AI-Anfrage für Karte gesendet. Antwort wird über WebSocket empfangen...', 'info');
-              // Chatbot-Modal öffnen um den Status zu zeigen
-            if (typeof openChatbotModal === 'function') {
-                openChatbotModal();
-                if (typeof displayMessage === 'function') {
-                    displayMessage(`🤖 AI verarbeitet Karte "${currentCardForAI.heading}" in Spalte "${actualColumn.name}"...`, 'system');
-                }
+            
+            // Status im Chat anzeigen
+            if (typeof displayMessage === 'function') {
+                displayMessage(`🤖 AI verarbeitet Karte "${currentCardForAI.heading}" in Spalte "${actualColumn.name}"...`, 'system');
             }
         } else {
             throw new Error(`Server antwortet mit Status ${response.status}`);
@@ -312,19 +327,28 @@ async function submitCardAIRequestWithAction(cardId, columnId, actionParams) {
         showNotification('AI-Endpoints nicht konfiguriert', 'error');
         return;
     }
-    
-    // Chatbot-Modal öffnen, um die Connection ID zu erhalten
-    openChatbotModal();
-    const connectionId = getConnectionId();
-    if (!connectionId) {
-        showNotification('Keine Verbindung zum AI-Service', 'error');
+      // Chatbot-Modal öffnen und auf Connection ID warten
+    try {
+        showNotification('Verbindung zum AI-Service wird hergestellt...', 'info');
+        const connectionId = await openChatbotModalAndWaitForConnection(currentBoard.id);
+        showNotification('Verbindung hergestellt, verarbeite Anfrage...', 'success');
+        
+        // Kurze Pause für bessere UX
+        await new Promise(resolve => setTimeout(resolve, 300));
+          // Hier weiter mit der eigentlichen Verarbeitung
+        await processCardActionRequest(connectionId, card, column, columnId, actionParams);
+    } catch (error) {
+        console.error('Fehler beim Herstellen der AI-Verbindung:', error);
+        showNotification('Verbindung zum AI-Service fehlgeschlagen', 'error');
         return;
     }
-    
-    // Alle Karten der Spalte sammeln (für Context)
+}
+
+// Separate async Funktion für die eigentliche Card Action Verarbeitung
+async function processCardActionRequest(connectionId, card, column, columnId, actionParams) {
+    const cardsUrl = localStorage.getItem('ai_cardsUrl');
     const allCards = getAllCardsFromColumn(columnId);
-    
-    const requestData = {
+      const requestData = {
         type: 'card-action-request',
         boardId: currentBoard.id,
         connectionId: connectionId,
@@ -357,12 +381,9 @@ async function submitCardAIRequestWithAction(cardId, columnId, actionParams) {
         if (result.success) {
             showNotification(`🤖 Action "${actionParams.action}" wird verarbeitet...`, 'info');
             
-            // Chatbot-Modal öffnen um den Status zu zeigen
-            if (typeof openChatbotModal === 'function') {
-                openChatbotModal();
-                if (typeof displayMessage === 'function') {
-                    displayMessage(`🤖 AI führt "${actionParams.action}" für Karte "${card.heading}" aus...`, 'system');
-                }
+            // Status im Chat anzeigen
+            if (typeof displayMessage === 'function') {
+                displayMessage(`🤖 AI führt "${actionParams.action}" für Karte "${card.heading}" aus...`, 'system');
             }
         } else {
             throw new Error(result.error || 'Unbekannter Fehler');
@@ -422,26 +443,37 @@ async function submitColumnAIRequest() {
     if (!prompt) {
         alert('Bitte geben Sie eine Anweisung für die AI ein');
         return;
-    }
-      const includeContext = document.getElementById('column-ai-include-board-context').checked;
+    }      const includeContext = document.getElementById('column-ai-include-board-context').checked;
     
     // Connection ID für WebSocket-Routing abrufen
-    openChatbotModal(); // Sicherstellen, dass die Chatbot-Modal geöffnet ist, um die Connection ID zu erhalten
-    const connectionId = getServerAssignedConnectionId(currentBoard.id);
-    if (!connectionId) {
-        alert('Keine WebSocket-Verbindung verfügbar. Bitte versuchen Sie es später erneut.');
+    try {
+        showNotification('Verbindung zum AI-Service wird hergestellt...', 'info');
+        const connectionId = await openChatbotModalAndWaitForConnection(currentBoard.id);
+        showNotification('Verbindung hergestellt, verarbeite Spalten-Anfrage...', 'success');
+        
+        // Kurze Pause für bessere UX
+        await new Promise(resolve => setTimeout(resolve, 300));
+          // Hier weiter mit der eigentlichen Spalten-Verarbeitung
+        await processColumnAIRequest(connectionId, prompt, includeContext, currentColumnForAI);
+    } catch (error) {
+        console.error('Fehler beim Herstellen der AI-Verbindung:', error);
+        showNotification('Verbindung zum AI-Service fehlgeschlagen', 'error');
         return;
     }
-    
+}
 
+// Separate async Funktion für die eigentliche Column AI Verarbeitung
+async function processColumnAIRequest(connectionId, prompt, includeContext, columnForAI) {
+    const columnsUrl = localStorage.getItem('ai_columnsUrl');
+    
     // Prepare payload - vereinfachtes Format ohne interne IDs
     const payload = {
         type: 'column-ai-request',
         connectionId: connectionId,
-        columnName: currentColumnForAI.name,
-        columnId: currentColumnForAI.id,
+        columnName: columnForAI.name,
+        columnId: columnForAI.id,
         chatInput: prompt,
-        cards: currentColumnForAI.cards.map(card => ({
+        cards: columnForAI.cards.map(card => ({
             id: card.id,
             heading: card.heading,
             content: card.content,
@@ -479,13 +511,9 @@ async function submitColumnAIRequest() {
                         
             // Erfolgs-Benachrichtigung
             showAINotification('🤖 AI-Anfrage gesendet. Antwort wird über WebSocket empfangen...', 'info');
-            
-            // Chatbot-Modal öffnen um den Status zu zeigen
-            if (typeof openChatbotModal === 'function') {
-                openChatbotModal();
-                if (typeof displayMessage === 'function') {
-                    displayMessage(`🤖 AI verarbeitet Spalte "${currentColumnForAI.name}" mit ${currentColumnForAI.cards.length} Karten...`, 'system');
-                }
+              // Status im Chat anzeigen
+            if (typeof displayMessage === 'function') {
+                displayMessage(`🤖 AI verarbeitet Spalte "${columnForAI.name}" mit ${columnForAI.cards.length} Karten...`, 'system');
             }
         } else {
             throw new Error(`Server antwortet mit Status ${response.status}`);
@@ -597,6 +625,60 @@ async function executeCall2Action(event, cardId, columnId, actionParams) {
             button.disabled = false;
             button.textContent = originalText;
         }
+    }
+}
+
+// Hilfsfunktion: Wartet auf WebSocket-Verbindung
+async function ensureWebSocketConnection(boardId, maxRetries = 15, retryDelay = 500) {
+    return new Promise((resolve, reject) => {
+        let retries = 0;
+        
+        const checkConnection = () => {
+            const connectionId = getServerAssignedConnectionId(boardId);
+            
+            if (connectionId) {
+                console.log(`WebSocket-Verbindung verfügbar: ${connectionId}`);
+                resolve(connectionId);
+                return;
+            }
+            
+            retries++;
+            if (retries >= maxRetries) {
+                console.error('WebSocket-Verbindung konnte nicht innerhalb der Zeit hergestellt werden');
+                reject(new Error('WebSocket-Verbindung Timeout nach ' + (maxRetries * retryDelay / 1000) + ' Sekunden'));
+                return;
+            }
+            
+            // Benutzer-Feedback alle 3 Versuche
+            if (retries % 3 === 0) {
+                console.log(`Warte auf WebSocket-Verbindung... (Versuch ${retries}/${maxRetries})`);
+                if (retries === 6) {
+                    showNotification('Verbindung dauert länger als erwartet...', 'warning');
+                }
+            }
+            
+            setTimeout(checkConnection, retryDelay);
+        };
+        
+        // Ersten Check sofort starten
+        checkConnection();
+    });
+}
+
+// Hilfsfunktion: Öffnet Chatbot-Modal und wartet auf Verbindung
+async function openChatbotModalAndWaitForConnection(boardId) {
+    // Modal öffnen
+    if (typeof openChatbotModal === 'function') {
+        openChatbotModal();
+    }
+    
+    // Auf Verbindung warten
+    try {
+        const connectionId = await ensureWebSocketConnection(boardId);
+        return connectionId;
+    } catch (error) {
+        console.error('Fehler beim Warten auf WebSocket-Verbindung:', error);
+        throw error;
     }
 }
 
