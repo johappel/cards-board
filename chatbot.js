@@ -43,9 +43,9 @@ function addCardToColumn(columnName, cardData) {
             cards: []
         };
         currentBoard.columns.push(column);
-    }    
+    }
     // Card anlegen
-    if(!cardData.heading && cardData.title) {
+    if (!cardData.heading && cardData.title) {
         cardData.heading = cardData.title;
     }
     const newCard = {
@@ -82,7 +82,7 @@ function addColumnWithCards(columnName, cards) {
     cards.forEach(cardData => {
         const exists = column.cards.some(card => card.content === (cardData.content || 'Kein Inhalt'));
         if (!exists) {
-            if(!cardData.heading && cardData.title) {
+            if (!cardData.heading && cardData.title) {
                 cardData.heading = cardData.title;
             }
 
@@ -373,10 +373,11 @@ function connectWebSocket() {
                 } else if ((data.type === 'suggestion' || data.type === 'suggestions') && (data.suggestion || data.text || data.suggestions)) {
                     // Nur als Button anzeigen, nicht mehr als Chatnachricht
                     const suggestionText = data.suggestion || data.text;
+                    const params = data.params || null; // Parameter extrahieren
                     if (suggestionText) {
-                        renderSuggestions([suggestionText]);
+                        renderSuggestions([suggestionText], params);
                     } else if (Array.isArray(data.suggestions)) {
-                        renderSuggestions(data.suggestions);
+                        renderSuggestions(data.suggestions, params);
                     }
                     resetChatInputUI(); // UI wieder freigeben nach Suggestions
                     return;
@@ -412,7 +413,7 @@ function connectWebSocket() {
                     return;
                 } else if (data.type === 'update-cards' && data.columnId && data.column && Array.isArray(data.cards)) {
                     // Neue Funktionalität: Karten in einer Spalte aktualisieren (über columnName)
-                    updateColumnCardsByName(data.column,data.columnId, data.cards);
+                    updateColumnCardsByName(data.column, data.columnId, data.cards);
                     displayMessage(`✅ Spalte "${data.columnName}" wurde durch AI aktualisiert (${data.cards.length} Karten).`, 'system');
                     resetChatInputUI(); // UI wieder freigeben nach Karten-Update
                     return;
@@ -502,7 +503,7 @@ function stopHeartbeat() {
 }
 
 // sendQueryToN8NAgent muss vor allen Event-Handlern deklariert werden!
-function sendQueryToN8NAgent(queryText) {
+function sendQueryToN8NAgent(queryText, additionalParams = null) {
     if (!queryText) return;
 
     // UI-Elemente für Progress-Anzeige
@@ -575,13 +576,16 @@ function sendQueryToN8NAgent(queryText) {
     }
 
     // Automatisches UI-Reset nach 30 Sekunden planen
-    scheduleUIReset(30000);
-
-    displayMessage(queryText, 'user');
+    scheduleUIReset(30000); displayMessage(queryText, 'user');
     const payload = {
         query: queryText,
         connectionId: serverAssignedConnectionId
     };
+
+    // Zusätzliche Parameter hinzufügen, falls vorhanden
+    if (additionalParams && typeof additionalParams === 'object') {
+        Object.assign(payload, additionalParams);
+    }
 
     fetch(n8nAgentWebhookUrl, {
         method: 'POST',
@@ -596,7 +600,7 @@ function sendQueryToN8NAgent(queryText) {
 }
 
 // Suggestions-UI unter dem Chat-Input
-function renderSuggestions(suggestions) {
+function renderSuggestions(suggestions, params = null) {
     const suggestionBar = document.getElementById('chatbot-suggestions');
     if (!suggestionBar) return;
     suggestionBar.innerHTML = '';
@@ -611,7 +615,8 @@ function renderSuggestions(suggestions) {
         btn.onclick = function () {
             const userInput = document.getElementById('userInput');
             userInput.value = suggestion;
-            window.sendQueryToN8NAgent(suggestion);
+            // Parameters aus dem aktuellen Suggestion-Kontext mitgeben
+            window.sendQueryToN8NAgent(suggestion, params);
             userInput.value = '';  // Input-Feld leeren
             suggestionBar.classList.remove('show');
             suggestionBar.innerHTML = '';
@@ -1076,11 +1081,11 @@ function updateSingleCard(cardId, columnId, updatedCard) {
     }    // Versuche zuerst in der angegebenen Spalte zu finden
     let column = currentBoard.columns.find(c => c.id === columnId);
     let cardIndex = -1;
-    
+
     if (column) {
         cardIndex = column.cards.findIndex(c => c.id === cardId);
     }
-    
+
     // Falls nicht gefunden, in allen Spalten suchen (Karte könnte verschoben worden sein)
     if (cardIndex === -1) {
         for (const col of currentBoard.columns) {
@@ -1093,14 +1098,14 @@ function updateSingleCard(cardId, columnId, updatedCard) {
             }
         }
     }
-    
+
     if (!column || cardIndex === -1) {
         console.error(`Card with ID ${cardId} not found in any column`);
         return;
     }
 
     console.log(`🔄 Updating card "${column.cards[cardIndex].heading}" with AI response`);
-    
+
     // Log Call2Actions falls vorhanden
     if (updatedCard.call2Actions && updatedCard.call2Actions.length > 0) {
         console.log(`📋 Adding ${updatedCard.call2Actions.length} Call2Actions to card`);
@@ -1149,7 +1154,7 @@ function updateColumnCardsByName(columnName, columnId, newCards) {
     }
 
     console.log(`🔄 Updating column "${column.name}" with ${newCards.length} cards from AI`);
-    
+
     // Log Call2Actions Statistics
     const cardsWithActions = newCards.filter(card => card.call2Actions && card.call2Actions.length > 0);
     if (cardsWithActions.length > 0) {
@@ -1163,7 +1168,7 @@ function updateColumnCardsByName(columnName, columnId, newCards) {
         const existingCard = column.cards.find(c =>
             (card.id && c.id === card.id) ||
             (card.heading && c.heading === card.heading)
-        );        return {
+        ); return {
             id: existingCard?.id || card.id || generateId(),
             heading: card.heading || '',
             content: card.content || '',
