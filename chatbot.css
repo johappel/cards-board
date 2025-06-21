@@ -240,8 +240,9 @@
   display: flex;
 }
 .suggestion-btn {
-  background: #f0f4fa;
-  border: 1px solid #bcd;
+  background: #0317886c;
+  border: 1px solid rgb(10, 57, 104);
+  color: #ffffff;
   border-radius: 16px;
   padding: 0.3em 1em;
   font-size: 0.95em;
@@ -250,12 +251,35 @@
   margin-bottom: 0.2em;
 }
 .suggestion-btn:hover {
-  background: #e0e8f0;
+  background: #00258ba2;
+}
+.suggestion-close-btn {
+  background: #ff6b6b;
+  border: 1px solid #ff4757;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: unset;
+  margin-bottom: 0.2em;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.suggestion-close-btn:hover {
+  background: #ff4757;
+  transform: scale(1.1);
 }
 .think {
   background: #fffbe6;
   border-left: 4px solid #f7c873;
-  margin: 0.5em 0;
+  margin: -0.5em -1em -1em;
   padding: 0.5em 1em;
   border-radius: 6px;
   font-size: 0.97em;

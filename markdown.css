@@ -19,9 +19,27 @@
 .markdown-content h2 { font-size: 1.15em; border-bottom: 1px solid #f0f0f0; }
 .markdown-content h3 { font-size: 1.05em; }
 
+.user-message div.markdown-content {
+  margin: 1em 1em;
+  border: 3px solid #00008b40;
+  padding: 5px 10px;
+  border-radius: 5px;
+  color: #fff;
+  background: #00258ba2; /* Heller Hintergrund für User-Nachrichten */
+  margin-left: 10%!important;
+}
+
+.bot-message div.markdown-content {
+  margin: 1em 1em;
+  border: 4px solid #e10000b2;
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+
 .markdown-content p {
   margin: 0.4em 0;
 }
+
 
 .markdown-content ul,
 .markdown-content ol {

@@ -93,7 +93,7 @@ function addColumnWithCards(columnName, cards) {
                 color: 'color-gradient-1',
                 thumbnail: cardData.thumbnail || '',
                 comments: cardData.comment || '',
-                url: cardData.url || '',
+                url: cardData.url || false,
                 labels: cardData.labels || '',
                 inactive: false
             };
@@ -423,7 +423,14 @@ function connectWebSocket() {
                     displayMessage(`✅ Karte "${data.card.heading || 'Unbekannt'}" wurde durch AI aktualisiert.`, 'system');
                     resetChatInputUI(); // UI wieder freigeben nach Karten-Update
                     return;
+                } else if (data.type === 'system-message') {
+                    // System-Nachrichten direkt anzeigen
+                    displayMessage(data.message || data.text, 'system');
+                    resetChatInputUI(); // UI wieder freigeben bei System-Nachrichten
+                    return;
+                
                 } else {
+                
                     displayMessage(`Unbekannte Nachricht vom Server: ${event.data}`, 'system');
                     console.error('Unknown message type from server:', event.data);
                     resetChatInputUI(); // UI wieder freigeben bei unbekannten Nachrichten
@@ -576,16 +583,17 @@ function sendQueryToN8NAgent(queryText, additionalParams = null) {
     }
 
     // Automatisches UI-Reset nach 30 Sekunden planen
-    scheduleUIReset(30000); displayMessage(queryText, 'user');
-    const payload = {
+    scheduleUIReset(30000); displayMessage(queryText, 'user');    const payload = {
         query: queryText,
         connectionId: serverAssignedConnectionId
     };
 
-    // Zusätzliche Parameter hinzufügen, falls vorhanden
+    // Zusätzliche Parameter in 'params' Objekt hinzufügen, falls vorhanden
     if (additionalParams && typeof additionalParams === 'object') {
-        Object.assign(payload, additionalParams);
+        payload.params = additionalParams;
     }
+
+    console.log('Sending payload to N8N:', payload);
 
     fetch(n8nAgentWebhookUrl, {
         method: 'POST',
@@ -603,27 +611,82 @@ function sendQueryToN8NAgent(queryText, additionalParams = null) {
 function renderSuggestions(suggestions, params = null) {
     const suggestionBar = document.getElementById('chatbot-suggestions');
     if (!suggestionBar) return;
+    
+    // Nur leeren wenn neue Suggestions kommen (Überschreiben)
     suggestionBar.innerHTML = '';
+    
     if (!Array.isArray(suggestions) || suggestions.length === 0) {
         suggestionBar.classList.remove('show');
         return;
     }
-    suggestions.forEach(suggestion => {
+    
+    // Close-Button erstellen (nur wenn Suggestions angezeigt werden)
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'suggestion-close-btn';
+    closeBtn.innerHTML = '×';
+    closeBtn.title = 'Vorschläge schließen';
+    closeBtn.onclick = function () {
+        clearSuggestions();
+    };
+    suggestionBar.appendChild(closeBtn);
+    
+    suggestions.forEach((suggestion, index) => {
         const btn = document.createElement('button');
         btn.className = 'suggestion-btn';
-        btn.textContent = suggestion;
-        btn.onclick = function () {
-            const userInput = document.getElementById('userInput');
-            userInput.value = suggestion;
-            // Parameters aus dem aktuellen Suggestion-Kontext mitgeben
-            window.sendQueryToN8NAgent(suggestion, params);
-            userInput.value = '';  // Input-Feld leeren
-            suggestionBar.classList.remove('show');
-            suggestionBar.innerHTML = '';
-        };
+        
+        // Unterstützung für String oder Objekt mit text und params
+        let buttonText = '';
+        let buttonParams = params; // Fallback auf globale params
+        
+        if (typeof suggestion === 'string') {
+            buttonText = suggestion;
+        } else if (typeof suggestion === 'object' && suggestion.text) {
+            buttonText = suggestion.text;
+            // Button-spezifische Parameter haben Vorrang
+            buttonParams = suggestion.params || params;
+        } else {
+            console.warn('Invalid suggestion format:', suggestion);
+            return;
+        }        btn.textContent = buttonText;
+        
+        // Parameter als data-Attribute speichern (für Debugging und Inspektion)
+        if (buttonParams) {
+            btn.setAttribute('data-params', JSON.stringify(buttonParams));
+            console.log('Button created with params:', buttonParams);
+        }
+        
+        btn.onclick = (function(text, params) {
+            return function() {
+                const userInput = document.getElementById('userInput');
+                userInput.value = text;
+                
+                console.log('Suggestion button clicked:', { text, params });
+                
+                // Button-spezifische Parameter verwenden
+                window.sendQueryToN8NAgent(text, params);
+                userInput.value = '';  // Input-Feld leeren
+                // Suggestions NICHT automatisch löschen - bleiben sichtbar
+            };        })(buttonText, buttonParams);
         suggestionBar.appendChild(btn);
     });
     suggestionBar.classList.add('show');
+    
+    // Suggestions für aktuelles Board speichern
+    const boardId = window.currentBoard && window.currentBoard.id ? window.currentBoard.id : 'default';
+    saveSuggestionButtons(boardId, suggestions, params);
+}
+
+// Neue Funktion zum expliziten Löschen der Suggestions
+function clearSuggestions() {
+    const suggestionBar = document.getElementById('chatbot-suggestions');
+    if (suggestionBar) {
+        suggestionBar.innerHTML = '';
+        suggestionBar.classList.remove('show');
+    }
+    
+    // Auch gespeicherte Suggestions für aktuelles Board löschen
+    const boardId = window.currentBoard && window.currentBoard.id ? window.currentBoard.id : 'default';
+    clearSuggestionButtons(boardId);
 }
 
 // Event-Handler für UI
@@ -773,6 +836,13 @@ function openChatbotModal() {
     const boardId = window.currentBoard && window.currentBoard.id ? window.currentBoard.id : 'default';
     const savedMessages = loadChatMessages(boardId);
     restoreChatMessages(savedMessages);
+    
+    // Gespeicherte Suggestion-Buttons für aktuelles Board laden
+    const savedSuggestions = loadSuggestionButtons(boardId);
+    if (savedSuggestions) {
+        console.log('Restoring suggestion buttons for board:', boardId, savedSuggestions);
+        renderSuggestions(savedSuggestions.suggestions, savedSuggestions.params);
+    }
 
     if (!window._chatbotInitialized) {
         connectWebSocket();
@@ -914,30 +984,57 @@ function handleBoardChange(newBoardId) {
 
 // Chat-Nachrichten pro Board speichern/laden
 function saveChatMessages(boardId, messages) {
-    if (!boardId) return;
-    const key = 'chatMessages_' + boardId;
-    localStorage.setItem(key, JSON.stringify(messages));
+    try {
+        localStorage.setItem(`chatMessages_${boardId}`, JSON.stringify(messages));
+    } catch (e) {
+        console.error('Error saving chat messages:', e);
+    }
 }
 
 function loadChatMessages(boardId) {
-    if (!boardId) return [];
-    const key = 'chatMessages_' + boardId;
-    const saved = localStorage.getItem(key);
-    if (saved) {
-        try {
-            return JSON.parse(saved);
-        } catch (e) {
-            console.error('Fehler beim Laden der Chat-Nachrichten:', e);
-            return [];
-        }
+    try {
+        const stored = localStorage.getItem(`chatMessages_${boardId}`);
+        return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+        console.error('Error loading chat messages:', e);
+        return [];
     }
-    return [];
 }
 
 function clearChatMessages(boardId) {
-    if (!boardId) return;
-    const key = 'chatMessages_' + boardId;
-    localStorage.removeItem(key);
+    try {
+        localStorage.removeItem(`chatMessages_${boardId}`);
+    } catch (e) {
+        console.error('Error clearing chat messages:', e);
+    }
+}
+
+// Suggestion-Buttons pro Board speichern/laden
+function saveSuggestionButtons(boardId, suggestions, params) {
+    try {
+        const data = { suggestions, params, timestamp: Date.now() };
+        localStorage.setItem(`suggestionButtons_${boardId}`, JSON.stringify(data));
+    } catch (e) {
+        console.error('Error saving suggestion buttons:', e);
+    }
+}
+
+function loadSuggestionButtons(boardId) {
+    try {
+        const stored = localStorage.getItem(`suggestionButtons_${boardId}`);
+        return stored ? JSON.parse(stored) : null;
+    } catch (e) {
+        console.error('Error loading suggestion buttons:', e);
+        return null;
+    }
+}
+
+function clearSuggestionButtons(boardId) {
+    try {
+        localStorage.removeItem(`suggestionButtons_${boardId}`);
+    } catch (e) {
+        console.error('Error clearing suggestion buttons:', e);
+    }
 }
 
 // Board Summary Update Funktion
