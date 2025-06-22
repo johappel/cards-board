@@ -28,7 +28,7 @@ let isConnecting = false; // Flag um Race Conditions zu vermeiden
 let uiResetTimeout = null; // Timeout für automatisches UI-Reset nach Anfrage
 const HEARTBEAT_INTERVAL = 30000; // 30 Sekunden
 const RECONNECT_DELAY = 3000; // 3 Sekunden
-const TEMPORARY_STATUS_DURATION = 5000; // 5 Sekunden für temporäre Fehlermeldungen
+const TEMPORARY_STATUS_DURATION = 10000; // 10 Sekunden für temporäre Fehlermeldungen
 
 // Hilfsfunktionen für das Board
 function addCardToColumn(columnName, cardData) {
@@ -139,14 +139,18 @@ function renderMarkdownToHtml(markdownText) {
     return markdownText;
 }
 
-function displayMessage(textOrHtml, sender = 'bot') {
+function displayMessage(textOrHtml, sender = 'bot', duration = null) {
     // System-Messages mit Fehlerindikatoren erhalten temporäre Anzeige
     if (sender === 'system') {
         const hasError = textOrHtml.includes('⚠️') || textOrHtml.includes('Fehler') || textOrHtml.includes('Netzwerkfehler');
         if (hasError) {
-            showTemporaryStatus(textOrHtml, true);
+            // Längere Anzeige für Fehlermeldungen
+            const errorDuration = duration || 15000; // 15 Sekunden für Fehler
+            showTemporaryStatus(textOrHtml, true, errorDuration);
         } else {
-            updateConnectionStatus(textOrHtml, false);
+            // Normale oder benutzerdefinierte Dauer für Info-Nachrichten
+            const infoDuration = duration || TEMPORARY_STATUS_DURATION;
+            showTemporaryStatus(textOrHtml, false, infoDuration);
         }
         return;
     }
@@ -583,7 +587,7 @@ function sendQueryToN8NAgent(queryText, additionalParams = null) {
     }
 
     // Automatisches UI-Reset nach 30 Sekunden planen
-    scheduleUIReset(30000); displayMessage(queryText, 'user');    const payload = {
+    scheduleUIReset(300000); displayMessage(queryText, 'user');    const payload = {
         query: queryText,
         connectionId: serverAssignedConnectionId
     };
