@@ -30,6 +30,44 @@ const HEARTBEAT_INTERVAL = 30000; // 30 Sekunden
 const RECONNECT_DELAY = 3000; // 3 Sekunden
 const TEMPORARY_STATUS_DURATION = 10000; // 10 Sekunden für temporäre Fehlermeldungen
 
+// Zentrale Funktion zum Erstellen einer neuen Karte mit allen Eigenschaften
+function createCard(cardData, existingCard = null) {
+    // Log Call2Actions falls vorhanden
+    if (cardData.call2Actions && cardData.call2Actions.length > 0) {
+        console.log(`📋 Creating card with ${cardData.call2Actions.length} Call2Actions`);
+    } else {
+        console.log(`📝 Creating card without Call2Actions (will get empty array)`);
+    }
+    
+    // Fallback für title -> heading
+    if (!cardData.heading && cardData.title) {
+        cardData.heading = cardData.title;
+    }
+    
+    const newCard = {
+        id: existingCard?.id || cardData.id || generateId(),
+        heading: cardData.heading || existingCard?.heading || 'Unbenannt',
+        content: cardData.content || existingCard?.content || '',
+        color: cardData.color || existingCard?.color || 'color-gradient-1',
+        thumbnail: cardData.thumbnail || existingCard?.thumbnail || '',
+        comments: cardData.comments || cardData.comment || existingCard?.comments || '',
+        url: cardData.url || existingCard?.url || '',
+        labels: cardData.labels || existingCard?.labels || '',
+        inactive: cardData.inactive !== undefined ? cardData.inactive : (existingCard?.inactive || false),
+        expanded: cardData.expanded !== undefined ? cardData.expanded : (existingCard?.expanded || false),
+        call2Actions: cardData.call2Actions || existingCard?.call2Actions || [] // Call2Actions immer berücksichtigen
+    };
+    
+    console.log(`✅ Card created successfully:`, {
+        id: newCard.id,
+        heading: newCard.heading,
+        hasCall2Actions: newCard.call2Actions.length > 0,
+        call2ActionsCount: newCard.call2Actions.length
+    });
+    
+    return newCard;
+}
+
 // Hilfsfunktionen für das Board
 function addCardToColumn(columnName, cardData) {
     if (!currentBoard) return;
@@ -44,22 +82,11 @@ function addCardToColumn(columnName, cardData) {
         };
         currentBoard.columns.push(column);
     }
-    // Card anlegen
-    if (!cardData.heading && cardData.title) {
-        cardData.heading = cardData.title;
-    }
-    const newCard = {
-        id: generateId(),
-        heading: cardData.heading || 'Unbenannt',
-        content: cardData.content || '',
-        color: 'color-gradient-1',
-        thumbnail: cardData.thumbnail || '',
-        comments: cardData.comment || '',
-        url: cardData.url || '',
-        labels: cardData.labels || '',
-        inactive: false
-    };
+    
+    // Zentrale Karten-Erstellung verwenden
+    const newCard = createCard(cardData);
     column.cards.push(newCard);
+    
     if (typeof saveAllBoards === 'function') saveAllBoards();
     if (typeof renderColumns === 'function') renderColumns();
 }
@@ -77,28 +104,13 @@ function addColumnWithCards(columnName, cards) {
         };
         currentBoard.columns.push(column);
         columnWasCreated = true;
-    }
-    // Karten nur hinzufügen, wenn sie noch nicht existieren (nach Titel vergleichen)
+    }    // Karten nur hinzufügen, wenn sie noch nicht existieren (nach Titel vergleichen)
     cards.forEach(cardData => {
         const exists = column.cards.some(card => card.content === (cardData.content || 'Kein Inhalt'));
         if (!exists) {
-            if (!cardData.heading && cardData.title) {
-                cardData.heading = cardData.title;
-            }
-
-            const newCard = {
-                id: generateId(),
-                heading: cardData.heading || 'Unbenannt',
-                content: cardData.content || '',
-                color: 'color-gradient-1',
-                thumbnail: cardData.thumbnail || '',
-                comments: cardData.comment || '',
-                url: cardData.url || false,
-                labels: cardData.labels || '',
-                inactive: false
-            };
+            // Zentrale Karten-Erstellung verwenden
+            const newCard = createCard(cardData);
             column.cards.push(newCard);
-
         }
     });
     if (typeof saveAllBoards === 'function') saveAllBoards();
@@ -1135,9 +1147,7 @@ function updateColumnCards(columnId, newCards, columnName) {
         return;
     }
 
-    console.log(`🔄 Updating column "${column.name}" with ${newCards.length} cards from AI`);
-
-    // Karten aktualisieren - sicherstellen, dass alle Karten gültige IDs haben
+    console.log(`🔄 Updating column "${column.name}" with ${newCards.length} cards from AI`);    // Karten aktualisieren - sicherstellen, dass alle Karten gültige IDs haben
     const updatedCards = newCards.map(card => {
         // Bestehende Karte finden anhand von heading oder id
         const existingCard = column.cards.find(c =>
@@ -1145,18 +1155,8 @@ function updateColumnCards(columnId, newCards, columnName) {
             (card.heading && c.heading === card.heading)
         );
 
-        return {
-            id: existingCard?.id || card.id || generateId(),
-            heading: card.heading || '',
-            content: card.content || '',
-            color: card.color || existingCard?.color || 'color-gradient-1',
-            thumbnail: card.thumbnail || existingCard?.thumbnail || '',
-            comments: card.comments || existingCard?.comments || '',
-            url: card.url || existingCard?.url || '',
-            labels: card.labels || existingCard?.labels || '',
-            inactive: card.inactive || existingCard?.inactive || false,
-            expanded: card.expanded || existingCard?.expanded || false
-        };
+        // Zentrale Karten-Erstellung verwenden
+        return createCard(card, existingCard);
     });
 
     // Spalte mit neuen Karten aktualisieren
@@ -1203,28 +1203,11 @@ function updateSingleCard(cardId, columnId, updatedCard) {
     if (!column || cardIndex === -1) {
         console.error(`Card with ID ${cardId} not found in any column`);
         return;
-    }
+    }    console.log(`🔄 Updating card "${column.cards[cardIndex].heading}" with AI response`);
 
-    console.log(`🔄 Updating card "${column.cards[cardIndex].heading}" with AI response`);
-
-    // Log Call2Actions falls vorhanden
-    if (updatedCard.call2Actions && updatedCard.call2Actions.length > 0) {
-        console.log(`📋 Adding ${updatedCard.call2Actions.length} Call2Actions to card`);
-    }    // Karte aktualisieren - bestehende Eigenschaften beibehalten
+    // Karte aktualisieren - bestehende Eigenschaften beibehalten
     const existingCard = column.cards[cardIndex];
-    const mergedCard = {
-        id: existingCard.id, // ID muss gleich bleiben
-        heading: updatedCard.heading || existingCard.heading,
-        content: updatedCard.content || existingCard.content,
-        color: updatedCard.color || existingCard.color,
-        thumbnail: updatedCard.thumbnail || existingCard.thumbnail,
-        comments: updatedCard.comments || existingCard.comments,
-        url: updatedCard.url || existingCard.url,
-        labels: updatedCard.labels || existingCard.labels,
-        inactive: updatedCard.inactive !== undefined ? updatedCard.inactive : existingCard.inactive,
-        expanded: updatedCard.expanded !== undefined ? updatedCard.expanded : existingCard.expanded,
-        call2Actions: updatedCard.call2Actions || existingCard.call2Actions || [] // Call2Actions übernehmen
-    };
+    const mergedCard = createCard(updatedCard, existingCard);
 
     // Karte ersetzen
     column.cards[cardIndex] = mergedCard;
@@ -1254,9 +1237,7 @@ function updateColumnCardsByName(columnName, columnId, newCards) {
         return;
     }
 
-    console.log(`🔄 Updating column "${column.name}" with ${newCards.length} cards from AI`);
-
-    // Log Call2Actions Statistics
+    console.log(`🔄 Updating column "${column.name}" with ${newCards.length} cards from AI`);    // Log Call2Actions Statistics
     const cardsWithActions = newCards.filter(card => card.call2Actions && card.call2Actions.length > 0);
     if (cardsWithActions.length > 0) {
         const totalActions = cardsWithActions.reduce((sum, card) => sum + card.call2Actions.length, 0);
@@ -1269,19 +1250,10 @@ function updateColumnCardsByName(columnName, columnId, newCards) {
         const existingCard = column.cards.find(c =>
             (card.id && c.id === card.id) ||
             (card.heading && c.heading === card.heading)
-        ); return {
-            id: existingCard?.id || card.id || generateId(),
-            heading: card.heading || '',
-            content: card.content || '',
-            color: card.color || existingCard?.color || 'color-gradient-1',
-            thumbnail: card.thumbnail || existingCard?.thumbnail || '',
-            comments: card.comments || '',
-            url: card.url || '',
-            labels: card.labels || '',
-            inactive: card.inactive !== undefined ? card.inactive : (existingCard?.inactive || false),
-            expanded: card.expanded !== undefined ? card.expanded : (existingCard?.expanded || false),
-            call2Actions: card.call2Actions || existingCard?.call2Actions || [] // Call2Actions übernehmen
-        };
+        );
+        
+        // Zentrale Karten-Erstellung verwenden
+        return createCard(card, existingCard);
     });
 
     // Spalte mit neuen Karten aktualisieren
