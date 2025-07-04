@@ -60,3 +60,8 @@ Als Open-Source-Projekt sind die nächsten Schritte:
 4.  **Weitere Export-Formate:** Implementierung von direkten Export-Funktionen in Formate wie PDF oder interaktive HTML-Präsentationen.
 
 Dieses Projekt bietet eine einzigartige Alternative im Bereich der Produktivitäts-Tools und hat das Potenzial, einen neuen Standard für benutzergesteuerte, interoperable Software zu setzen.
+
+
+
+- Github: https://github.com/johappel/cards-board
+- PRE_ALPHA: https://johappel.github.io/cards-board/kanban.html
