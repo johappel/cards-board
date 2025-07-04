@@ -1,4 +1,4 @@
-# Projektantrag: Open-Source Kanban-Like Editor
+# Projektbeschreibung: Open-Source Kanban-Like Editor
 
 ## 1. Vision und Projektziel
 

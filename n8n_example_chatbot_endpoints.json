@@ -1,11 +1,17 @@
 {
+  "createdAt": "2025-06-15T11:04:06.459Z",
+  "updatedAt": "2025-07-04T05:12:17.974Z",
+  "id": "IIM9D0wL6bGNlDtp",
   "name": "n8n_example_chatbot_endpoint",
+  "active": true,
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
         "path": "n8n_example_chatbot_endpoint",
         "options": {
+          "allowedOrigins": "*",
           "responseData": "={\"success\":true}"
         }
       },
@@ -356,21 +362,8 @@
     },
     {
       "parameters": {
-        "jsCode": "const cards =[];\nfor (const item of $input.all()) {\n  if(item.json.card.content){\n    item.json.card.content += \" ... \";\n  }\n  item.json.card.call2Actions=[\n        {\n          \"label\":\"In Bausteine aufteilen\",\n          \"action\":\"split\",\n          \"material_id\": 1230,\n          \"description\":\"Notiere unterrichtsrelevante Bausteine aus diesem Material in einzelne Kärtchen\"\n        }\n      ];\n  cards.push(item.json.card);\n}\nreturn {\n  cards: cards\n}\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1040,
-        220
-      ],
-      "id": "cb69da59-f0de-49c9-81ec-1e5a0d80d041",
-      "name": "manipulate content"
-    },
-    {
-      "parameters": {
         "mode": "raw",
-        "jsonOutput": "={\n  \"type\": \"chat\",\n  \"connectionId\": {{ $json.body.connectionId.toJsonString() }},\n  \"chatInput\": {{ $json.body.chatInput.toJsonString() }}\n}",
+        "jsonOutput": "={\n  \"type\": \"chat\",\n  \"connectionId\": {{ $json.body.connectionId.toJsonString() }},\n  \"chatInput\": {{ $json.body.query.toJsonString() }}\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.set",
@@ -535,7 +528,7 @@
     },
     {
       "parameters": {
-        "jsCode": "return [  \n  {\n    \"messagePayload\": {\n      \"type\": \"final_answer\",\n      \"message\" : $input.first().json.message.trim()\n    }\n  },\n  {\n    \"messagePayload\": {\n      \"type\": \"update-card\",\n      \"cardId\":  $input.first().json.card.id,\n      \"columnId\" : $input.first().json.columnId, \n      \"card\": $input.first().json.card\n    }\n  },\n  {\n    \"messagePayload\": {\n      \"type\": \"cards\",\n      \"column\":\"Fragmente\",\n      \"cards\": [{\n        \"heaading\": \"Fragment 1\",\n        \"content\": \"Teilinhalt für Fragment 1\"\n      },{\n        \"heaading\": \"Fragment 2\",\n        \"content\": \"Teilinhalt für Fragment 2\"\n      }]\n    }\n  }\n];"
+        "jsCode": "return [  \n  {\n    \"messagePayload\": {\n      \"type\": \"final_answer\",\n      \"message\" : $input.first().json.message.trim()\n    }\n  },\n  {\n    \"messagePayload\": {\n      \"type\": \"update-card\",\n      \"cardId\":  $input.first().json.card.id,\n      \"columnId\" : $input.first().json.columnId, \n      \"card\": $input.first().json.card\n    }\n  },\n  {\n    \"messagePayload\": {\n      \"type\": \"cards\",\n      \"column\":\"Fragmente\",\n      \"cards\": [{\n        \"heading\": \"Fragment 1\",\n        \"content\": \"Teilinhalt für Fragment 1\"\n      },{\n        \"heading\": \"Fragment 2\",\n        \"content\": \"Teilinhalt für Fragment 2\"\n      }]\n    }\n  }\n];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -545,9 +538,21 @@
       ],
       "id": "c668070e-6e42-4b94-9ab4-b1b4b7c03fe4",
       "name": "payloadcardactions"
+    },
+    {
+      "parameters": {
+        "jsCode": "const cards =[];\nfor (const item of $input.all()) {\n  if(item.json.card.content){\n    item.json.card.content += \" ... \";\n  }\n  item.json.card.call2Actions=[\n        {\n          \"label\":\"Fragmentieren\",\n          \"action\":\"split\",\n          \"material_id\": 1230,\n          \"description\":\"Notiere unterrichtsrelevante Bausteine aus diesem Material in einzelne Kärtchen\"\n        }\n      ];\n  cards.push(item.json.card);\n}\nreturn {\n  cards: cards\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        220
+      ],
+      "id": "cb69da59-f0de-49c9-81ec-1e5a0d80d041",
+      "name": "manipulate content & add call2Actions"
     }
   ],
-  "pinData": {},
   "connections": {
     "Webhook": {
       "main": [
@@ -575,7 +580,7 @@
       "main": [
         [
           {
-            "node": "manipulate content",
+            "node": "manipulate content & add call2Actions",
             "type": "main",
             "index": 0
           }
@@ -720,17 +725,6 @@
         ]
       ]
     },
-    "manipulate content": {
-      "main": [
-        [
-          {
-            "node": "payload",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Incomming-chat": {
       "main": [
         [
@@ -807,18 +801,122 @@
           }
         ]
       ]
+    },
+    "manipulate content & add call2Actions": {
+      "main": [
+        [
+          {
+            "node": "payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "cb855762-bf90-4ce8-8c4e-7fd1e4ac110d",
+  "staticData": null,
   "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "634e789e9cac462123b2b4acaedfe20e105965d27f018a60d1d4305ae72b1acb"
+    "templateCredsSetupCompleted": true
   },
-  "id": "IIM9D0wL6bGNlDtp",
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n.rpi-virtuell.de",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0",
+            "sec-ch-ua": "\"Not)A;Brand\";v=\"8\", \"Chromium\";v=\"138\", \"Microsoft Edge\";v=\"138\"",
+            "dnt": "1",
+            "content-type": "application/json",
+            "sec-ch-ua-mobile": "?0",
+            "accept": "*/*",
+            "origin": "https://johappel.github.io",
+            "sec-fetch-site": "cross-site",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-dest": "empty",
+            "referer": "https://johappel.github.io/",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "accept-language": "de,de-DE;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
+            "x-forwarded-proto": "https",
+            "x-forwarded-ssl": "on",
+            "x-forwarded-for": "94.31.95.84",
+            "x-forwarded-host": "n8n.rpi-virtuell.de",
+            "x-forwarded-server": "n8n.rpi-virtuell.de",
+            "content-length": "92",
+            "connection": "Keep-Alive"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "query": "Hallo",
+            "connectionId": "boardchat-id-1751605515964-bd2g3nx-ilrgikoz-1751605835451"
+          },
+          "webhookUrl": "https://n8n.rpi-virtuell.de/webhook/n8n_example_chatbot_endpoint",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "versionId": "6c5da6ab-cd9e-4c47-937a-265b9c8e87b4",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "createdAt": "2025-06-15T11:04:06.459Z",
+      "updatedAt": "2025-06-15T11:04:06.459Z",
+      "role": "workflow:owner",
+      "workflowId": "IIM9D0wL6bGNlDtp",
+      "projectId": "XDY0ETPYLFStyNIe",
+      "project": {
+        "createdAt": "2025-05-04T16:19:06.256Z",
+        "updatedAt": "2025-05-04T16:24:03.400Z",
+        "id": "XDY0ETPYLFStyNIe",
+        "name": "Joachim Happel <joachim.happel@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "createdAt": "2025-05-04T16:19:06.256Z",
+            "updatedAt": "2025-05-04T16:19:06.256Z",
+            "role": "project:personalOwner",
+            "userId": "38ad847b-265f-49f5-ab04-e262dd7d9255",
+            "projectId": "XDY0ETPYLFStyNIe",
+            "user": {
+              "createdAt": "2025-05-04T16:19:06.256Z",
+              "updatedAt": "2025-05-09T16:01:58.521Z",
+              "id": "38ad847b-265f-49f5-ab04-e262dd7d9255",
+              "email": "joachim.happel@gmail.com",
+              "firstName": "Joachim",
+              "lastName": "Happel",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-05-04T16:24:25.927Z",
+                "personalization_survey_n8n_version": "1.90.2"
+              },
+              "settings": {
+                "easyAIWorkflowOnboarded": true,
+                "firstSuccessfulWorkflowId": "rNNfPVYZwjVWPbRC",
+                "userActivated": true,
+                "userActivatedAt": 1746514613651,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1746806514708
+                }
+              },
+              "role": "global:member",
+              "disabled": false,
+              "mfaEnabled": false,
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
   "tags": [
     {
       "createdAt": "2025-05-15T06:47:46.005Z",
