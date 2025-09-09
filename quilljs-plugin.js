@@ -280,6 +280,8 @@ async function enableQuillEditor(cardContentElement, cardId, columnId) {
         IframeBlot.blotName = 'iframe';
         IframeBlot.tagName = 'IFRAME';
 
+        Quill.register('formats/iframe', IframeBlot);
+
         
         const quill = new Quill(`#${editorId}`, QUILL_CONFIG);
         const quillMarkdown = new QuillMarkdown(quill, {});

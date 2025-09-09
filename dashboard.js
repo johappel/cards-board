@@ -70,9 +70,9 @@ function createNewBoard(e) {
         backgroundColor: '#f5f7fa',
         customStyle: '',
         columns: [
-            { id: generateId(), name: 'To Do', color: 'color-gradient-1', cards: [] },
-            { id: generateId(), name: 'In Progress', color: 'color-gradient-2', cards: [] },
-            { id: generateId(), name: 'Done', color: 'color-gradient-3', cards: [] }
+            { id: generateId(), name: 'Ideen', color: 'color-gradient-1', cards: [] },
+            { id: generateId(), name: 'Phasen', color: 'color-gradient-2', cards: [] },
+            { id: generateId(), name: 'Stundenverlauf', color: 'color-gradient-3', cards: [] }
         ],
         aiConfig: {
             provider: '',
