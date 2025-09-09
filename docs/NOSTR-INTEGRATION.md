@@ -1,35 +1,49 @@
 # Nostr Integration für Kanban Board
 
+**Letzte Aktualisierung:** 2025-09-09
+
+Dieses Dokument gibt einen Überblick über die Nostr-Integration für das Teilen von Kanban-Boards. Für die vollständige Implementierung siehe [[Nostr Implementation Complete|NOSTR-IMPLEMENTATION-COMPLETE.md]] und [[Firefox Button Fix|FIREFOX-BUTTON-FIX-STATUS.md]]. Wichtige Formate in [[AGENTS|AGENTS.md]]. Siehe [[INDEX|INDEX.md]] für die Gesamtübersicht.
+
+## Inhaltsverzeichnis
+- [[Übersicht|#übersicht]]
+- [[Features|#features]]
+- [[Technische Details|#technische-details]]
+- [[Verwendung|#verwendung]]
+- [[Dateien|#dateien]]
+- [[Sicherheit|#sicherheit]]
+- [[Entwicklung|#entwicklung]]
+- [[Testing|#testing]]
+
 ## Übersicht
 
-Die Nostr-Integration ermöglicht es, Kanban-Boards als Nostr-Events zu veröffentlichen und zu teilen. Die Implementierung nutzt **NIP-23 Long-form Content (Kind 30023)** für veröffentlichte Boards und **Kind 30024** für Entwürfe.
+Die Nostr-Integration ermöglicht es, Kanban-Boards als Nostr-Events zu veröffentlichen und zu teilen. Die Implementierung nutzt **NIP-23 Long-form Content (Kind 30023)** für veröffentlichte Boards und **Kind 30024** für Entwürfe. Dies unterstützt dezentrale Kollaboration, siehe [[KONZEPT|KONZEPT.md]].
 
 ## Features
 
-### ✅ Implementiert
+### Implementiert
 
 1. **Board Publishing**
-   - Boards als Nostr-Events veröffentlichen
-   - Unterstützung für Draft-Modus (Kind 30024)
-   - Mehrere Relay-Server
-   - Erfolgs-/Fehlerbenachrichtigungen
+   - Boards als Nostr-Events veröffentlichen.
+   - Unterstützung für Draft-Modus (Kind 30024).
+   - Mehrere Relay-Server.
+   - Erfolgs-/Fehlerbenachrichtigungen.
 
 2. **Board Import**
-   - Import über URL-Parameter: `?import=nevent1...`
-   - Automatische Board-Erkennung
-   - Konfliktvermeidung durch neue IDs
+   - Import über URL-Parameter: `?import=nevent1...`.
+   - Automatische Board-Erkennung.
+   - Konfliktvermeidung durch neue IDs.
 
 3. **Schlüsselverwaltung**
-   - Generierung neuer Schlüsselpaare
-   - Lokale Speicherung (optional)
-   - Bech32-Format (nsec/npub)
+   - Generierung neuer Schlüsselpaare.
+   - Lokale Speicherung (optional).
+   - Bech32-Format (nsec/npub).
 
 4. **UI Integration**
-   - Modal-Dialog für Nostr-Einstellungen
-   - Sidebar-Integration
-   - Responsives Design
+   - Modal-Dialog für Nostr-Einstellungen.
+   - Sidebar-Integration.
+   - Responsives Design.
 
-### 🔧 Technische Details
+### Technische Details
 
 **Nostr Event Structure:**
 ```json
@@ -54,43 +68,41 @@ Die Nostr-Integration ermöglicht es, Kanban-Boards als Nostr-Events zu veröffe
 ## Verwendung
 
 ### 1. Board Veröffentlichen
-
-1. **Sidebar öffnen** → "Via Nostr Teilen"
+1. **Sidebar öffnen** → "Via Nostr Teilen".
 2. **Schlüssel konfigurieren:**
    - Bestehende nsec/npub eingeben ODER
-   - "Neue Schlüssel Generieren" klicken
-3. **Relay-Server** konfigurieren (optional)
-4. **"Jetzt Veröffentlichen"** klicken
-5. **Link kopieren** und teilen
+   - "Neue Schlüssel Generieren" klicken.
+3. **Relay-Server** konfigurieren (optional).
+4. **"Jetzt Veröffentlichen"** klicken.
+5. **Link kopieren** und teilen.
 
 ### 2. Board Importieren
 
 **Automatisch:**
-- URL mit `?import=nevent1...` öffnen
-- Board wird automatisch importiert
+- URL mit `?import=nevent1...` öffnen.
+- Board wird automatisch importiert.
 
 **Manuell:**
-- Programmcode kann `importBoardFromNostr(nevent)` aufrufen
+- Programmcode kann `importBoardFromNostr(nevent)` aufrufen.
 
 ### 3. Beispiel URLs
-
 ```
 http://localhost:5500/kanban.html?import=nevent1eyJldmVudElkIjoiYWJjMTIzIiwicmVsYXlzIjpbIndzcy8vcmVsYXkuZGFtdXMuaW8iXX0=
 ```
 
 ## Dateien
 
-- **`share_via_nostr.js`** - Hauptfunktionalität
-- **`share_via_nostr.css`** - Styling
-- **`kanban.html`** - UI-Integration
+- **`share_via_nostr.js`** - Hauptfunktionalität.
+- **`share_via_nostr.css`** - Styling.
+- **`kanban.html`** - UI-Integration.
 
 ## Sicherheit
 
 ⚠️ **Wichtige Hinweise:**
 
-1. **Vereinfachte Kryptographie**: Die aktuelle Implementierung verwendet vereinfachte Hash-Funktionen statt secp256k1
-2. **Produktionsreife**: Für Produktionsumgebungen sollte eine echte secp256k1-Bibliothek verwendet werden
-3. **Schlüsselsicherheit**: Private Schlüssel werden nur lokal gespeichert
+1. **Vereinfachte Kryptographie:** Die aktuelle Implementierung verwendet vereinfachte Hash-Funktionen statt secp256k1.
+2. **Produktionsreife:** Für Produktionsumgebungen sollte eine echte secp256k1-Bibliothek verwendet werden.
+3. **Schlüsselsicherheit:** Private Schlüssel werden nur lokal gespeichert.
 
 ## Entwicklung
 
@@ -103,18 +115,18 @@ http://localhost:5500/kanban.html?import=nevent1eyJldmVudElkIjoiYWJjMTIzIiwicmVs
    ```
 
 2. **NIP-19 korrekte Implementierung**
-   - Bech32-Encoding nach Standard
-   - Korrekte nevent-Struktur
+   - Bech32-Encoding nach Standard.
+   - Korrekte nevent-Struktur.
 
 3. **Erweiterte Features**
-   - Board-Updates (replaceable events)
-   - Verschlüsselte Private Boards
-   - Multi-Author Support
+   - Board-Updates (replaceable events).
+   - Verschlüsselte Private Boards.
+   - Multi-Author Support.
 
 4. **Error Handling**
-   - Retry-Mechanismus für Relays
-   - Bessere Fehlerberichterstattung
-   - Offline-Support
+   - Retry-Mechanismus für Relays.
+   - Bessere Fehlerberichterstattung.
+   - Offline-Support.
 
 ## Testing
 
@@ -128,8 +140,13 @@ http://localhost:5500/kanban.html
 ```
 
 **Test-Schritte:**
-1. Board erstellen
-2. Sidebar → "Via Nostr Teilen"
-3. Neue Schlüssel generieren
-4. Board veröffentlichen
-5. Link kopieren und in neuem Tab testen
+1. Board erstellen.
+2. Sidebar → "Via Nostr Teilen".
+3. Neue Schlüssel generieren.
+4. Board veröffentlichen.
+5. Link kopieren und in neuem Tab testen.
+
+Für detaillierte Tests siehe [[Nostr Implementation Complete|NOSTR-IMPLEMENTATION-COMPLETE.md]].
+
+---
+*Überarbeitet für Wiki: Hinzugefügtes Inhaltsverzeichnis, Links zu anderen Docs, konsistente Formatierung.*
