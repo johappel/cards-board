@@ -4,18 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kanban Board System</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="column.css">
-    <link rel="stylesheet" href="card.css">
-    <link rel="stylesheet" href="modal.css">
-    <link rel="stylesheet" href="chatbot.css">
-    <link rel="stylesheet" href="board.css">
-    <link rel="stylesheet" href="colors.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/column.css">
+    <link rel="stylesheet" href="css/card.css">
+    <link rel="stylesheet" href="css/modal.css">
+    <link rel="stylesheet" href="css/chatbot.css">
+    <link rel="stylesheet" href="css/board.css">
+    <link rel="stylesheet" href="css/colors.css">
     <link rel="stylesheet" href="markdown.css">
-    <link rel="stylesheet" href="duplicate.css">
-    <link rel="stylesheet" href="sidebar.css">
-    <link rel="stylesheet" href="share_via_nostr.css">
-    <link rel="stylesheet" href="quilljs-plugin.css">
+    <link rel="stylesheet" href="css/duplicate.css">
+    <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="css/share_via_nostr.css">
+    <link rel="stylesheet" href="css/quilljs-plugin.css">
     <!-- SortableJS für Drag&Drop -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 </head>
@@ -766,18 +766,17 @@ Beispiel: 'Ergänze fehlende Details in den Karten', 'Erstelle To-Do-Listen aus 
         </div>
     </div>
 
-    <script src="storage.js"></script>
-    <script src="board.js"></script>
-    <script src="dashboard.js"></script>
-    <script src="column.js"></script>
-    <script src="card.js"></script>
-    <script src="ai.js"></script>
-    <script src="board_settings.js"></script>
-    <script src="import_export.js"></script>
-    <script src="drag_drop.js"></script>
-    <script src="onpaste.js"></script>
-    <script src="onpaste-init.js"></script>
-    <script src="onpaste-url-plugin.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/board.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/column.js"></script>
+    <script src="js/card.js"></script>
+    <script src="js/ai.js"></script>
+    <script src="js/board_settings.js"></script>
+    <script src="js/import_export.js"></script>
+    <script src="js/onpaste.js"></script>
+    <script src="js/onpaste-init.js"></script>
+    <script src="js/plugins/onpaste-url-plugin.js"></script>
     <!-- <script src="import-fix-test.js"></script> -->
     
     <!-- nostr-tools - the standard Nostr library for JS -->
@@ -883,16 +882,15 @@ Beispiel: 'Ergänze fehlende Details in den Karten', 'Erstelle To-Do-Listen aus 
         // Load nostr-tools
         loadNostrTools();
     </script>
-    <script src="share_via_nostr.js"></script>
-    <script src="init.js"></script>
-    <script src="api.js"></script>
-    <script src="colors.js"></script>
-    <script src="utils.js"></script>
-    <script src="chatbot.js"></script>
-    <script src="duplicate.js"></script>
-    <script src="sortable-duplicate.js"></script>
-    <script src="sidebar.js"></script>
-    <script src="board-colors.js"></script>
+    <script src="js/share_via_nostr.js"></script>
+    <script src="js/init.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/colors.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/chatbot.js"></script>
+    <script src="js/duplicate.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/board-colors.js"></script>
     
     <script>
         // Initialize column width changer
@@ -906,7 +904,7 @@ Beispiel: 'Ergänze fehlende Details in den Karten', 'Erstelle To-Do-Listen aus 
     <!-- <script src="test-publishing.js"></script> -->
     
     <!-- Quill.js WYSIWYG Editor Plugin -->
-    <script src="quilljs-plugin.js"></script>
+    <script src="js/plugins/quilljs-plugin.js"></script>
    
 </script>
 </html>

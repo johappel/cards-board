@@ -1,1 +1,0 @@
-// (Alle alten Drag&Drop-Funktionen entfernt, da SortableJS verwendet wird)
